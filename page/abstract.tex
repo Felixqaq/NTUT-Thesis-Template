@@ -1,14 +1,16 @@
 % 中文摘要頁
 \begin{ZhAbstract}
     \begin{ZhAbstractItems}
-        \noindent \text 關鍵詞：胸部 CT、COPD、量化生物標記、肺氣腫、自動化分類
+        \noindent \text 關鍵詞：胸部 CT、慢性阻塞性肺病、量化生物標記、Hybrid Mamba-Attention、TAP-CT、類別不平衡
 
     \end{ZhAbstractItems}
 
     \begin{ZhAbstractDescription}
-        本研究提出一套以胸部 CT 影像為基礎之 COPD 輔助分析流程，從肺部分割、定量特徵擷取到分類模型訓練，建立可解釋之自動化判讀系統。系統以 54 筆臨床 CT 影像為資料來源，擷取 12 項具臨床意義之量化生物標記，包括全肺與分葉肺氣腫比例、血管與氣道相關指標、總肺容積及肺動脈直徑，並以五折交叉驗證訓練全連接神經網路進行 Normal/Abnormal 分類。實驗結果顯示，模型可達 92.59\% 之整體準確率與 0.9784 之 AUC；單一特徵分析亦顯示肺氣腫比例與肺容積對分類最具區辨能力。
+        慢性阻塞性肺病（Chronic Obstructive Pulmonary Disease, COPD）為一種與氣道阻塞、肺氣腫相關之慢性呼吸道疾病。臨床上雖以肺功能檢查作為主要診斷依據，胸部電腦斷層影像（computed tomography, CT）仍可提供肺實質、氣道、血管等結構性資訊，具備作為輔助診斷與疾病表徵分析之潛力。本研究旨在建立以胸部 CT 影像為基礎之 COPD 輔助診斷流程，並結合可解釋之影像量化生物標記與 3D 深度影像模型，探討 CT 影像於正異常分類與肺功能相關塌陷角度分級之應用可行性。
 
-        除量化生物標記外，本研究亦進一步將 3D CT 影像直接輸入深度模型，探討 COPD 相關肺功能表徵之預測與分級。實驗以 Mamba 與 Hybrid Mamba-Attention 架構為核心，分別進行肺功能塌陷角度回歸、角度三分類、排除中間灰區之極端二分類，以及 GOLD 嚴重度四分類。結果顯示，Hybrid Mamba-Attention 於角度回歸可達 15.85 度之 MAE 與 0.6699 之 Pearson 相關係數；在角度三分類與 GOLD 四分類中，結合資料增強與平衡取樣後，分別達到 0.5713 與 0.5323 之 Macro-F1，Balanced Accuracy 則為 0.6319 與 0.5222。於排除 132 至 151 度灰區後之極端二分類任務中，模型可達 0.8177 之 Macro-F1 與 0.8289 之 Balanced Accuracy，顯示合理的標籤設計與類別不平衡處理有助於提升小樣本 COPD CT 分類之可靠性。整體而言，胸部 CT 定量生物標記與 3D 深度影像模型可相互補足，作為 COPD 輔助診斷、肺功能表徵預測與疾病嚴重度評估之有效依據。
+        本研究首先針對 54 筆臨床胸部 CT 影像建立量化特徵分析流程，由 CT 影像產生肺葉、血管與氣道相關分割標籤，並擷取 12 項具臨床意義之量化生物標記，包括全肺與分葉肺氣腫比例、小血管體積比例、氣道壁比例、血管密度、氣道肺體積比例、總肺容積及肺動脈直徑。分類模型採用全連接神經網路，並以 stratified five-fold cross validation 評估 Normal/Abnormal 分類效能。實驗結果顯示，量化特徵模型可達 92.59\% 之整體準確率、0.9355 之 F1-score 與 0.9784 之 AUC，顯示胸部 CT 量化生物標記可提供具可解釋性之 COPD 輔助判讀依據。
+
+        其次，本研究進一步使用 66 筆具肺功能相關標籤之 3D CT 影像，將原始影像輸入 Mamba、SwinUNETR 與 Hybrid Mamba-Attention 等模型，分別進行以 $131^{\circ}$ 與 $152^{\circ}$ 為門檻之塌陷角度（Angle of Collapse, AC）三分類，以及排除 $132^{\circ}$ 至 $151^{\circ}$ 區間的二分類。為降低小樣本與類別不平衡的偏差，本研究採用交叉驗證，並僅於訓練中進行資料增強與平衡取樣。結果顯示，結合預先萃取之 TAP-CT 影像嵌入後，AC 三分類可達 0.8209 之 accuracy、0.6141 之 Macro-F1 與 0.6326 之 balanced accuracy，極端二分類則可達 0.9192 之 accuracy、0.8763 之 Macro-F1 與 0.8778 之 balanced accuracy。整體而言，本研究結果顯示，胸部 CT 量化生物標記與 3D 深度影像模型具有互補性，可分別提供可解釋之結構量化依據與影像層級之肺功能表徵學習能力，並可作為 COPD 輔助診斷之參考。
     \end{ZhAbstractDescription}
     
 \end{ZhAbstract}

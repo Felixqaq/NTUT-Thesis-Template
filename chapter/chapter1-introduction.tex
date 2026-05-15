@@ -1,99 +1,28 @@
 \begin{ZhChapter}
 
-\chapter{緒論（大標）}
+\chapter{緒論}
 
-\section{研究動機與背景（小標）}
+\section{研究背景與動機}
 
-\begin{equation} 
-    \mbox{$x = \dfrac{-b\pm\sqrt{b^2-4ac}}{2a}$}
-\end{equation}
+慢性阻塞性肺病（Chronic Obstructive Pulmonary Disease, COPD）為一種與長期氣道阻塞、肺實質破壞及肺功能下降相關之慢性呼吸道疾病。臨床診斷主要依賴肺功能檢查，然而胸部電腦斷層影像（computed tomography, CT）能呈現肺實質、氣道與血管等結構變化，因此具有作為輔助診斷與疾病表徵分析之潛力。
 
-\subsection{研究背景(小小標)}
+\section{研究目的}
 
-\text 背景內文背景內文背景內文背景內文,背景內文背景內文背景內文背景內文背景內文背景內文，如表 1.1 所示。
+本研究旨在建立以胸部 CT 影像為基礎之 COPD 輔助診斷流程，並從可解釋量化特徵與三維影像模型兩個方向進行分析。前者擷取肺氣腫、氣道、血管與肺容積等量化生物標記，後者使用三維 CT 模型學習肺功能相關影像表徵。
 
-\begin{table*}[htbp]
-    \centering
-    \caption{表格範例標題} \label{tab: complexity}
-    \makebox[\linewidth][c]{
-    \renewcommand\arraystretch{1.2}{
-        \begin{tabular}{| l | c  c  c  c |}
-        \hline
-        Protocol & $P$ & $CS_1$ & $CS_2$ & $RG$ \\
-        \hline
-        SD & $O(1)$, $O(1)$, N/A & $O(n-t)$, $O(1)$, N/A & $O(n-t)$, $O(1)$, N/A & $O(1)$, $O(n)$, $O(n)$ \\
-        MSSMul & $O(1)$, $O(1)$, N/A & $O(n-t)$, $O(n)$, $O(1)$ & $O(n-t)$, $O(n)$, N/A & $O(1)$, $O(n)$, $O(n)$ \\
-        MSSAdd & $O(1)$, $O(1)$, N/A & $O(n-t)$, $O(n)$, $O(1)$ & N/A, N/A, N/A & $O(1)$, $O(n)$, $O(n)$ \\
-        SC & $O(1)$, $O(1)$, N/A & $O(n-t)$, $O(n)$, $O(1)$ & $O(n-t)$, $O(n)$, N/A & $O(1)$, $O(n)$, $O(n)$ \\
-        \hline 
-        \end {tabular}
-    }}
-\end {table*}
+\section{研究範圍與貢獻}
 
-\subsubsection{研究動機(小小標)}
+本研究範圍聚焦於胸部 CT 影像於 COPD 輔助診斷之應用，並不取代臨床肺功能檢查或醫師診斷。本研究所討論之分類與分級結果，主要作為影像輔助分析與研究性評估依據。主要貢獻如下：
 
-\begin{equation} 
-    \mbox{$(1+x)^n = 1 + \dfrac{nx}{1!} + \dfrac{n(n-1)x^2}{2!}$}
-\end{equation}
+\begin{enumerate}
+    \item 建立胸部 CT 影像之 COPD 量化特徵分析流程，並以 12 項影像生物標記進行 Normal/Abnormal 分類。
+    \item 評估三維 CT 深度學習模型於塌陷角角度分類與 GOLD 分級任務之可行性。
+    \item 探討小樣本與類別不平衡情境下，資料增強與平衡取樣對模型效能之影響。
+    \item 比較量化特徵方法與三維影像模型於 COPD 輔助診斷中之互補性。
+\end{enumerate}
 
-動機動機動機動機，動機動機動機動機動機動機動機動機動機動機動機動機，動機動機動機動機動機動機動機動機。
+\section{論文架構}
 
-動機動機動機動機動機動機動機動機，動機動機動機動機動機動機動機動機動機動機動機動機。動機動機動機動機動機動機動機動機，動機動機動機動機動機動機動機動機動機動機動機動機。動機動機動機動機動機動機動機動機，動機動機動機動機動機動機動機動機動機動機動機動機，如圖 1.1、圖 1.2 所示。
-
-\begin{figure*}[htbp]
-    \centering
-    \includegraphics[width = 1\textwidth]{image.jpeg}
-    \caption{Cool train station}
-    \label{fig: image}
-\end{figure*}
-
-\begin{figure*}[htbp]
-    \centering
-    \includegraphics[width = 1\textwidth]{image.jpeg}
-    \caption{"Cool train station" "Cool train station" "Cool train station" "Cool train station" "Cool train station" "Cool train station" "Cool train station" "Cool train station" "Cool train station" "Cool train station" "Cool train station" "Cool train station"}
-    \label{fig: image}
-\end{figure*}
-
-\begin{figure*}[htbp]
-    \centering
-    \includegraphics[width = 1\textwidth]{image.jpeg}
-    \caption{Cool train station}
-    \label{fig: image}
-\end{figure*}
-
-\begin{table*}[htbp]
-    \centering
-    \caption{表格範例標題} \label{tab: complexity}
-    \makebox[\linewidth][c]{
-    \renewcommand\arraystretch{1.2}{
-        \begin{tabular}{| l | c  c  c  c |}
-        \hline
-        Protocol & $P$ & $CS_1$ & $CS_2$ & $RG$ \\
-        \hline
-        MSSMul & $O(1)$, $O(1)$, N/A & $O(n-t)$, $O(n)$, $O(1)$ & $O(n-t)$, $O(n)$, N/A & $O(1)$, $O(n)$, $O(n)$ \\
-        MSSAdd & $O(1)$, $O(1)$, N/A & $O(n-t)$, $O(n)$, $O(1)$ & N/A, N/A, N/A & $O(1)$, $O(n)$, $O(n)$ \\
-        SC & $O(1)$, $O(1)$, N/A & $O(n-t)$, $O(n)$, $O(1)$ & $O(n-t)$, $O(n)$, N/A & $O(1)$, $O(n)$, $O(n)$ \\
-        MSSMul & $O(1)$, $O(1)$, N/A & $O(n-t)$, $O(n)$, $O(1)$ & $O(n-t)$, $O(n)$, N/A & $O(1)$, $O(n)$, $O(n)$ \\
-        MSSAdd & $O(1)$, $O(1)$, N/A & $O(n-t)$, $O(n)$, $O(1)$ & N/A, N/A, N/A & $O(1)$, $O(n)$, $O(n)$ \\
-        SC & $O(1)$, $O(1)$, N/A & $O(n-t)$, $O(n)$, $O(1)$ & $O(n-t)$, $O(n)$, N/A & $O(1)$, $O(n)$, $O(n)$ \\
-        \hline 
-        \end {tabular}
-    }}
-\end {table*}
-
-動機動機動機動機，動機動機動機動機動機動機動機動機動機動機動機動機，動機動機動機動機動機動機動機動機。
-
-動機動機動機動機，動機動機動機動機動機動機動機動機動機動機動機動機，動機動機動機動機動機動機動機動機。動機動機動機動機，動機動機動機動機動機動機動機動機動機動機動機動機，動機動機動機動機動機動機動機動機。
-
-動機動機動機動機，動機動機動機動機動機動機動機動機動機動機動機動機，動機動機動機動機動機動機動機動機。動機動機動機動機，動機動機動機動機動機動機動機動機動機動機動機動機，動機動機動機動機動機動機動機動機。動機動機動機動機，動機動機動機動機動機動機動機動機動機動機動機動機，動機動機動機動機動機動機動機動機。
-
-動機動機動機動機，動機動機動機動機動機動機動機動機動機動機動機動機，動機動機動機動機動機動機動機動機。動機動機動機動機，動機動機動機動機動機動機動機動機動機動機動機動機，動機動機動機動機動機動機動機動機。動機動機動機動機，動機動機動機動機動機動機動機動機動機動機動機動機，動機動機動機動機動機動機動機動機。動機動機動機動機，動機動機動機動機動機動機動機動機動機動機動機動機，動機動機動機動機動機動機動機動機。
-
-\begin{figure*}[htbp]
-    \centering
-    \includegraphics[width = 0.5\textwidth]{image.jpeg}
-    \caption{Cool train station}
-    \label{fig: image}
-\end{figure*}
+本論文共分為五章。第二章整理相關背景與文獻，第三章說明研究材料與方法，第四章呈現實驗結果與討論，第五章總結研究成果、限制與未來方向。
 
 \end{ZhChapter}
