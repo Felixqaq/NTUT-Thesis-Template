@@ -2,6 +2,7 @@
 A Study on the Auxiliary Diagnosis of COPD using Chest CT images
 你現在是一位寫論文大師，寫的時候盡量使用論文形式去撰寫
 要先參考前人paper中的資料夾，還有我把前半段跟後半段的研究放在兩個不同資料夾中一個在COPD_quantification中另一個在nnMamba_paper_experiment_notes中
+撰寫論文、整理文獻回顧或補參考文獻時，優先參考 `參考文獻連結對照.md`，其中已整理 `AI Meeting.md` 會議紀錄中提到的論文、臨床指南、資料集、程式碼與內部工作文件連結；正式引用前需再補齊作者、年份、期刊或會議、DOI 等完整 bibliographic 資訊。
 
 學校論文規範來源：`學校論文規範/J1.pdf`，國立臺北科技大學研究生論文撰寫規範書，114.02.01 版。撰寫與整理論文時需遵守下列重點：
 
