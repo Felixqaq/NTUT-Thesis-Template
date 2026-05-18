@@ -45,7 +45,16 @@
 綜合上述文獻，肺部、肺葉、氣道與血管分割分別支撐 COPD quantitative CT 中不同類型的影像生物標記：肺部與肺葉分割影響肺容積與肺氣腫比例，氣道分割影響 airway-derived features，血管分割則影響血管密度、小血管比例與肺動脈相關估計。既有研究已提供多種可用的深度學習模型、公開工具與 benchmark，但各方法在標籤定義、輸出格式、資料來源與疾病情境上並不完全一致。因此，在後續方法章中，需明確說明實際採用之分割來源、輸出標籤、特徵計算方式與限制，避免將不同來源之分割結果視為完全等價。
 
 \section{三維醫學影像深度學習模型}
-% TODO: 3D CNN、Transformer、SwinUNETR、Mamba、Hybrid Mamba-Attention。
+
+胸部 CT 屬於三維體積影像，與單張二維影像相比，其資訊不僅存在於單一切面，也包含上下切片之間的連續解剖關係。COPD 相關影像表徵亦具有三維分布特性，例如肺氣腫可能呈現肺葉或區域性分布，氣道與血管則沿著肺內空間形成分支結構。因此，若僅以二維切片進行分析，可能忽略跨切片的空間連續性與整體肺部形態；三維深度學習模型則可直接以 CT volume 作為輸入，從體積資料中學習局部紋理、區域分布與全肺形態等特徵。
+
+早期三維醫學影像深度學習多以 3D convolutional neural networks（3D CNN）為基礎。3D convolution 可在深度、高度與寬度三個方向同時萃取局部特徵，使模型能保留體積影像中的空間鄰近關係。Park 等人以 inflated three-dimensional convolutional network 由低劑量胸部 CT 預測 FVC 與 FEV1，並進一步以預測之肺功能值判斷高風險族群，顯示三維 CT 模型可由影像中學習與肺功能相關的潛在表徵\cite{park2023dlpulmonaryct}。BeyondCT 則結合 3D CNN、Vision Transformer 與人口統計資料，用於由非增強吸氣相胸部 CT 預測 FVC 與 FEV1；其設計反映了近年模型發展趨勢，即以 CNN 擷取局部影像特徵，再透過 Transformer 類架構捕捉較長距離的全域關係\cite{geng2024beyondct}。
+
+Transformer 架構原先發展於序列建模，後續 Vision Transformer 將影像切分為 patch token，利用 self-attention 建立影像區域之間的關係\cite{dosovitskiy2021vit}。在胸部 CT 與 COPD 相關研究中，Wu 等人曾將 Vision Transformer 應用於 CT 肺氣腫亞型分類，說明 attention-based 模型可用於辨識 centrilobular、panlobular 與 paraseptal emphysema 等不同影像型態\cite{wu2021emphysemavit}。然而，標準 self-attention 的計算量會隨 token 數量平方成長，若直接用於高解析三維 CT，記憶體與運算成本皆相當高。Swin Transformer 以 shifted window attention 建立階層式特徵表示，在降低計算負擔的同時保留多尺度資訊\cite{liu2021swin}；Swin UNETR 進一步將此概念引入三維醫學影像分割，以 Swin Transformer encoder 萃取多層級特徵，再與 U-Net 類 decoder 結合\cite{hatamizadeh2022swinunetr}。這些研究顯示，Transformer 類模型有助於補足純 CNN 對長距離相依關係建模不足的問題。
+
+近年 state space model（SSM）與 Mamba 架構開始被引入醫學影像分析。Mamba 透過 selective state space mechanism 建立長序列建模能力，並具有相對於標準 Transformer 更接近線性的序列長度複雜度，因此適合處理 token 數量龐大的影像或三維體積資料\cite{gu2023mamba}。在醫學影像領域，nnMamba 將 CNN 的局部表示能力與 SSM 的長距離建模能力結合，並應用於三維生物醫學影像分割、分類與 landmark detection 任務\cite{gong2024nnmamba}。SegMamba 則針對三維醫學影像分割設計 Mamba-based 架構，以提升 whole-volume feature modeling 的效率\cite{xing2024segmamba}；MedMamba 則探討 Vision Mamba 於多種醫學影像分類任務中的應用，作為 Mamba-based medical image classification 的基準之一\cite{yue2024medmamba}。
+
+整體而言，三維醫學影像模型的發展可視為由局部特徵萃取走向局部與全域表徵整合的過程。3D CNN 適合捕捉 CT 中局部低衰減區、血管紋理與氣道周邊變化；Transformer 與 Swin 類模型則強調跨區域或多尺度關係；Mamba 類模型則嘗試在保留長距離建模能力的同時降低高維體積資料的計算負擔。對 COPD 輔助診斷而言，這些模型可作為 2.2 節量化生物標記之外的補充途徑，使模型直接由原始 CT volume 學習與肺功能、肺氣腫分布或疾病嚴重程度相關的隱含特徵。然而，三維深度模型通常需要較多資料與嚴謹驗證；在小樣本醫學影像情境中，模型可能受到掃描協議差異、類別不平衡與資料切分方式影響，因此後續仍需搭配適當的資料增強、交叉驗證與多指標評估。
 
 \section{小樣本與類別不平衡問題}
 % TODO: small sample、class imbalance、augmentation、balanced sampling、cross validation。
