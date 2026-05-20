@@ -56,10 +56,73 @@ GOLD 相關候選分級 & GOLD 1--4 & 36、11、13、6 & 依 FEV1 預測值百�
 \end{table}
 
 \section{資料前處理}
-% TODO: DICOM to NIfTI、HU、resize/resampling、normalization。
+
+本研究之前處理目的在於將臨床原始 DICOM 影像與 PFT 資料整理為後續分割、量化參數擷取與標籤建立可使用之格式。由於量化分析仰賴 HU 閾值與實際 voxel spacing，轉換流程需保留影像強度與空間資訊，避免影響後續體積與低衰減區比例計算。
+
+原始胸部 CT 以 DICOM series 形式儲存。同一病人可能具有多組掃描序列或重建影像，因此本研究先依 SeriesInstanceUID 與 DICOM metadata 將影像分組，再排除 scout、snapshot、冠狀面或矢狀面重建影像，以及不適合肺部分析之非目標序列。若同一病人具有多個可用胸部 CT series，則優先選擇適合肺部結構分析之軸向胸部或肺窗序列。完成序列選擇後，依 ImagePositionPatient 對切片排序，並利用 ImageOrientationPatient、PixelSpacing 與 SliceThickness 等欄位建立三維空間方向與 voxel spacing。
+
+CT 強度值轉換依據 DICOM 中之 RescaleSlope 與 RescaleIntercept 進行。設原始 pixel value 為 $p$，RescaleSlope 為 $m$，RescaleIntercept 為 $b$，則轉換後之 HU 值定義為：
+
+\begin{equation}
+\mathrm{HU} = m p + b\, .
+\end{equation}
+
+此步驟對本研究特別重要，因為肺氣腫比例係依 HU 小於 $-950$ 之低衰減區域計算；若未正確轉換 HU，後續低衰減區、肺密度與相關量化特徵皆可能產生系統性偏差。轉換後之影像以 NIfTI 格式儲存，並保留 affine、spacing 與 HU intensity，以利後續分割、體積計算與模型輸入。
+
+PFT 資料則以病人為單位與 CT volume 對應。合作醫師提供之 PFT 結果用於建立正常/異常二元標籤、FEV1 預測值百分比相關分級，以及塌陷角度（AC）等肺功能導向標籤。資料整理時以病人識別碼對應 CT 與 PFT，並檢查是否存在缺漏、重複或無法對應之個案；僅具備可用 CT volume 與相應標籤者納入後續模型分析。
 
 \section{肺部結構分割與量化參數擷取}
-% TODO: segmentation label、emphysema%、WA%、SVV%、vessel density、lung volume、PA diameter。
+
+量化生物標記分支之核心在於將胸部 CT 中與 COPD 相關之解剖結構轉換為可比較之數值特徵。本研究以前處理後之 HU-preserved NIfTI volume 作為輸入，先透過 3D Slicer 結合 MONAI Auto3DSeg 推論流程產生肺部與胸腔相關結構之多類別 label map\cite{fedorov2012slicer,cardoso2022monai}。在主實驗中，label 1 至 label 5 分別對應左上葉、左下葉、右上葉、右中葉與右下葉，並合併為總肺遮罩；label 6 至 label 9 則對應血管、氣管、肺靜脈系統與肺動脈等結構，用於血管與氣道相關參數估計。分割完成後，本研究先檢查輸出檔案是否存在、主要 label 是否為非空值，以及各主要結構 voxel 數是否合理，再進行後續量化計算。
+
+氣道結構另以 AeroPath 氣道分割流程作為補充來源\cite{stoverud2024aeropath}。輸入 CT volume 經 AeroPath 推論後可產生氣道 NIfTI mask 與三維氣道表面模型；若同一病人具有多組候選輸出，則先排除冠狀面、矢狀面、重建截面或明顯不適用之序列，再依有效氣道模型大小選擇較完整之輸出。當 voxel-based airway mask 可取得時，氣道相關特徵優先由該 mask 計算；若氣道分割結果不完整，則以 label map 中之氣管或可用氣道標籤作為 fallback 估計。因此，本研究之氣道參數屬 airway-derived features，重點在於提供氣道體積與相對比例資訊，而非宣稱已完成精確之小氣道管壁中心線量測。
+
+所有體積計算皆根據 NIfTI header 中的 voxel spacing 進行，而非僅使用 voxel 數量。設三個方向之 spacing 分別為 $s_x$、$s_y$ 與 $s_z$，某結構區域 $R$ 之 voxel 數為 $N_R$，則單一 voxel 體積與結構體積定義如下：
+
+\begin{equation}
+v_{\mathrm{voxel}} = s_x s_y s_z,\qquad
+V_R = \frac{N_R v_{\mathrm{voxel}}}{1000}\, .
+\end{equation}
+
+其中 $v_{\mathrm{voxel}}$ 之單位為 $\mathrm{mm^3}$，$V_R$ 之單位為 $\mathrm{mL}$。總肺體積由五個肺葉 label 合併後計算，肺葉體積則分別由各肺葉遮罩計算。肺氣腫比例採用低衰減區域（low attenuation area）概念，在肺部或指定肺葉遮罩內計算 HU 小於 $-950$ 之 voxel 比例；此門檻常用於 CT 肺氣腫定量分析\cite{gevenois1995density}。若 $R$ 表示總肺或任一肺葉區域，肺氣腫比例定義為：
+
+\begin{equation}
+E_R = \frac{N_{R,\mathrm{HU}<-950}}{N_R}\times 100\%\, .
+\end{equation}
+
+依此可取得全肺肺氣腫比例，以及左上葉、左下葉、右上葉、右中葉與右下葉之肺葉別肺氣腫比例。肺葉別特徵可補足全肺平均值無法描述之空間分布差異，例如異常低衰減區是否集中於特定肺葉。
+
+血管相關參數由血管與肺動脈相關 label 計算。血管密度定義為分割血管體積相對於總肺體積之比例，用以描述肺內可見血管負荷。小血管體積比例（small vessel volume percentage, SVV\%）則先對血管遮罩進行 distance transform，以血管 voxel 至邊界之距離估計局部半徑，並以直徑小於 5 mm 之近似門檻辨識小血管區域。由於本研究最終分類特徵採用主程式輸出之定義，SVV\% 以小血管體積除以總肺體積表示，其計算式如下：
+
+\begin{equation}
+\begin{aligned}
+D_{\mathrm{vessel}} &= \frac{V_{\mathrm{vessel}}}{V_{\mathrm{lung}}}\times 100\%,\\
+\mathrm{SVV} &= \frac{V_{\mathrm{small}}}{V_{\mathrm{lung}}}\times 100\%\, .
+\end{aligned}
+\end{equation}
+
+其中 $V_{\mathrm{vessel}}$ 為分割血管體積，$V_{\mathrm{small}}$ 為小血管體積，$V_{\mathrm{lung}}$ 為總肺體積。小血管相關量化可反映 COPD 中肺血管床減少或肺氣腫相關血管破壞之影像表徵\cite{matsuoka2010smallvessel}。
+
+氣道相關參數包含氣道壁比例與氣道肺體積比例。理想情況下，若氣道分割可區分 lumen 與 wall，氣道壁比例可由 wall volume 除以 lumen 與 wall 總和計算；若缺乏完整 lumen/wall 標籤，則使用可取得之 airway mask 以形態學侵蝕方式近似 lumen，再以剩餘部分估計 wall。氣道肺體積比例則定義為氣道體積相對於總肺體積之比例：
+
+\begin{equation}
+\begin{aligned}
+\mathrm{WA} &= \frac{V_{\mathrm{wall}}}{V_{\mathrm{lumen}} + V_{\mathrm{wall}}}\times 100\%,\\
+R_{\mathrm{airway}} &= \frac{V_{\mathrm{airway}}}{V_{\mathrm{lung}}}\times 100\%\, .
+\end{aligned}
+\end{equation}
+
+上述氣道參數可作為氣道重塑與氣道負荷之影像近似指標；然而，因本研究部分個案之氣道輸出為 OBJ 表面模型或僅具氣管 fallback 標籤，WA\% 不應被解釋為標準中心線截面分析所得之精確氣道壁厚量測。
+
+肺動脈相關特徵則由肺動脈 label 估計等效直徑。設肺動脈分割體積為 $V_{\mathrm{PA}}$，本研究以相同體積之球體直徑作為自動估計值：
+
+\begin{equation}
+d_{\mathrm{PA}} = 2\left(\frac{3V_{\mathrm{PA}}}{4\pi}\right)^{1/3}\, .
+\end{equation}
+
+此參數為 segmentation-based equivalent diameter，與臨床上於特定 axial slice 手動量測主肺動脈直徑不同。由於本研究未建立可靠主動脈分割或標準化人工量測流程，PA:A ratio 未納入最終分類特徵；本研究僅使用肺動脈直徑估計值作為血管相關輔助特徵。肺動脈擴大與 PA:A ratio 在 COPD 急性惡化與肺血管壓力相關研究中具有臨床意義\cite{wells2012paenlargement}，但仍需標準化量測流程方能作為正式臨床指標。
+
+綜合上述流程，本研究將每位病人之 CT 與 label map 轉換為 12 維量化特徵，包括全肺肺氣腫比例、五個肺葉別肺氣腫比例、SVV\%、血管密度、肺動脈直徑、WA\%、氣道肺體積比例與總肺體積。所有特徵輸出為病人層級之結構化數值資料，後續作為量化生物標記分類模型之輸入。
 
 \section{量化生物標記分類模型}
 % TODO: 12 features、standardization、MLP/FCNN、5-fold Normal/Abnormal classification。
