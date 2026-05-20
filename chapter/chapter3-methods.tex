@@ -2,13 +2,60 @@
 
 \chapter{研究材料與方法}
 
-\section{整體研究流程}
-% TODO: 用流程圖說明 CT 量化特徵分支與 3D CT 模型分支。
+\section{研究流程}
 
-\section{資料來源與標籤定義}
-% TODO: 資料來源、筆數、Normal/Abnormal、AC、angle groups、GOLD labels。
+本研究以胸部電腦斷層影像為主要輸入，建立 COPD 輔助診斷與肺功能相關表徵預測流程。整體方法可分為兩條互補之分析分支：第一條分支為可解釋之 CT 量化生物標記分析，第二條分支為三維 CT 深度學習模型分析。前者將肺部、肺葉、血管與氣道等結構轉換為數值特徵，以評估 Normal/Abnormal 二元分類之可行性；後者直接以三維 CT volume 作為模型輸入，評估影像模型對肺功能相關塌陷角度分級與 GOLD 相關候選標籤之預測能力。
 
-\section{CT 影像前處理}
+在 CT 量化生物標記分支中，原始 DICOM 影像先轉換為保留 Hounsfield unit 之 NIfTI volume，並依據適合肺部分析之胸部軸向影像序列建立後續輸入。轉換後之 CT 影像經肺部、肺葉、血管與氣道相關分割流程產生 label map，再依各結構遮罩計算肺氣腫比例、肺容積、血管密度、小血管體積比例、氣道相關比例與肺動脈直徑等特徵。由於此類特徵具有明確的解剖與病理對應關係，本研究將其視為可解釋影像生物標記，並以全連接神經網路進行 Normal/Abnormal 分類。
+
+在三維 CT 深度學習分支中，轉換後之 NIfTI 影像不先壓縮為人工定義特徵，而是經尺寸統一、強度正規化與必要之資料增強後輸入三維模型。此分支包含 Mamba、SwinUNETR、Hybrid Mamba-Attention 與 TAP-CT 影像嵌入融合等模型設定，任務涵蓋 Normal/Abnormal 分類、連續塌陷角度迴歸、塌陷角度三分類、排除中間灰區後之極端二分類，以及 GOLD 相關候選分級分類。模型訓練與驗證皆以病人為單位切分資料，避免同一病人之原始影像與增強影像同時出現在訓練與驗證集合中。
+
+兩條分支之目的並不完全相同。量化生物標記分支強調指標可解釋性與小樣本資料下的穩定分類能力；三維 CT 模型分支則強調由原始影像直接學習肺部空間表徵，補足人工定義特徵可能無法涵蓋的影像資訊。因此，本研究後續分別報告兩類方法之資料範圍、模型設定與評估結果，並於討論中比較其互補性與限制。
+
+\section{資料集}
+
+本研究資料由北投振興醫院合作醫師提供，包含病人胸部 CT 之 DICOM 影像及肺功能檢查（pulmonary function test, PFT）資料。原始 CT 影像以 DICOM series 形式儲存，經資料轉換流程產生 NIfTI volume 後，再依不同實驗目的建立量化特徵資料集與三維影像資料集。其他公開資料或外部資料僅作為前期工具測試、分割方法參考或未來擴充候選，未納入本研究已報告之主要模型訓練與評估。
+
+量化生物標記分支使用其中 54 例胸部 CT，其中正常（Normal）21 例、異常或 COPD（Abnormal/COPD）33 例；其正常/異常二元標籤由合作醫師依 ATS/ERS 肺功能判讀標準與 PFT 結果判定\cite{stanojevic2022ersats}。此資料集用於肺部結構分割、量化參數擷取與正常/異常二元分類。由於本分支之核心目標為驗證 CT-derived biomarkers 是否能提供可解釋之 COPD 輔助判讀依據，因此每一例影像皆需具備可供後續特徵計算之 CT volume、肺部相關 label map 與量化參數輸出。另有後續新增之 12 例正常傾向 CT 已完成初步轉換，但未併入此 54 例量化特徵主實驗，以避免在未重跑完整分割、特徵擷取與交叉驗證流程前改變已報告之資料範圍。
+
+三維 CT 深度學習分支使用 66 例可與 PFT 資料對應之 CT 影像。PFT 資料用於整理塌陷角度與 GOLD 相關候選標籤，並作為 Mamba、SwinUNETR、Hybrid Mamba-Attention 與 TAP-CT 融合模型訓練與驗證時之監督訊號。塌陷角度（Angle of Collapse, AC）係由肺功能檢查之呼氣流量容積曲線萃取的幾何指標，並非 CT 影像中的解剖角度。參考 Topalovic 等人提出之 AC 與肺氣腫關係，本研究採用 $131^{\circ}$ 與 $152^{\circ}$ 作為角度分級門檻\cite{topalovic2013anglecollapse}。
+
+\begin{table}[htbp]
+\centering
+\caption{本研究影像資料組成}
+\small
+\begin{tabularx}{\textwidth}{l c X}
+\hline
+資料集 & 例數 & 標籤與實驗用途 \\
+\hline
+量化生物標記資料集 & 54 & 正常 21 例、異常或 COPD 33 例，標籤由醫師依 ATS/ERS 標準與 PFT 判定；用於肺部結構分割、量化參數擷取與正常/異常二元分類。\\
+三維 CT 影像資料集 & 66 & 具由 PFT 整理之 AC 與 GOLD 相關候選標籤；用於三維 CT 模型訓練、塌陷角度分級、極端二分類與 GOLD 相關分類。\\
+\hline
+\end{tabularx}
+\end{table}
+
+AC 三分類任務將影像分為三類：$AC \leq 131^{\circ}$ 為 emphysema/abnormal-like 類別，$132^{\circ} \leq AC \leq 151^{\circ}$ 為 intermediate 類別，$AC \geq 152^{\circ}$ 為 normal-like 類別。原始 66 例資料中，三類樣本數分別為 14、5 與 47 例。由於 intermediate 類別樣本數較少且可能代表肺功能曲線表徵之灰區，本研究另設計 AC 極端二分類任務，排除 $132^{\circ}$ 至 $151^{\circ}$ 之 5 例，只保留 $AC \leq 131^{\circ}$ 與 $AC \geq 152^{\circ}$ 兩端較明確之 61 例資料。
+
+GOLD 相關候選標籤則依肺功能檢查中 FEV1 佔預測值百分比進行整理，分為 GOLD 1、GOLD 2、GOLD 3 與 GOLD 4。於 66 例三維影像資料中，四類樣本數分別為 36、11、13 與 6 例。需要注意的是，此分組主要反映 FEV1 predicted 所對應之氣流受限嚴重度候選標籤；正式 COPD 診斷與 GOLD 分級仍需結合支氣管擴張劑後 FEV1/FVC、症狀、病史與臨床判讀。因此，本研究在方法與結果中將其稱為 GOLD 相關候選分級或肺功能導向分級，不將其直接等同於完整臨床診斷。
+
+\begin{table}[htbp]
+\centering
+\caption{肺功能相關標籤定義}
+\small
+\begin{tabularx}{\textwidth}{l c c X}
+\hline
+標籤類型 & 類別條件 & 例數 & 說明 \\
+\hline
+AC 三分類 & $\leq 131^{\circ}$ & 14 & 肺氣腫或異常傾向 \\
+AC 三分類 & $132^{\circ}$--$151^{\circ}$ & 5 & 中間灰區，於極端二分類中排除 \\
+AC 三分類 & $\geq 152^{\circ}$ & 47 & 正常傾向 \\
+AC 極端二分類 & 兩端類別 & 61 & 僅保留 $\leq 131^{\circ}$ 與 $\geq 152^{\circ}$ 樣本 \\
+GOLD 相關候選分級 & GOLD 1--4 & 36、11、13、6 & 依 FEV1 預測值百分比整理 \\
+\hline
+\end{tabularx}
+\end{table}
+
+\section{資料前處理}
 % TODO: DICOM to NIfTI、HU、resize/resampling、normalization。
 
 \section{肺部結構分割與量化參數擷取}
