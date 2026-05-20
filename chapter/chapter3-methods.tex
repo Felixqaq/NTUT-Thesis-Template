@@ -73,62 +73,90 @@ PFT 資料則以病人為單位與 CT volume 對應。合作醫師提供之 PFT 
 
 \section{肺部結構分割與量化參數擷取}
 
-量化生物標記分支之核心在於將胸部 CT 中與 COPD 相關之解剖結構轉換為可比較之數值特徵。本研究以前處理後之 HU-preserved NIfTI volume 作為輸入，先透過 3D Slicer 結合 MONAI Auto3DSeg 推論流程產生肺部與胸腔相關結構之多類別 label map\cite{fedorov2012slicer,cardoso2022monai}。在主實驗中，label 1 至 label 5 分別對應左上葉、左下葉、右上葉、右中葉與右下葉，並合併為總肺遮罩；label 6 至 label 9 則對應血管、氣管、肺靜脈系統與肺動脈等結構，用於血管與氣道相關參數估計。分割完成後，本研究先檢查輸出檔案是否存在、主要 label 是否為非空值，以及各主要結構 voxel 數是否合理，再進行後續量化計算。
+量化生物標記分支之目的，是將胸部 CT 中與 COPD 相關之肺葉、血管與氣道結構轉換為 12 項病人層級數值特徵。本研究以前處理後之 HU-preserved NIfTI volume 作為輸入，透過 3D Slicer 結合 MONAI Auto3DSeg 產生多類別 label map\cite{fedorov2012slicer,cardoso2022monai}。主實驗中，label 1 至 label 5 對應五個肺葉並合併為總肺遮罩；label 6 至 label 9 則對應血管、氣管、肺靜脈系統與肺動脈等結構。氣道結構另以 AeroPath 分割結果作為補充來源\cite{stoverud2024aeropath}；當 voxel-based airway mask 可取得時，優先用於氣道相關特徵，否則以 label map 中可用之氣管或氣道標籤近似估計。分割完成後，本研究檢查輸出檔案、主要 label 是否為非空值，以及各主要結構 voxel 數是否合理，再進行量化參數計算。
 
-氣道結構另以 AeroPath 氣道分割流程作為補充來源\cite{stoverud2024aeropath}。輸入 CT volume 經 AeroPath 推論後可產生氣道 NIfTI mask 與三維氣道表面模型；若同一病人具有多組候選輸出，則先排除冠狀面、矢狀面、重建截面或明顯不適用之序列，再依有效氣道模型大小選擇較完整之輸出。當 voxel-based airway mask 可取得時，氣道相關特徵優先由該 mask 計算；若氣道分割結果不完整，則以 label map 中之氣管或可用氣道標籤作為 fallback 估計。因此，本研究之氣道參數屬 airway-derived features，重點在於提供氣道體積與相對比例資訊，而非宣稱已完成精確之小氣道管壁中心線量測。
-
-所有體積計算皆根據 NIfTI header 中的 voxel spacing 進行，而非僅使用 voxel 數量。設三個方向之 spacing 分別為 $s_x$、$s_y$ 與 $s_z$，某結構區域 $R$ 之 voxel 數為 $N_R$，則單一 voxel 體積與結構體積定義如下：
+所有體積計算皆根據 NIfTI header 中的 voxel spacing 進行。設三個方向之 spacing 分別為 $s_x$、$s_y$ 與 $s_z$，某結構區域 $R$ 之 voxel 數為 $N_R$，則單一 voxel 體積與結構體積定義如下：
 
 \begin{equation}
 v_{\mathrm{voxel}} = s_x s_y s_z,\qquad
 V_R = \frac{N_R v_{\mathrm{voxel}}}{1000}\, .
 \end{equation}
 
-其中 $v_{\mathrm{voxel}}$ 之單位為 $\mathrm{mm^3}$，$V_R$ 之單位為 $\mathrm{mL}$。總肺體積由五個肺葉 label 合併後計算，肺葉體積則分別由各肺葉遮罩計算。肺氣腫比例採用低衰減區域（low attenuation area）概念，在肺部或指定肺葉遮罩內計算 HU 小於 $-950$ 之 voxel 比例；此門檻常用於 CT 肺氣腫定量分析\cite{gevenois1995density}。若 $R$ 表示總肺或任一肺葉區域，肺氣腫比例定義為：
+其中 $v_{\mathrm{voxel}}$ 之單位為 $\mathrm{mm^3}$，$V_R$ 之單位為 $\mathrm{mL}$。肺氣腫比例採用低衰減區域（low attenuation area）概念，在總肺或指定肺葉遮罩內計算 HU 小於 $-950$ 之 voxel 比例；此門檻常用於 CT 肺氣腫定量分析\cite{gevenois1995density}。若 $R$ 表示總肺或任一肺葉區域，肺氣腫比例定義為：
 
 \begin{equation}
 E_R = \frac{N_{R,\mathrm{HU}<-950}}{N_R}\times 100\%\, .
 \end{equation}
 
-依此可取得全肺肺氣腫比例，以及左上葉、左下葉、右上葉、右中葉與右下葉之肺葉別肺氣腫比例。肺葉別特徵可補足全肺平均值無法描述之空間分布差異，例如異常低衰減區是否集中於特定肺葉。
-
-血管相關參數由血管與肺動脈相關 label 計算。血管密度定義為分割血管體積相對於總肺體積之比例，用以描述肺內可見血管負荷。小血管體積比例（small vessel volume percentage, SVV\%）則先對血管遮罩進行 distance transform，以血管 voxel 至邊界之距離估計局部半徑，並以直徑小於 5 mm 之近似門檻辨識小血管區域。由於本研究最終分類特徵採用主程式輸出之定義，SVV\% 以小血管體積除以總肺體積表示，其計算式如下：
+血管、氣道與肺動脈相關特徵則依下列比例或等效直徑計算：
 
 \begin{equation}
 \begin{aligned}
-D_{\mathrm{vessel}} &= \frac{V_{\mathrm{vessel}}}{V_{\mathrm{lung}}}\times 100\%,\\
-\mathrm{SVV} &= \frac{V_{\mathrm{small}}}{V_{\mathrm{lung}}}\times 100\%\, .
+D_{\mathrm{vessel}} &= \frac{V_{\mathrm{vessel}}}{V_{\mathrm{lung}}}\times 100\%\\
+\mathrm{SVV} &= \frac{V_{\mathrm{small}}}{V_{\mathrm{lung}}}\times 100\%\\
+\mathrm{WA} &= \frac{V_{\mathrm{wall}}}{V_{\mathrm{lumen}} + V_{\mathrm{wall}}}\times 100\%\\
+R_{\mathrm{airway}} &= \frac{V_{\mathrm{airway}}}{V_{\mathrm{lung}}}\times 100\%\\
+d_{\mathrm{PA}} &= 2\left(\frac{3V_{\mathrm{PA}}}{4\pi}\right)^{1/3}\, .
 \end{aligned}
 \end{equation}
 
-其中 $V_{\mathrm{vessel}}$ 為分割血管體積，$V_{\mathrm{small}}$ 為小血管體積，$V_{\mathrm{lung}}$ 為總肺體積。小血管相關量化可反映 COPD 中肺血管床減少或肺氣腫相關血管破壞之影像表徵\cite{matsuoka2010smallvessel}。
+其中 $V_{\mathrm{lung}}$ 為總肺體積，$V_{\mathrm{vessel}}$ 為血管體積，$V_{\mathrm{small}}$ 為直徑小於 5 mm 之小血管體積，$V_{\mathrm{airway}}$ 為氣道體積，$V_{\mathrm{PA}}$ 為肺動脈 label 體積。SVV\% 可反映 COPD 中小血管床減少或肺氣腫相關血管破壞之影像表徵\cite{matsuoka2010smallvessel}；肺動脈直徑則為本研究根據分割體積定義之 segmentation-based equivalent diameter，非臨床標準手動量測值。雖然 PA:A ratio 已被用於 COPD 肺血管相關研究\cite{wells2012paenlargement}，但本研究未取得可靠主動脈分割或人工量測結果，因此未納入最終分類特徵。
 
-氣道相關參數包含氣道壁比例與氣道肺體積比例。理想情況下，若氣道分割可區分 lumen 與 wall，氣道壁比例可由 wall volume 除以 lumen 與 wall 總和計算；若缺乏完整 lumen/wall 標籤，則使用可取得之 airway mask 以形態學侵蝕方式近似 lumen，再以剩餘部分估計 wall。氣道肺體積比例則定義為氣道體積相對於總肺體積之比例：
+本研究最終輸出下列 12 項量化特徵，作為後續分類模型之輸入：
 
-\begin{equation}
-\begin{aligned}
-\mathrm{WA} &= \frac{V_{\mathrm{wall}}}{V_{\mathrm{lumen}} + V_{\mathrm{wall}}}\times 100\%,\\
-R_{\mathrm{airway}} &= \frac{V_{\mathrm{airway}}}{V_{\mathrm{lung}}}\times 100\%\, .
-\end{aligned}
-\end{equation}
+\begin{enumerate}
+    \item \textbf{全肺肺氣腫比例}（\texttt{Total\_Emphysema\_Percent}）：於五個肺葉合併後之總肺遮罩內，計算 HU 小於 $-950$ 之 voxel 佔比，單位為百分比。
+    \item \textbf{左上葉肺氣腫比例}（\texttt{Left\_Superior\_Lobe\_Emphysema}）：於左上葉遮罩內計算 HU 小於 $-950$ 之 voxel 佔比，用於描述左上葉低衰減區程度。
+    \item \textbf{左下葉肺氣腫比例}（\texttt{Left\_Inferior\_Lobe\_Emphysema}）：於左下葉遮罩內計算 HU 小於 $-950$ 之 voxel 佔比，用於描述左下葉低衰減區程度。
+    \item \textbf{右上葉肺氣腫比例}（\texttt{Right\_Superior\_Lobe\_Emphysema}）：於右上葉遮罩內計算 HU 小於 $-950$ 之 voxel 佔比，用於描述右上葉低衰減區程度。
+    \item \textbf{右中葉肺氣腫比例}（\texttt{Right\_Middle\_Lobe\_Emphysema}）：於右中葉遮罩內計算 HU 小於 $-950$ 之 voxel 佔比，用於描述右中葉低衰減區程度。
+    \item \textbf{右下葉肺氣腫比例}（\texttt{Right\_Inferior\_Lobe\_Emphysema}）：於右下葉遮罩內計算 HU 小於 $-950$ 之 voxel 佔比，用於描述右下葉低衰減區程度。
+    \item \textbf{小血管體積比例}（\texttt{SVV\_Percent}）：由血管遮罩與 distance transform 估計小血管區域，並以小血管體積除以總肺體積表示，單位為百分比。
+    \item \textbf{氣道壁比例}（\texttt{WA\_Percent}）：以氣道 lumen 與 wall 之估計體積計算 wall volume 佔總氣道體積之比例，作為氣道壁相對增厚之近似特徵。
+    \item \textbf{血管密度}（\texttt{Vessel\_Density\_Percent}）：以分割血管體積除以總肺體積表示，反映 CT 中可見血管結構相對於肺容積之比例。
+    \item \textbf{氣道肺體積比例}（\texttt{Airway\_Lung\_Ratio\_Percent}）：以氣道體積除以總肺體積表示，描述氣道結構相對於肺部整體體積之比例。
+    \item \textbf{總肺體積}（\texttt{Total\_Lung\_Volume\_ml}）：由左上葉、左下葉、右上葉、右中葉與右下葉五個肺葉體積加總而得，單位為 mL。
+    \item \textbf{肺動脈直徑估計值}（\texttt{PA\_Diameter\_mm}）：由肺動脈 label 體積換算為等效球體直徑，作為肺動脈相關之自動估計特徵，單位為 mm。
+\end{enumerate}
 
-上述氣道參數可作為氣道重塑與氣道負荷之影像近似指標；然而，因本研究部分個案之氣道輸出為 OBJ 表面模型或僅具氣管 fallback 標籤，WA\% 不應被解釋為標準中心線截面分析所得之精確氣道壁厚量測。
-
-肺動脈相關特徵則由肺動脈 label 估計等效直徑。設肺動脈分割體積為 $V_{\mathrm{PA}}$，本研究以相同體積之球體直徑作為自動估計值：
-
-\begin{equation}
-d_{\mathrm{PA}} = 2\left(\frac{3V_{\mathrm{PA}}}{4\pi}\right)^{1/3}\, .
-\end{equation}
-
-此參數為 segmentation-based equivalent diameter，與臨床上於特定 axial slice 手動量測主肺動脈直徑不同。由於本研究未建立可靠主動脈分割或標準化人工量測流程，PA:A ratio 未納入最終分類特徵；本研究僅使用肺動脈直徑估計值作為血管相關輔助特徵。肺動脈擴大與 PA:A ratio 在 COPD 急性惡化與肺血管壓力相關研究中具有臨床意義\cite{wells2012paenlargement}，但仍需標準化量測流程方能作為正式臨床指標。
-
-綜合上述流程，本研究將每位病人之 CT 與 label map 轉換為 12 維量化特徵，包括全肺肺氣腫比例、五個肺葉別肺氣腫比例、SVV\%、血管密度、肺動脈直徑、WA\%、氣道肺體積比例與總肺體積。所有特徵輸出為病人層級之結構化數值資料，後續作為量化生物標記分類模型之輸入。
+上述 12 項特徵皆輸出為結構化數值資料；其中肺氣腫比例、血管與氣道比例皆為百分比，總肺體積與肺動脈直徑則分別保留其物理單位，以便後續模型標準化與分類分析。
 
 \section{量化生物標記分類模型}
-% TODO: 12 features、standardization、MLP/FCNN、5-fold Normal/Abnormal classification。
+
+量化生物標記分類模型以第 3.4 節所述之 12 維 CT-derived biomarkers 作為輸入，目標為區分正常與異常或 COPD 個案。相較於直接輸入完整三維 CT，量化特徵模型之輸入維度較低，且每一個特徵皆可對應至肺氣腫、肺容積、血管或氣道相關影像表徵，因此較適合用於本研究 54 例小樣本資料之可解釋分類分析。
+
+每位病人之特徵向量記為 $\mathbf{x}_i$，其包含第 3.4 節列出之 12 個實數特徵；標籤 $y_i$ 以 0 表示正常、1 表示異常或 COPD。由於各特徵單位與尺度不同，例如百分比、毫升與毫米，模型訓練前需先進行標準化。對於第 $j$ 個特徵，僅使用訓練資料計算平均值 $\mu_j$ 與標準差 $\sigma_j$，再將訓練與驗證資料轉換為：
+
+\begin{equation}
+z_{ij} = \frac{x_{ij}-\mu_j}{\sigma_j}\, .
+\end{equation}
+
+此作法可避免總肺體積或肺動脈直徑等尺度較大的特徵主導神經網路權重，同時避免在交叉驗證中因驗證資料參與標準化參數估計而造成資料洩漏。
+
+分類器採用全連接神經網路，其模型架構、訓練設定與驗證方式如下：
+
+\begin{itemize}
+    \item \textbf{輸入與標籤：}模型輸入為第 3.4 節所列 12 項量化特徵；標籤為二元分類，0 表示正常，1 表示異常或 COPD。標準化參數僅由 training fold 估計，避免驗證資料資訊洩漏至訓練流程。
+    \item \textbf{模型架構：}網路維度為 $12 \rightarrow 64 \rightarrow 32 \rightarrow 16 \rightarrow 2$。各 hidden layer 後接 batch normalization、ReLU activation 與 dropout，以增加非線性表示能力並降低小樣本訓練時之過擬合風險。
+    \item \textbf{輸出與損失函數：}輸出層包含 2 個 logits，分別對應正常與異常或 COPD 類別，並以 softmax 轉換為類別機率。模型訓練使用 CrossEntropyLoss。
+    \item \textbf{最佳化與訓練設定：}Optimizer 採用 Adam，初始 learning rate 為 0.001，weight decay 為 $1\times10^{-5}$；batch size 設為 16，最多訓練 100 epochs。
+    \item \textbf{學習率調整與早停：}訓練過程使用 ReduceLROnPlateau 依驗證指標調整 learning rate，並以 early stopping 避免模型在小資料集上過度擬合。
+    \item \textbf{驗證方式：}模型採用 stratified five-fold cross validation。每一 fold 以四個 folds 作為訓練集、一個 fold 作為驗證集，並維持正常與異常或 COPD 樣本比例；每一 fold 皆重新建立標準化器並重新訓練模型，最後合併五個 fold 之驗證預測以計算整體分類效能。
+\end{itemize}
 
 \section{三維 CT 深度學習模型}
-% TODO: 3D CT input、Mamba、SwinUNETR、Hybrid Mamba-Attention、tasks。
+
+三維 CT 深度學習分支直接以 NIfTI volume 作為模型輸入，目的在於評估模型是否能由原始影像中學習肺部空間表徵，而不完全依賴人工定義之量化特徵。此分支使用可與 PFT 標籤對應之 66 例 CT 影像，任務包含連續 AC 迴歸、AC 三分類、排除中間灰區後之 AC 極端二分類，以及 GOLD 相關候選分級分類。各任務之標籤定義已於第 3.2 節說明。
+
+輸入影像讀入後轉換為 channel-first tensor，並統一 resize 為 $1\times112\times136\times112$ 之三維張量。強度處理方面，依任務設定將 HU 裁切至肺部與軟組織分析常用範圍，例如 $[-1000,400]$，再進行 per-volume z-score normalization，使不同掃描條件與病人間之影像強度分布較為一致。資料增強僅套用於訓練資料，包含小幅三維 affine transformation、強度縮放或平移，以及 Gaussian noise；驗證資料則維持原始影像處理結果，以避免評估結果受到增強樣本重複出現之影響。
+
+本研究比較三類主要三維影像模型。第一類為 Mamba-based model。Mamba 架構以 selective state space mechanism 建立長距離序列建模能力，具有相對於標準 Transformer 更接近線性之序列長度複雜度\cite{gu2023mamba}；在三維醫學影像中，nnMamba 等研究亦將 state space model 應用於分割、分類與 landmark detection 任務\cite{gong2024nnmamba}。本研究之 Mamba 模型先以三維 convolution stem 擷取局部影像特徵，再將空間特徵展平成 token sequence，經 residual Mamba blocks 建模全域空間關係，最後以多尺度 pooling 與 MLP head 輸出迴歸值或分類 logits。
+
+第二類模型為 SwinUNETR-based model。Swin Transformer 透過 shifted window attention 建立階層式影像表示\cite{liu2021swin}，Swin UNETR 則將其延伸至三維醫學影像編碼器\cite{hatamizadeh2022swinunetr}。在本研究中，SwinUNETR 主要作為三維 CT 影像之 Transformer baseline；模型使用 Swin Transformer encoder 取得多層次空間特徵，並將 encoder hidden states 經 pooling 後接上 MLP prediction head，以執行 AC 迴歸或分類任務。
+
+第三類模型為 Hybrid Mamba-Attention model。此模型以 Mamba block 作為主要空間序列建模單元，並於深層特徵加入 global multi-head attention bridge，使模型在保留 Mamba 長距離建模效率的同時，能直接對最終階段之空間 token 進行全域注意力整合。其輸出同樣經 pooling 與 MLP head 轉換為任務所需之連續值或類別 logits。相較於純 Mamba 或純 Transformer 類模型，此設計用於檢驗 state space model 與 attention mechanism 在小樣本三維 CT 任務中的互補性。
+
+訓練目標依任務類型設定。AC 迴歸任務以連續塌陷角度作為目標，主要使用 Smooth L1 loss 訓練；AC 三分類、AC 極端二分類與 GOLD 相關候選分級則使用 cross entropy loss。模型優化採用 AdamW，並搭配 ReduceLROnPlateau scheduler、gradient clipping 與 mixed precision training。分類模型以 validation macro-F1 作為最佳 checkpoint 選擇依據，迴歸模型則以 validation MAE 最低者作為最佳模型。為避免同一病人之原始影像與增強影像同時出現在訓練與驗證資料中，所有切分均以 patient-level 為單位執行。
 
 \section{TAP-CT 影像嵌入與融合策略}
 % TODO: TAP-CT embedding、late fusion、attention fusion、ABMIL variants。
