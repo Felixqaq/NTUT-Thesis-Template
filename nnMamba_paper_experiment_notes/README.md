@@ -15,6 +15,8 @@ Generated on `2026-05-15T12:00:18` from `/home/felix/Research/nnMamba`.
 - [07_artifact_inventory.md](07_artifact_inventory.md): 所有 figures/train_log/weights run directory 索引，包含 incomplete/result-less runs。
 - [08_reproducibility_checklist.md](08_reproducibility_checklist.md): 重跑與放入論文前的確認清單。
 - [09_log_only_or_incomplete_runs.md](09_log_only_or_incomplete_runs.md): 有 log/weight/figure 但缺正式 `results.json` 的早期或未完成 run。
+- [10_project_codebase_map.md](10_project_codebase_map.md): 整個 repo 的程式碼地圖，區分原始 nnMamba stack、classification、regression 與 artifact。
+- [11_coverage_audit.md](11_coverage_audit.md): 這份筆記庫目前已覆蓋與仍缺少的資訊稽核，避免把 local COPD 實驗和 upstream nnMamba 發表結果混在一起。
 
 ## Result Pages By Task
 
@@ -62,6 +64,7 @@ Generated on `2026-05-15T12:00:18` from `/home/felix/Research/nnMamba`.
 - TAP-CT probe rows flattened: `33`。
 - Config files documented: `28`。
 - Generated manifest/label JSON files summarized: `22`。
+- Whole-project scope audit added: root-level `nnMamba*.py` 與 `nnunet/` 已在 code map/audit 中標出；逐檔完整 artifact 索引仍以本地 COPD `classification/`、`regression/` 實驗為主。
 
 ## Important Note
 

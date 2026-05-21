@@ -121,7 +121,7 @@ d_{\mathrm{PA}} &= 2\left(\frac{3V_{\mathrm{PA}}}{4\pi}\right)^{1/3}\, .
 
 上述 12 項特徵皆輸出為結構化數值資料；其中肺氣腫比例、血管與氣道比例皆為百分比，總肺體積與肺動脈直徑則分別保留其物理單位，以便後續模型標準化與分類分析。
 
-\section{量化生物標記分類模型}
+\section{量化CT分類模型}
 
 量化生物標記分類模型以第 3.4 節所述之 12 維 CT-derived biomarkers 作為輸入，目標為區分正常與異常或 COPD 個案。相較於直接輸入完整三維 CT，量化特徵模型之輸入維度較低，且每一個特徵皆可對應至肺氣腫、肺容積、血管或氣道相關影像表徵，因此較適合用於本研究 54 例小樣本資料之可解釋分類分析。
 
@@ -144,19 +144,16 @@ z_{ij} = \frac{x_{ij}-\mu_j}{\sigma_j}\, .
     \item \textbf{驗證方式：}模型採用 stratified five-fold cross validation。每一 fold 以四個 folds 作為訓練集、一個 fold 作為驗證集，並維持正常與異常或 COPD 樣本比例；每一 fold 皆重新建立標準化器並重新訓練模型，最後合併五個 fold 之驗證預測以計算整體分類效能。
 \end{itemize}
 
-\section{三維 CT 深度學習模型}
+\section{三維 CT 網路架構設計}
 
-三維 CT 深度學習分支直接以 NIfTI volume 作為模型輸入，目的在於評估模型是否能由原始影像中學習肺部空間表徵，而不完全依賴人工定義之量化特徵。此分支使用可與 PFT 標籤對應之 66 例 CT 影像，任務包含連續 AC 迴歸、AC 三分類、排除中間灰區後之 AC 極端二分類，以及 GOLD 相關候選分級分類。各任務之標籤定義已於第 3.2 節說明。
+三維 CT 影像模型之目的在於直接由完整 CT volume 學習肺部空間表徵，補足量化生物標記僅能描述預先定義特徵之限制。本研究採用之模型皆由影像編碼器、特徵彙整模組與 prediction head 組成。前處理後之三維 CT volume 先輸入編碼器以擷取空間特徵，再經 pooling 形成病人層級表示，最後由 prediction head 依任務輸出迴歸值或分類預測分數。各模型架構設定如下：
 
-輸入影像讀入後轉換為 channel-first tensor，並統一 resize 為 $1\times112\times136\times112$ 之三維張量。強度處理方面，依任務設定將 HU 裁切至肺部與軟組織分析常用範圍，例如 $[-1000,400]$，再進行 per-volume z-score normalization，使不同掃描條件與病人間之影像強度分布較為一致。資料增強僅套用於訓練資料，包含小幅三維 affine transformation、強度縮放或平移，以及 Gaussian noise；驗證資料則維持原始影像處理結果，以避免評估結果受到增強樣本重複出現之影響。
-
-本研究比較三類主要三維影像模型。第一類為 Mamba-based model。Mamba 架構以 selective state space mechanism 建立長距離序列建模能力，具有相對於標準 Transformer 更接近線性之序列長度複雜度\cite{gu2023mamba}；在三維醫學影像中，nnMamba 等研究亦將 state space model 應用於分割、分類與 landmark detection 任務\cite{gong2024nnmamba}。本研究之 Mamba 模型先以三維 convolution stem 擷取局部影像特徵，再將空間特徵展平成 token sequence，經 residual Mamba blocks 建模全域空間關係，最後以多尺度 pooling 與 MLP head 輸出迴歸值或分類 logits。
-
-第二類模型為 SwinUNETR-based model。Swin Transformer 透過 shifted window attention 建立階層式影像表示\cite{liu2021swin}，Swin UNETR 則將其延伸至三維醫學影像編碼器\cite{hatamizadeh2022swinunetr}。在本研究中，SwinUNETR 主要作為三維 CT 影像之 Transformer baseline；模型使用 Swin Transformer encoder 取得多層次空間特徵，並將 encoder hidden states 經 pooling 後接上 MLP prediction head，以執行 AC 迴歸或分類任務。
-
-第三類模型為 Hybrid Mamba-Attention model。此模型以 Mamba block 作為主要空間序列建模單元，並於深層特徵加入 global multi-head attention bridge，使模型在保留 Mamba 長距離建模效率的同時，能直接對最終階段之空間 token 進行全域注意力整合。其輸出同樣經 pooling 與 MLP head 轉換為任務所需之連續值或類別 logits。相較於純 Mamba 或純 Transformer 類模型，此設計用於檢驗 state space model 與 attention mechanism 在小樣本三維 CT 任務中的互補性。
-
-訓練目標依任務類型設定。AC 迴歸任務以連續塌陷角度作為目標，主要使用 Smooth L1 loss 訓練；AC 三分類、AC 極端二分類與 GOLD 相關候選分級則使用 cross entropy loss。模型優化採用 AdamW，並搭配 ReduceLROnPlateau scheduler、gradient clipping 與 mixed precision training。分類模型以 validation macro-F1 作為最佳 checkpoint 選擇依據，迴歸模型則以 validation MAE 最低者作為最佳模型。為避免同一病人之原始影像與增強影像同時出現在訓練與驗證資料中，所有切分均以 patient-level 為單位執行。
+\begin{itemize}
+    \item \textbf{Mamba-based model：}本研究之 Mamba-based model 以三維 convolution stem 擷取局部影像紋理與結構，再將特徵轉換為空間 token sequence，並透過 residual Mamba blocks 建立跨切片與跨區域之特徵關係。此架構用於由完整三維 CT volume 建立肺部影像表徵。
+    \item \textbf{SwinUNETR-based model：}本研究將 SwinUNETR-based model 作為 Transformer 類影像編碼器設定。模型由階層式三維影像特徵中取得多層級表示，再經特徵彙整與輸出模組產生預測結果，用於與 Mamba 類編碼方式進行比較\cite{liu2021swin,hatamizadeh2022swinunetr}。
+    \item \textbf{Hybrid Mamba-Attention model：}Hybrid Mamba-Attention model 以 Mamba stages 作為主要編碼流程，並於深層特徵加入 global multi-head attention bridge，使最終階段之空間 token 可進一步進行全域關係整合。此設定保留 Mamba-based encoder 之三維特徵建模流程，並加入 attention-based 特徵整合模組以形成混合式影像表徵。
+    \item \textbf{Prediction head：}上述模型於編碼器輸出後接續 pooling 與 MLP prediction head。Pooling 用以彙整三維空間特徵，將體積影像表示轉換為病人層級特徵向量；其後之 prediction head 則依任務設定輸出連續塌陷角度預測值，或輸出對應分類任務之預測分數。
+\end{itemize}
 
 \section{TAP-CT 影像嵌入與融合策略}
 % TODO: TAP-CT embedding、late fusion、attention fusion、ABMIL variants。
@@ -164,7 +161,106 @@ z_{ij} = \frac{x_{ij}-\mu_j}{\sigma_j}\, .
 \section{交叉驗證、資料增強與平衡取樣}
 % TODO: patient-level split、training-fold-only augmentation、balanced sampling。
 
-\section{評估方法}
-% TODO: classification metrics、regression metrics、macro/balanced metrics。
+\section{損失函數}
+
+損失函數用於衡量模型預測與監督標籤之差異，並作為反向傳播時更新模型參數之目標。本研究之主要實驗包含病人層級分類與連續 AC 迴歸兩類任務，因此依輸出型態選用分類損失與迴歸損失。肺部結構分割結果於本研究中主要作為量化參數擷取之輸入，並非重新訓練之主要預測任務，故本文未以 Dice loss 作為主模型訓練目標。
+
+對於量化生物標記 Normal/Abnormal 分類、AC 三分類、AC 極端二分類與 GOLD 相關候選分級，本研究採用 cross entropy loss。設第 \(i\) 筆資料屬於第 \(k\) 類之 one-hot 標籤為 \(y_{ik}\)，模型輸出之類別機率為 \(\hat{p}_{ik}\)，類別數為 \(K\)，則其損失函數定義如下：
+
+\begin{equation}
+\mathcal{L}_{\mathrm{CE}}
+= -\frac{1}{N}\sum_{i=1}^{N}\sum_{k=1}^{K}
+y_{ik}\log\left(\hat{p}_{ik}\right)\, .
+\end{equation}
+
+三維 CT Normal/Abnormal 二元分類流程則以單一 logit 表示異常傾向，並使用 binary cross entropy with logits loss。若 \(y_i\in\{0,1\}\) 為二元標籤，\(\hat{p}_i\) 為經 sigmoid 轉換後之預測機率，則可表示為：
+
+\begin{equation}
+\mathcal{L}_{\mathrm{BCE}}
+= -\frac{1}{N}\sum_{i=1}^{N}
+\left[
+y_i\log\left(\hat{p}_i\right)
++\left(1-y_i\right)\log\left(1-\hat{p}_i\right)
+\right]\, .
+\end{equation}
+
+連續 AC 迴歸任務採用 smooth L1 loss，以降低少數較大角度誤差對訓練更新造成之過度影響。令殘差 \(e_i=\hat{y}_i-y_i\)，則單筆樣本之 smooth L1 loss 定義如下：
+
+\begin{equation}
+\ell_{\mathrm{SmoothL1}}(e_i)=
+\begin{cases}
+\frac{1}{2}e_i^2, & |e_i| < 1,\\
+|e_i|-\frac{1}{2}, & |e_i| \geq 1.
+\end{cases}
+\end{equation}
+
+\section{評估指標}
+
+本研究依任務輸出型態選擇評估指標。Normal/Abnormal 二元分類以 confusion matrix、accuracy、sensitivity、specificity、precision、F1-score 與 ROC-AUC 描述模型區辨能力及錯誤分類型態。二元分類中，true positive（TP）表示異常個案被正確判定為異常，true negative（TN）表示正常個案被正確判定為正常，false positive（FP）表示正常個案被誤判為異常，false negative（FN）表示異常個案被誤判為正常。由 TP、TN、FP 與 FN 可定義 accuracy、sensitivity、specificity、precision、negative predictive value 與 F1-score 等指標\cite{he2009imbalanced}。
+
+\begin{equation}
+\begin{alignedat}{2}
+&\mathrm{Accuracy}\quad &&= \frac{\mathrm{TP} + \mathrm{TN}}{\mathrm{TP} + \mathrm{TN} + \mathrm{FP} + \mathrm{FN}} \\
+&\mathrm{Sensitivity}\quad &&= \mathrm{Recall} = \frac{\mathrm{TP}}{\mathrm{TP} + \mathrm{FN}} \\
+&\mathrm{Specificity}\quad &&= \frac{\mathrm{TN}}{\mathrm{TN} + \mathrm{FP}} \\
+&\mathrm{Precision}\quad &&= \frac{\mathrm{TP}}{\mathrm{TP} + \mathrm{FP}} \\
+&\mathrm{NPV}\quad &&= \frac{\mathrm{TN}}{\mathrm{TN} + \mathrm{FN}} \\
+&\mathrm{F1}\quad &&= \frac{2 \times \mathrm{Precision} \times \mathrm{Recall}}{\mathrm{Precision} + \mathrm{Recall}}
+\end{alignedat}
+\end{equation}
+
+Receiver operating characteristic curve（ROC curve）以 true positive rate（TPR）與 false positive rate（FPR）表示不同 decision threshold 下的分類結果。Area under the curve（AUC）為 ROC curve 下方面積，用於描述模型整體區辨能力\cite{fawcett2006roc}。
+
+\begin{equation}
+\begin{alignedat}{2}
+&\mathrm{TPR}\quad &&= \frac{\mathrm{TP}}{\mathrm{TP} + \mathrm{FN}} \\
+&\mathrm{FPR}\quad &&= \frac{\mathrm{FP}}{\mathrm{FP} + \mathrm{TN}} \\
+&\mathrm{AUC}\quad &&= \int_{0}^{1} \mathrm{TPR}(\mathrm{FPR})\,\mathrm{d}\mathrm{FPR}
+\end{alignedat}
+\end{equation}
+
+Precision--recall curve 以 precision 與 recall 作為座標軸。Average precision（AP）或 area under precision--recall curve（AUPRC）可表示 precision--recall curve 下方面積\cite{saito2015pr}。
+
+\begin{equation}
+\begin{alignedat}{2}
+&\mathrm{Recall}\quad &&= \frac{\mathrm{TP}}{\mathrm{TP} + \mathrm{FN}} \\
+&\mathrm{Precision}\quad &&= \frac{\mathrm{TP}}{\mathrm{TP} + \mathrm{FP}} \\
+&\mathrm{AUPRC}\quad &&= \int_{0}^{1} \mathrm{Precision}(\mathrm{Recall})\,\mathrm{d}\mathrm{Recall}
+\end{alignedat}
+\end{equation}
+
+AC 三分類、AC 極端二分類與 GOLD 相關候選分級亦需考量類別數量不均，因此本文除整體 accuracy 外，同時報告 macro-precision、macro-recall、macro-F1、balanced accuracy 與 confusion matrix。若類別數為 \(K\)，第 \(k\) 類之 true positive、false positive 與 false negative 分別為 \(\mathrm{TP}_k\)、\(\mathrm{FP}_k\) 與 \(\mathrm{FN}_k\)，則各類別之 precision、recall 與 F1-score 定義如下：
+
+\begin{equation}
+\begin{alignedat}{2}
+&\mathrm{Precision}_k\quad &&= \frac{\mathrm{TP}_k}{\mathrm{TP}_k + \mathrm{FP}_k} \\
+&\mathrm{Recall}_k\quad &&= \frac{\mathrm{TP}_k}{\mathrm{TP}_k + \mathrm{FN}_k} \\
+&\mathrm{F1}_k\quad &&= \frac{2 \times \mathrm{Precision}_k \times \mathrm{Recall}_k}{\mathrm{Precision}_k + \mathrm{Recall}_k}
+\end{alignedat}
+\end{equation}
+
+Macro-precision、macro-recall、macro-F1 與 balanced accuracy 定義如下：
+
+\begin{equation}
+\begin{alignedat}{2}
+&\mathrm{MacroPrecision}\quad &&= \frac{1}{K}\sum_{k=1}^{K}\mathrm{Precision}_k \\
+&\mathrm{MacroRecall}\quad &&= \frac{1}{K}\sum_{k=1}^{K}\mathrm{Recall}_k \\
+&\mathrm{MacroF1}\quad &&= \frac{1}{K}\sum_{k=1}^{K}\mathrm{F1}_k \\
+&\mathrm{BalancedAccuracy}\quad &&= \frac{1}{K}\sum_{k=1}^{K}\mathrm{Recall}_k
+\end{alignedat}
+\end{equation}
+
+對於連續 AC 迴歸任務，本研究以 mean absolute error（MAE）、root mean squared error（RMSE）、coefficient of determination（\(R^2\)）與 Pearson correlation coefficient 評估預測值與真實角度之差異及相關程度。設真實值為 \(y_i\)，預測值為 \(\hat{y}_i\)，真實值平均為 \(\bar{y}\)，則 MAE、RMSE 與 \(R^2\) 定義如下：
+
+\begin{equation}
+\begin{aligned}
+\mathrm{MAE} &= \frac{1}{N}\sum_{i=1}^{N}\left|y_i-\hat{y}_i\right|,\\
+\mathrm{RMSE} &= \sqrt{\frac{1}{N}\sum_{i=1}^{N}\left(y_i-\hat{y}_i\right)^2},\\
+R^2 &= 1-\frac{\sum_{i=1}^{N}\left(y_i-\hat{y}_i\right)^2}
+{\sum_{i=1}^{N}\left(y_i-\bar{y}\right)^2}\, .
+\end{aligned}
+\end{equation}
+
+MAE 可直接表示預測角度與真實角度之平均絕對差距；RMSE 對較大誤差較為敏感；\(R^2\) 用於描述模型相對於真實值變異之解釋程度；Pearson correlation coefficient 則用於觀察預測值與真實值之線性相關方向與強度。由於本文目前報告之主要深度模型結果為分類與迴歸輸出，而非分割模型比較，因此 Dice similarity coefficient 與 Hausdorff distance 不列為主要實驗結果指標。
 
 \end{ZhChapter}

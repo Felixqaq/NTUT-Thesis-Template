@@ -2,6 +2,8 @@
 
 分類與回歸兩個主要實驗資料夾中的可讀文字檔索引。大型二進位權重、影像與 `.npz` embedding bundle 沒有嵌入，只在各 run 頁與 artifact inventory 中列路徑。
 
+這份 appendix 不是整個 repo 的逐檔 mirror。root-level `nnMamba.py`、`nnMamba4cls.py` 與大型 `nnunet/` segmentation/landmark stack 請先看 [10_project_codebase_map.md](../10_project_codebase_map.md) 與 [11_coverage_audit.md](../11_coverage_audit.md)；目前逐檔 inventory 的主體仍是本地論文實驗最常追的 `classification/` 與 `regression/`。
+
 | file | size |
 | --- | --- |
 | [classification/config.yaml](/home/felix/Research/nnMamba/classification/config.yaml) | 855 B |
