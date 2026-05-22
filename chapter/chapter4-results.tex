@@ -2,28 +2,65 @@
 
 \chapter{實驗結果與討論}
 
-\section{實驗環境與參數設定}
-% TODO: 實驗環境、硬體、神經網路參數設定、訓練細節。
+\section{研究問題}
 
-\section{CT 量化特徵 Normal/Abnormal 分類結果}
-% TODO: 54 cases, 12 features, accuracy/F1/AUC, confusion matrix, FN cases。
+本章依據本研究之實驗流程與任務設計，將結果分析整理為五項研究問題（Research Questions, RQs）。此安排旨在分別檢視可解釋量化特徵與三維 CT 深度學習模型於 COPD 輔助判讀及肺功能相關表徵預測中所能提供之資訊，並保留由二元分類、連續值迴歸至衍生分級任務之實驗歷程。各研究問題說明如下：
 
-\section{三維 CT Normal/Abnormal 分類結果}
-% TODO: nnMamba Normal/Abnormal results and comparison。
+\begin{enumerate}
+    \item \textbf{RQ1：}由胸部 CT 影像擷取之量化生物標記，是否能用於區分正常與異常個案？
+    \item \textbf{RQ2：}直接輸入三維 CT volume 之影像模型，是否能進行正常與異常個案分類？
+    \item \textbf{RQ3：}三維 CT 影像模型是否能回歸肺功能塌陷角度之連續值？
+    \item \textbf{RQ4：}將塌陷角度轉換為三分類與排除中間灰區後之二分類，是否有助於肺功能相關影像判讀？
+    \item \textbf{RQ5：}三維 CT 影像模型是否能辨識依肺功能資料整理之 GOLD 相關候選分級？
+\end{enumerate}
 
-\section{PFT Angle Regression 結果}
-% TODO: MAE、RMSE、R2、Pearson；說明 regression 不穩定但有訊號。
+後續各節將依上述 RQ 順序呈現實驗設定、結果指標與限制討論；其中 RQ3 記錄連續值迴歸任務，RQ4 則呈現由迴歸標籤延伸至分類標籤後之結果比較。
 
-\section{Angle 三分類結果}
-% TODO: 131/152 thresholds、macro-F1、balanced accuracy、augmentation ablation。
+\section{實驗設定}
+% TODO: 整理兩條實驗分支之共通設定，包含資料筆數、資料切分層級、交叉驗證 folds、輸入型態、主要評估指標與最佳模型選擇依據。
+% TODO: 補實驗歷程總表，依任務列出 baseline、資料平衡或資料增強設定、TAP-CT 融合設定與正式報告之候選結果。
+% TODO: 補硬體、軟體環境、訓練日期或設定檔來源；若細節尚未確認，先標示待查證欄位。
 
-\section{Extreme Binary Classification 結果}
-% TODO: gray-zone excluded binary task、best TAP-CT fusion result。
+\section{實驗結果分析}
+\subsection{RQ1 量化特徵二分類結果}
+% TODO: 說明 RQ1 所對應之量化特徵二分類任務，包含 54 例資料組成與 12 項 CT 量化生物標記輸入。
+% TODO: 補量化特徵分類模型之 stratified five-fold cross validation 結果表。
+% TODO: 補整體效能指標表，包含 accuracy、precision、sensitivity、specificity、F1-score 與 AUC。
+% TODO: 補混淆矩陣與誤分類個案分析，說明 false negative 集中於異常個案之可能意義。
+% TODO: 討論本研究前半段分支之優點與限制，包含特徵可解釋性、分割品質依賴與小樣本內部驗證定位。
 
-\section{GOLD Stage 分類結果}
-% TODO: GOLD 1-4 results、class imbalance、ordinal label limitation。
+\subsection{RQ2 三維影像模型二分類結果}
+% TODO: 說明 RQ2 所對應之三維影像二分類任務，包含三維 CT volume 輸入與 nnMamba 分類設定。
+% TODO: 補 Normal 與 Abnormal 三維 CT 分類之各次 run 結果表，不只列最佳 AUC 候選。
+% TODO: 補最佳 nnMamba 五折結果與主要指標，至少包含 mean AUC 與 mean accuracy。
+% TODO: 討論三維影像表徵與人工定義量化特徵之互補關係，並避免將兩分支在不同資料流程下的數值直接視為完全公平比較。
 
-\section{綜合討論與限制}
-% TODO: 比較兩條方法線、資料量、標籤、分割品質、scan protocol、clinical limitation。
+\subsection{RQ3 三維影像角度預測結果}
+% TODO: 說明 RQ3 所對應之 AC 角度預測任務，並交代其為後續 AC 分類實驗之前期連續值預測結果。
+% TODO: 補 66 例資料範圍、角度分層交叉驗證方式、Smooth L1 loss 與主要評估指標。
+% TODO: 補 nnMamba regressor、Mamba、SwinUNETR 與 Hybrid Mamba-Attention 之角度預測結果表，呈現 MAE、RMSE、R squared 與 Pearson correlation。
+% TODO: 補最佳角度預測候選之五折平均結果，並說明 MAE 與 R squared 所反映之預測誤差與解釋能力限制。
+% TODO: 討論角度預測結果與後續 AC 分類任務之關係，避免將迴歸表現不足解釋為影像完全不含相關訊號。
+
+\subsection{RQ4 塌陷角能否提升肺功能相關影像判讀}
+% TODO: 說明 RQ4 所對應之 AC 分類任務，包含三分類與排除中間灰區後之二分類標籤設計。
+
+\subsubsection{三分類結果}
+% TODO: 補三分類之 AC 門檻與樣本分布，說明低角度、中間灰區與正常傾向類別之定義。
+% TODO: 補 Hybrid Mamba-Attention baseline、balanced sampling、不同資料增強強度、TAP-CT 單獨模型與融合模型之完整實驗歷程表。
+% TODO: 補最佳三分類候選之 accuracy、macro-F1 與 balanced accuracy。
+% TODO: 討論中間灰區樣本數少所造成之類別不平衡與結果波動。
+
+\subsubsection{二分類結果}
+% TODO: 補二分類資料範圍與排除中間灰區之原因，說明此任務用於觀察兩端 AC 表徵是否較可區分。
+% TODO: 補 baseline、balanced augmentation 與 TAP-CT late fusion 之結果比較表。
+% TODO: 補最佳二分類候選之 accuracy、macro-F1 與 balanced accuracy。
+% TODO: 比較 AC 三分類與二分類結果，說明灰區標籤與樣本分布對模型評估之影響。
+
+\subsection{RQ5 三維影像GOLD四分類結果}
+% TODO: 說明 RQ5 所對應之 GOLD 四分類任務，並註明其標籤由 PFT 資料整理，不等同完整臨床 GOLD 診斷。
+% TODO: 補 GOLD 1 至 GOLD 4 類別分布、三折或五折設定差異，以及 Mamba、SwinUNETR、Hybrid Mamba-Attention 與平衡增強設定之結果表。
+% TODO: 補最佳 GOLD 四分類候選結果之 accuracy、macro-F1 與 balanced accuracy。
+% TODO: 討論 ordinal label、類別不平衡、極重度樣本較少與 PFT 導向標籤限制。
 
 \end{ZhChapter}
