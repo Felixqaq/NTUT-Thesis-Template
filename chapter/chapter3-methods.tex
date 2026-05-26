@@ -161,27 +161,11 @@ z_{ij} = \frac{x_{ij}-\mu_j}{\sigma_j}\, .
 
 \section{塌陷角迴歸任務}
 
-本研究後半段實驗以肺功能檢查所得之塌陷角作為三維 CT 表徵學習目標。塌陷角係由 PFT 流量容積曲線整理而得，並作為連續實數標籤輸入模型訓練流程。對於第 \(i\) 位病人，令三維 CT volume 為 \(\mathbf{X}_i\)，由 PFT 整理之塌陷角連續值為 \(a_i\)。模型 \(f_{\theta}\) 以 \(\mathbf{X}_i\) 為輸入，輸出單一連續預測值。
+本研究後半段實驗以肺功能檢查所得之塌陷角作為三維 CT 表徵學習目標。塌陷角由 PFT 流量容積曲線整理而得，代表肺功能曲線形態之連續量化指標。模型以三維 CT volume 為輸入，輸出單一連續預測值，用以估計每位病人之塌陷角。
 
-為降低角度尺度差異對訓練穩定性的影響，迴歸實驗於每一 fold 內僅使用訓練資料估計塌陷角平均值 \(\mu_a\) 與標準差 \(\sigma_a\)，並將訓練標籤轉換為標準化目標：
+由於塌陷角為連續角度值，不同 fold 中的角度分布可能略有差異，本研究在每一 fold 內先以訓練資料計算塌陷角之平均值與標準差，再用此訓練資料統計量將角度標籤標準化。模型訓練時學習的是標準化後的塌陷角，而不是直接預測原始角度；驗證時則使用同一組訓練資料統計量，將模型輸出轉回原始角度單位，再與真實塌陷角計算 MAE 等迴歸誤差。此流程可避免驗證資料參與標準化參數估計，同時使不同 folds 的模型皆在相同原則下訓練與評估。
 
-\begin{equation}
-\tilde{a}_i = \frac{a_i-\mu_a}{\sigma_a}\, .
-\end{equation}
-
-模型訓練時預測標準化角度 \(\hat{\tilde{a}}_i=f_{\theta}(\mathbf{X}_i)\)，驗證階段再將模型輸出還原為 \(\hat{a}_i=\hat{\tilde{a}}_i\sigma_a+\mu_a\) 後計算誤差。此作法避免驗證資料參與標籤標準化參數估計，並使各 fold 評估維持一致。
-
-訓練階段採用 smooth L1 loss。令標準化預測誤差為 \(e_i=\hat{\tilde{a}}_i-\tilde{a}_i\)，其損失函數定義如下：
-
-\begin{equation}
-\mathcal{L}_{\mathrm{smoothL1}}(e_i)=
-\begin{cases}
-\frac{1}{2}\frac{e_i^2}{\beta}, & |e_i| < \beta,\\
-|e_i|-\frac{1}{2}\beta, & |e_i| \geq \beta.
-\end{cases}
-\end{equation}
-
-其中 \(\beta\) 為平方懲罰與線性懲罰之轉換參數。相較於平均平方誤差，smooth L1 loss 在誤差較小時保留平方懲罰，在誤差較大時轉為近似線性懲罰，可降低少數極端誤差對模型更新之影響。模型選擇則依 validation MAE 決定最佳 checkpoint。此任務用於評估三維 CT 模型是否能由胸部影像學習與肺功能曲線幾何表徵相關之資訊。
+訓練階段採用 smooth L1 loss，以降低少數極端誤差對模型更新之影響；模型選擇則依 validation MAE 決定最佳 checkpoint。此任務用於評估三維 CT 模型是否能由胸部影像學習與肺功能曲線幾何表徵相關之資訊。
 
 \section{TAP-CT 影像嵌入與融合策略}
 
@@ -194,23 +178,30 @@ TAP-CT 影像嵌入由每位病人之 CT volume 產生，並依病人識別碼�
 \begin{enumerate}
     \item \textbf{TAP-CT 單獨分類：}僅載入 TAP-CT frozen embedding，不再輸入原始三維 CT volume。本文以 attention-based multiple instance learning（ABMIL）分類頭彙整 embedding 表徵，再輸出塌陷角分類結果，用以作為預訓練 CT 特徵單獨使用時之比較基準\cite{ilse2018attentionmil}。
     \item \textbf{Late fusion：}Hybrid Mamba-Attention 分支先由 CT volume 產生病人層級特徵，TAP-CT embedding 則先投影至融合維度；兩類特徵串接後輸入 MLP 分類頭。此設定直接保留本研究自訓練之三維 CT 特徵與預訓練 CT 表徵，觀察兩者結合後是否能補充塌陷角分類所需資訊。
-    \item \textbf{Attention fusion：}在 CT 分支特徵與 TAP-CT embedding 串接前，先以 modality-level attention 對兩分支資訊重新加權，再輸入後續分類頭。此策略用於檢視模型是否可依病人影像表徵調整兩種特徵來源之相對貢獻。
-    \item \textbf{ABMIL fusion：}將 Hybrid Mamba-Attention 特徵與 TAP-CT embedding 投影為不同 modality instances，再以 gated ABMIL attention 進行彙整後分類。相較於直接串接，此設定將融合問題視為跨表徵 instance pooling，以比較 attention-based pooling 對兩類 CT 特徵整合之影響。
 \end{enumerate}
 
-上述策略皆以病人層級資料切分為前提；TAP-CT 特徵與原始 CT volume 需對應至同一病人，且資料增強所產生之訓練視圖僅能出現在 training fold。藉由同時保留 TAP-CT 單獨分類與多種融合設定，本研究可分別觀察預訓練 CT 表徵之獨立資訊量，以及其與任務導向三維影像特徵結合後對 AC 分類任務之補充效果。
+上述策略皆以病人層級資料切分為前提；TAP-CT 特徵與原始 CT volume 需對應至同一病人，且資料增強所產生之訓練視圖僅能出現在 training fold。藉由同時保留 TAP-CT 單獨分類與 late fusion，本研究可分別觀察預訓練 CT 表徵之獨立資訊量，以及其與任務導向三維影像特徵結合後對 AC 分類任務之補充效果。
 
 \section{交叉驗證、資料增強與平衡取樣}
 
-本研究樣本數有限，且部分任務存在明顯類別不平衡，因此所有模型評估皆採交叉驗證設計，並以病人為資料切分單位。若同一病人存在原始影像、重採樣影像、資料增強視圖或 TAP-CT embedding，皆視為同一病人之衍生資料，僅能出現在同一 fold 之訓練或驗證集合中，不得跨集合分配。此原則用以避免模型在驗證階段接觸到同一病人之相近影像表徵而造成資料洩漏。
+本研究樣本數有限，且部分任務存在明顯類別不平衡，因此所有模型評估皆採交叉驗證設計，並以病人為資料切分單位。若同一病人存在原始影像、重採樣影像、資料增強視圖或 TAP-CT embedding，皆視為同一病人之衍生資料，僅能出現在同一 fold 之訓練或驗證集合中，不得跨集合分配，以避免資料洩漏。
 
-量化生物標記分類實驗採 stratified five-fold cross validation，於每一 fold 維持正常與異常或 COPD 樣本比例，並僅以 training fold 估計特徵標準化參數。三維 CT 模型之 Normal/Abnormal、AC 三分類與 AC 二分類實驗亦以病人層級 five-fold cross validation 進行；AC 連續值迴歸則先依角度分布建立 quantile bins，再以分層方式切分 folds，以降低各 fold 角度分布差異。若特定任務因少數類別樣本過少而不適合五折切分，則調整為較少 folds，使每一驗證 fold 仍保有可評估之類別樣本；GOLD 相關候選分級即採三折設定。
-
-三維 CT 輸入於模型訓練前統一為 \(1 \times 112 \times 136 \times 112\) 之 channel-first volume，並依任務設定進行 HU window clipping 與強度正規化。資料增強僅套用於 training fold，驗證資料保留原始影像處理流程。增強方式包含小幅三維旋轉、平移、縮放、強度縮放與偏移，以及高斯雜訊，用以增加模型對掃描姿態與影像強度變異之穩定性。所有增強影像皆由 training fold 內病人產生，不作為獨立病人參與資料切分。
-
-對於 AC 三分類、AC 二分類與 GOLD 相關候選分級等類別不平衡任務，本研究使用平衡取樣與虛擬資料增強減少多數類別主導訓練的情形。平衡取樣於每一 epoch 依 training fold 內少數類別樣本數進行取樣，使各類別在訓練批次中具有較接近的出現機率；虛擬資料增強則在 training fold 內將指定類別補足至實驗設定之目標數量。驗證 fold 不使用平衡取樣或資料增強，評估時仍反映原始資料分布。
-
-三維 CT 模型訓練採 AdamW optimizer，並搭配 ReduceLROnPlateau、gradient clipping 與 early stopping 以降低小樣本訓練時的不穩定性。不同任務之最佳 checkpoint 依其主要驗證指標選取：AC 連續值迴歸以 validation MAE 最低者為準；AC 三分類、AC 二分類與 GOLD 相關候選分級以 validation macro-F1 較佳者為準；Normal/Abnormal 二元分類則以 validation AUC 或相應驗證分類指標選取。最終結果以各 fold 驗證預測合併或平均後呈現，避免僅依單一切分結果判斷模型效能。
+\begin{itemize}
+    \item \textbf{交叉驗證設定：}量化生物標記分類實驗採 stratified five-fold cross validation，於每一 fold 維持正常與異常或 COPD 樣本比例，並僅以 training fold 估計特徵標準化參數。三維 CT 模型之 Normal/Abnormal、AC 三分類與 AC 二分類實驗亦以病人層級 five-fold cross validation 進行；AC 連續值迴歸則先依角度分布建立 quantile bins，再以分層方式切分 folds，以降低各 fold 角度分布差異。若特定任務因少數類別樣本過少而不適合五折切分，則調整為較少 folds，使每一驗證 fold 仍保有可評估之類別樣本；GOLD 相關候選分級即採三折設定。
+    \item \textbf{三維影像輸入：}三維 CT 輸入於模型訓練前統一為 \(1 \times 112 \times 136 \times 112\) 之 channel-first volume，並依任務設定進行 HU window clipping 與強度正規化。
+    \item \textbf{資料增強設定：}資料增強僅套用於 training fold，驗證資料保留原始影像處理流程。本研究使用之增強方式與參數如下：
+    \begin{itemize}
+        \item \textbf{AC 三分類、AC 二分類與 TAP-CT late fusion：}三維旋轉範圍 \(\pm 5^{\circ}\)、相對影像尺寸之平移比例 0.03、縮放範圍 0.97--1.03、強度縮放範圍 0.98--1.02、強度平移範圍 \(-0.05\)--0.05，以及標準差 0.02 之高斯雜訊。
+        \item \textbf{GOLD 相關候選分級：}因類別數較多且少數類別樣本更少，採用較大的增強幅度，包含三維旋轉範圍 \(\pm 7^{\circ}\)、相對影像尺寸之平移比例 0.05、縮放範圍 0.95--1.05、強度縮放範圍 0.95--1.05、強度平移範圍 \(-0.1\)--0.1，以及標準差 0.03 之高斯雜訊。
+    \end{itemize}
+    \item \textbf{平衡取樣：}對於 AC 三分類、AC 二分類與 GOLD 相關候選分級等類別不平衡任務，本研究使用平衡取樣與虛擬資料增強減少多數類別主導訓練的情形。多數實驗先於每一個 training fold 內依目標類別數產生虛擬增強樣本，再於每一 epoch 以該 fold 之少數類別樣本數為基準，對各類別進行隨機平衡取樣，使訓練批次中各類別具有較接近的出現機率。本研究實際測試之平衡強度如下：
+    \begin{itemize}
+        \item \textbf{AC 三分類：}包含僅進行每個 epoch 之少數類別基準下採樣而不額外補樣本之設定，以及將各類別補至 50、75、100、200 與 300 筆訓練樣本之設定；另測試先平衡後增強之設定，於每一 epoch 先取平衡基礎樣本，再為每筆樣本產生 12 個訓練視圖。
+        \item \textbf{AC 二分類：}排除中間灰區後之二分類主要測試將兩類補至每類 100 筆訓練樣本之設定。
+        \item \textbf{TAP-CT late fusion：}AC 三分類與 AC 二分類之 TAP-CT late fusion 主要採用每類 100 筆訓練樣本之虛擬增強設定。
+        \item \textbf{GOLD 相關候選分級：}測試將四個 GOLD 相關候選類別補至每類 36 筆與 200 筆訓練樣本之設定。
+    \end{itemize}
+\end{itemize}
 
 \section{評估指標}
 
