@@ -16,10 +16,74 @@
 
 後續各節將依上述 RQ 順序呈現實驗設定、結果指標與限制討論。
 
-\section{實驗設定}
-% TODO: 整理兩條實驗分支之共通設定，包含資料筆數、資料切分層級、交叉驗證 folds、輸入型態、主要評估指標與最佳模型選擇依據。
-% TODO: 補實驗歷程總表，依任務列出 baseline、資料平衡或資料增強設定、TAP-CT 融合設定與正式報告之候選結果。
-% TODO: 補硬體、軟體環境、訓練日期或設定檔來源；若細節尚未確認，先標示待查證欄位。
+\section{實驗環境設定}
+
+本研究實驗主要於本機工作站完成，硬體設備如表~\ref{tab:experiment_hardware} 所示。依實驗流程不同，CT 量化生物標記分支於 Windows 環境執行；三維 CT 深度學習、塌陷角預測、GOLD 相關候選分級與 TAP-CT 相關實驗則於 Ubuntu 環境執行。兩個分支之作業系統、主要框架與用途分別整理如表~\ref{tab:quant_software} 與表~\ref{tab:deep_software}。
+
+\begin{table}[htbp]
+\centering
+\caption{實驗硬體設備}
+\label{tab:experiment_hardware}
+\begingroup
+\renewcommand{\arraystretch}{1.6}
+\begin{tabularx}{0.95\textwidth}{|>{\centering\arraybackslash}p{0.28\textwidth}|>{\centering\arraybackslash}X|}
+\hline
+\textbf{項目} & \textbf{規格} \\
+\hline
+CPU & Intel Core i7-12700K 3.60GHz 12-Core Processor \\
+GPU & NVIDIA GeForce RTX 4070 Ti SUPER \\
+RAM & 32GB DDR4-3200MHz \\
+Storage & 1TB NVMe SSD + 2TB SATA HDD \\
+\hline
+\end{tabularx}
+\endgroup
+\end{table}
+
+\begin{table}[htbp]
+\centering
+\caption{CT 量化生物標記分支實驗環境}
+\label{tab:quant_software}
+\begingroup
+\renewcommand{\arraystretch}{1.45}
+\begin{tabularx}{0.95\textwidth}{|>{\centering\arraybackslash}p{0.28\textwidth}|>{\raggedright\arraybackslash}X|}
+\hline
+\textbf{項目} & \textbf{內容} \\
+\hline
+作業系統 & Windows 11 Pro 64-bit \\
+\hline
+分割與影像處理工具 & 3D Slicer、MONAI Auto3DSeg、AeroPath、SimpleITK \\
+\hline
+模型訓練與資料處理套件 & PyTorch、scikit-learn、NumPy、pandas \\
+\hline
+主要用途 & 胸部 CT 影像分割、CT 量化生物標記擷取，以及 Normal/Abnormal 量化特徵分類模型訓練 \\
+\hline
+\end{tabularx}
+\endgroup
+\end{table}
+
+\begin{table}[htbp]
+\centering
+\caption{三維 CT 深度學習分支實驗環境}
+\label{tab:deep_software}
+\begingroup
+\renewcommand{\arraystretch}{1.45}
+\begin{tabularx}{0.95\textwidth}{|>{\centering\arraybackslash}p{0.28\textwidth}|>{\raggedright\arraybackslash}X|}
+\hline
+\textbf{項目} & \textbf{內容} \\
+\hline
+作業系統 & Ubuntu 24.04.4 LTS (Noble Numbat)，Linux kernel 6.17.0-29-generic，x86\_64 \\
+\hline
+深度學習環境 & Python 3.11、PyTorch 2.8.0、CUDA 12.8、MONAI \\
+\hline
+醫學影像與資料處理套件 & SimpleITK、nibabel、scikit-learn、pandas、matplotlib \\
+\hline
+TAP-CT相關套件 & transformers、timm、einops \\
+\hline
+主要用途 & 三維 CT 模型訓練、塌陷角預測、GOLD 相關候選分級、TAP-CT embedding 擷取與融合實驗 \\
+\hline
+\end{tabularx}
+\endgroup
+\end{table}
 
 \section{實驗結果分析}
 \subsection{RQ1 量化特徵二分類結果}
