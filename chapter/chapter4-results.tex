@@ -150,14 +150,14 @@ nnMamba & \texttt{15:32:33\_e5} & \(1.0000 \pm 0.0000\) & \(0.9409 \pm 0.0422\) 
 \begingroup
 \small
 \renewcommand{\arraystretch}{1.25}
-\begin{tabularx}{\textwidth}{c l c c c c}
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}X c c c c}
 \hline
-排名 & 模型 & MAE & RMSE & \(R^2\) & Pearson \\
+模型 & MAE & RMSE & \(R^2\) & Pearson \\
 \hline
-1 & Hybrid Mamba-Attention & \(15.8512 \pm 4.7756\) & 21.2647 & 0.1723 & 0.6699 \\
-2 & nnMamba regressor & \(17.1180 \pm 2.5754\) & 23.9086 & 0.0314 & 0.3413 \\
-3 & Mamba & \(17.5599 \pm 2.2596\) & 25.0490 & -0.0606 & 0.3812 \\
-4 & SwinUNETR & \(19.0884 \pm 2.8357\) & 24.3769 & -0.0012 & 0.1898 \\
+Hybrid Mamba-Attention & \(15.8512 \pm 4.7756\) & 21.2647 & 0.1723 & 0.6699 \\
+nnMamba regressor & \(17.1180 \pm 2.5754\) & 23.9086 & 0.0314 & 0.3413 \\
+Mamba & \(17.5599 \pm 2.2596\) & 25.0490 & -0.0606 & 0.3812 \\
+SwinUNETR & \(19.0884 \pm 2.8357\) & 24.3769 & -0.0012 & 0.1898 \\
 \hline
 \end{tabularx}
 \endgroup
@@ -196,7 +196,7 @@ nnMamba & \texttt{15:32:33\_e5} & \(1.0000 \pm 0.0000\) & \(0.9409 \pm 0.0422\) 
 
 \subsubsection{三分類結果}
 
-AC 三分類結果如表~\ref{tab:rq4_ac_3class} 所示。
+AC 三分類結果如表~\ref{tab:rq4_ac_3class} 所示。表中設定欄之 \texttt{baseline} 表示使用該模型之原始三維 CT 輸入與基本訓練設定，未額外加入 TAP-CT 表徵融合或類別補強；\texttt{pooled} 則表示僅使用 frozen TAP-CT scan embeddings，透過 attention-based multiple instance learning 分類頭將多個影像嵌入彙整為病人層級表徵後進行分類。至於 \texttt{aug100} 與 \texttt{aug300}，則分別代表於訓練 fold 中針對類別不平衡進行每類 100 或 300 筆之虛擬補強設定。
 
 \begin{table}[htbp]
 \centering
@@ -206,15 +206,15 @@ AC 三分類結果如表~\ref{tab:rq4_ac_3class} 所示。
 \footnotesize
 \renewcommand{\arraystretch}{1.25}
 \setlength{\tabcolsep}{3pt}
-\begin{tabular}{c p{0.26\textwidth} p{0.12\textwidth} c c c}
+\begin{tabular}{p{0.30\textwidth} p{0.14\textwidth} c c c}
 \hline
-排名 & 模型 & 設定 & Accuracy & Macro-F1 & Bal. acc. \\
+模型 & 設定 & Accuracy & Macro-F1 & Bal. acc. \\
 \hline
-1 & TAP-CT late fusion & aug100 & \(0.8209 \pm 0.0939\) & \(0.6141 \pm 0.1403\) & \(0.6326 \pm 0.1803\) \\
-2 & TAP-CT-S-2.5D late fusion & aug100 & \(0.8352 \pm 0.0831\) & \(0.5884 \pm 0.0756\) & \(0.5933 \pm 0.0952\) \\
-3 & TAP-CT ABMIL S-3D & pooled & \(0.7132 \pm 0.0846\) & \(0.5883 \pm 0.1381\) & \(0.6400 \pm 0.2036\) \\
-4 & Hybrid Mamba-Attention & baseline & \(0.7879 \pm 0.1018\) & \(0.5861 \pm 0.1546\) & \(0.6200 \pm 0.1154\) \\
-5 & Hybrid Mamba-Attention & aug300 & \(0.7593 \pm 0.1173\) & \(0.5713 \pm 0.0748\) & \(0.6319 \pm 0.1160\) \\
+TAP-CT late fusion & aug100 & \(0.8209 \pm 0.0939\) & \(0.6141 \pm 0.1403\) & \(0.6326 \pm 0.1803\) \\
+TAP-CT-S-2.5D late fusion & aug100 & \(0.8352 \pm 0.0831\) & \(0.5884 \pm 0.0756\) & \(0.5933 \pm 0.0952\) \\
+TAP-CT ABMIL S-3D & pooled & \(0.7132 \pm 0.0846\) & \(0.5883 \pm 0.1381\) & \(0.6400 \pm 0.2036\) \\
+Hybrid Mamba-Attention & baseline & \(0.7879 \pm 0.1018\) & \(0.5861 \pm 0.1546\) & \(0.6200 \pm 0.1154\) \\
+Hybrid Mamba-Attention & aug300 & \(0.7593 \pm 0.1173\) & \(0.5713 \pm 0.0748\) & \(0.6319 \pm 0.1160\) \\
 \hline
 \end{tabular}
 \endgroup
@@ -262,13 +262,13 @@ AC 二分類結果如表~\ref{tab:rq4_ac_binary} 所示。
 \footnotesize
 \renewcommand{\arraystretch}{1.25}
 \setlength{\tabcolsep}{3pt}
-\begin{tabular}{c p{0.26\textwidth} p{0.12\textwidth} c c c}
+\begin{tabular}{p{0.30\textwidth} p{0.14\textwidth} c c c}
 \hline
-排名 & 模型 & 設定 & Accuracy & Macro-F1 & Bal. acc. \\
+模型 & 設定 & Accuracy & Macro-F1 & Bal. acc. \\
 \hline
-1 & TAP-CT late fusion & \shortstack[l]{extreme\\aug100} & \(0.9192 \pm 0.0718\) & \(0.8763 \pm 0.1186\) & \(0.8778 \pm 0.1333\) \\
-2 & Hybrid Mamba-Attention & aug100 & \(0.8692 \pm 0.0656\) & \(0.8177 \pm 0.0761\) & \(0.8289 \pm 0.0963\) \\
-3 & Hybrid Mamba-Attention & baseline & \(0.7705 \pm 0.0323\) & \(0.4350 \pm 0.0101\) & \(0.5000 \pm 0.0000\) \\
+TAP-CT late fusion & \shortstack[l]{extreme\\aug100} & \(0.9192 \pm 0.0718\) & \(0.8763 \pm 0.1186\) & \(0.8778 \pm 0.1333\) \\
+Hybrid Mamba-Attention & aug100 & \(0.8692 \pm 0.0656\) & \(0.8177 \pm 0.0761\) & \(0.8289 \pm 0.0963\) \\
+Hybrid Mamba-Attention & baseline & \(0.7705 \pm 0.0323\) & \(0.4350 \pm 0.0101\) & \(0.5000 \pm 0.0000\) \\
 \hline
 \end{tabular}
 \endgroup
@@ -316,15 +316,15 @@ GOLD 相關候選分級結果如表~\ref{tab:rq5_gold_result} 所示。
 \footnotesize
 \renewcommand{\arraystretch}{1.25}
 \setlength{\tabcolsep}{3pt}
-\begin{tabular}{c p{0.26\textwidth} p{0.12\textwidth} c c c}
+\begin{tabular}{p{0.30\textwidth} p{0.14\textwidth} c c c}
 \hline
-排名 & 模型 & 設定 & Accuracy & Macro-F1 & Bal. acc. \\
+模型 & 設定 & Accuracy & Macro-F1 & Bal. acc. \\
 \hline
-1 & Hybrid Mamba-Attention & aug36 & \(0.5606 \pm 0.1134\) & \(0.5323 \pm 0.0479\) & \(0.5222 \pm 0.0463\) \\
-2 & Hybrid Mamba-Attention & baseline & \(0.5152 \pm 0.1868\) & \(0.4639 \pm 0.1645\) & \(0.5194 \pm 0.0834\) \\
-3 & Hybrid Mamba-Attention & aug200 & \(0.5606 \pm 0.0773\) & \(0.4436 \pm 0.0674\) & \(0.4611 \pm 0.0307\) \\
-4 & SwinUNETR & baseline & \(0.4444 \pm 0.1361\) & \(0.3144 \pm 0.1559\) & \(0.3472 \pm 0.1084\) \\
-5 & Mamba & baseline & \(0.4259 \pm 0.1458\) & \(0.3107 \pm 0.0392\) & \(0.3674 \pm 0.0606\) \\
+Hybrid Mamba-Attention & aug36 & \(0.5606 \pm 0.1134\) & \(0.5323 \pm 0.0479\) & \(0.5222 \pm 0.0463\) \\
+Hybrid Mamba-Attention & baseline & \(0.5152 \pm 0.1868\) & \(0.4639 \pm 0.1645\) & \(0.5194 \pm 0.0834\) \\
+Hybrid Mamba-Attention & aug200 & \(0.5606 \pm 0.0773\) & \(0.4436 \pm 0.0674\) & \(0.4611 \pm 0.0307\) \\
+SwinUNETR & baseline & \(0.4444 \pm 0.1361\) & \(0.3144 \pm 0.1559\) & \(0.3472 \pm 0.1084\) \\
+Mamba & baseline & \(0.4259 \pm 0.1458\) & \(0.3107 \pm 0.0392\) & \(0.3674 \pm 0.0606\) \\
 \hline
 \end{tabular}
 \endgroup
