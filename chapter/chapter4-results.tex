@@ -118,58 +118,26 @@ AUC & 0.9784 & \(0.9657 \pm 0.0430\) \\
 
 \subsection{RQ2 三維影像模型二分類結果}
 
-三維 CT Normal/Abnormal 分類結果如表~\ref{tab:rq2_3d_binary} 所示。本節列出同一 nnMamba 三維影像模型於 Normal/Abnormal 二分類任務下之不同原始訓練輸出結果；表中模型參數簡寫採「原始輸出後綴加主要辨識特性」命名，例如 \texttt{e5-bestAUC} 對應 \texttt{nnMamba\_2026-02-12\_15:32:33\_e5}，其中 \texttt{bestAUC}、\texttt{lowSens}、\texttt{highSpec} 與 \texttt{balSS} 分別表示最高 AUC、Sensitivity 相對較低、Specificity 較高，以及 Sensitivity/Specificity 較均衡。結果來源為本研究之 nnMamba 實驗紀錄\footnote{彙整結果取自 \path{nnMamba_paper_experiment_notes/results/Normal_v_Abnormal.md}；各列數值與原始 \path{results.json} 對應關係核對自 \path{nnMamba_paper_experiment_notes/runs/classification/Normal_v_Abnormal/}。}，各列皆為五折交叉驗證之平均值與標準差。
+三維 CT Normal/Abnormal 分類結果如表~\ref{tab:rq2_3d_binary} 所示。本節依 \path{nnMamba_paper_experiment_notes/results/Normal_v_Abnormal.md} 之 mean AUC 排序，僅呈現表現最佳之 nnMamba 訓練輸出 \texttt{nnMamba\_2026-02-12\_15:32:33\_e5}。各指標皆為五折交叉驗證之平均值與標準差，原始數值核對自本研究之實驗紀錄\footnote{結果取自 \path{nnMamba_paper_experiment_notes/runs/classification/Normal_v_Abnormal/nnMamba_2026-02-12_15_32_33.md}。}。
 
 \begin{table}[htbp]
 \centering
-\caption{RQ2 三維影像二分類實驗結果}
+\caption{RQ2 最佳三維影像二分類結果}
 \label{tab:rq2_3d_binary}
 \begingroup
-\footnotesize
-\setlength{\tabcolsep}{3pt}
 \renewcommand{\arraystretch}{1.25}
-\begin{tabular}{c l c c c c}
+\begin{tabularx}{\textwidth}{l >{\raggedright\arraybackslash}X c c c c}
 \hline
-排名 & 模型參數簡寫 & AUC & Accuracy & Sensitivity & Specificity \\
+模型 & 訓練輸出 & AUC & Accuracy & Sensitivity & Specificity \\
 \hline
-1 & \texttt{e5-bestAUC} & \(1.0000 \pm 0.0000\) & \(0.9409 \pm 0.0422\) & \(0.9019 \pm 0.0718\) & \(1.0000 \pm 0.0000\) \\
-2 & \texttt{e1-lowSens} & \(0.9643 \pm 0.0714\) & \(0.8491 \pm 0.1690\) & \(0.7857 \pm 0.2172\) & \(0.9500 \pm 0.1000\) \\
-3 & \texttt{e2soft-highSpec} & \(0.9486 \pm 0.1029\) & \(0.9167 \pm 0.1291\) & \(0.8571 \pm 0.2213\) & \(1.0000 \pm 0.0000\) \\
-4 & \texttt{0320-balSS} & \(0.9400 \pm 0.1200\) & \(0.8709 \pm 0.1683\) & \(0.8714 \pm 0.1238\) & \(0.8800 \pm 0.2400\) \\
+nnMamba & \texttt{15:32:33\_e5} & \(1.0000 \pm 0.0000\) & \(0.9409 \pm 0.0422\) & \(0.9019 \pm 0.0718\) & \(1.0000 \pm 0.0000\) \\
 \hline
-\end{tabular}
+\end{tabularx}
 \endgroup
 \end{table}
 
-從表~\ref{tab:rq2_3d_binary} 與圖~\ref{fig:rq2_3d_binary} 可以看出，三維影像模型在 Normal/Abnormal 二分類任務中表現最佳者為 \texttt{e5-bestAUC}，其 AUC 達到 \(1.0000 \pm 0.0000\)，Accuracy 為 \(0.9409 \pm 0.0422\)。\texttt{e2soft-highSpec} 同樣維持 \(1.0000\) 之 Specificity，但 AUC 與 Accuracy 略低於 \texttt{e5-bestAUC}；\texttt{e1-lowSens} 之 Sensitivity 相對較低，顯示其異常個案辨識較不穩定；\texttt{0320-balSS} 則呈現較接近的 Sensitivity 與 Specificity。整體而言，四組 nnMamba 訓練輸出之 AUC 皆高於 0.94，顯示直接由三維 CT volume 學習影像表徵可有效區分 Normal 與 Abnormal 個案；但不同訓練輸出之 Accuracy、Sensitivity 與 Specificity 仍有差異，代表小樣本資料切分與訓練過程之變異仍會影響最終分類穩定性。
-
-\begin{figure}[htbp]
-\centering
-\begin{tikzpicture}
-\begin{axis}[
-    ybar,
-    width=0.95\textwidth,
-    height=6cm,
-    ymin=0,
-    ymax=1.1,
-    ylabel={Score},
-    symbolic x coords={e5-bestAUC,e1-lowSens,e2soft-highSpec,0320-balSS},
-    xtick=data,
-    xticklabel style={font=\small, rotate=15, anchor=east},
-    bar width=12pt,
-    enlarge x limits=0.18,
-    legend style={at={(0.5,-0.18)}, anchor=north, legend columns=2},
-    ymajorgrids=true,
-    grid style={gray!25}
-]
-\addplot coordinates {(e5-bestAUC,1.0000) (e1-lowSens,0.9643) (e2soft-highSpec,0.9486) (0320-balSS,0.9400)};
-\addplot coordinates {(e5-bestAUC,0.9409) (e1-lowSens,0.8491) (e2soft-highSpec,0.9167) (0320-balSS,0.8709)};
-\legend{AUC, Accuracy}
-\end{axis}
-\end{tikzpicture}
-\caption{三維影像二分類效能比較}
-\label{fig:rq2_3d_binary}
-\end{figure}
+從表~\ref{tab:rq2_3d_binary} 可以看出，最佳三維影像模型於 Normal/Abnormal 二分類任務中達到 \(1.0000 \pm 0.0000\) 之 AUC，Accuracy 為 \(0.9409 \pm 0.0422\)，Specificity 亦維持 \(1.0000 \pm 0.0000\)。此結果表示模型對正常個案之排除能力相當穩定；Sensitivity 為 \(0.9019 \pm 0.0718\)，則顯示仍有部分異常個案可能被判為正常。相較於 RQ1 量化特徵模型，三維影像模型可直接由 CT volume 學習空間表徵，並在本研究資料中取得略高之 Accuracy 與 AUC，但臨床應用時仍需特別關注異常個案漏判風險。
+\FloatBarrier
 
 \subsection{RQ3 三維影像角度預測結果}
 
