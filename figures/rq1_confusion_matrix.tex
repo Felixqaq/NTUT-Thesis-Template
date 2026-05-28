@@ -1,0 +1,65 @@
+\documentclass[tikz,border=8pt]{standalone}
+\usepackage{fontspec}
+\usepackage{xeCJK}
+\usepackage{xcolor}
+\setmainfont{Times New Roman}
+\setCJKmainfont{DFKai-SB.ttf}
+
+\definecolor{cmZero}{HTML}{F3F5F7}
+\definecolor{cmMiss}{HTML}{DCE9F6}
+\definecolor{cmHit}{HTML}{3C69A5}
+\definecolor{cmHitDark}{HTML}{244A7F}
+\definecolor{cmRule}{HTML}{666666}
+
+\begin{document}
+\begin{tikzpicture}[x=1cm,y=1cm]
+    \def\cellw{2.35}
+    \def\cellh{1.32}
+    \def\xorigin{2.05}
+    \def\yorigin{0}
+
+    \node[font=\large] at ({\xorigin+\cellw},{\yorigin+2*\cellh+0.78}) {預測類別};
+    \node[font=\normalsize] at ({\xorigin+0.5*\cellw},{\yorigin+2*\cellh+0.32}) {Normal};
+    \node[font=\normalsize] at ({\xorigin+1.5*\cellw},{\yorigin+2*\cellh+0.32}) {Abnormal};
+
+    \node[font=\large, rotate=90] at (0.38,{\yorigin+\cellh}) {實際類別};
+    \node[font=\normalsize, anchor=east] at ({\xorigin-0.30},{\yorigin+1.5*\cellh}) {Normal};
+    \node[font=\normalsize, anchor=east] at ({\xorigin-0.30},{\yorigin+0.5*\cellh}) {Abnormal};
+
+    \draw[fill=cmHit, draw=white, line width=1.0pt]
+        (\xorigin,{\yorigin+\cellh}) rectangle ++(\cellw,\cellh);
+    \draw[fill=cmZero, draw=white, line width=1.0pt]
+        ({\xorigin+\cellw},{\yorigin+\cellh}) rectangle ++(\cellw,\cellh);
+    \draw[fill=cmMiss, draw=white, line width=1.0pt]
+        (\xorigin,\yorigin) rectangle ++(\cellw,\cellh);
+    \draw[fill=cmHitDark, draw=white, line width=1.0pt]
+        ({\xorigin+\cellw},\yorigin) rectangle ++(\cellw,\cellh);
+
+    \draw[cmRule, line width=0.55pt]
+        (\xorigin,\yorigin) rectangle ({\xorigin+2*\cellw},{\yorigin+2*\cellh});
+    \draw[cmRule, line width=0.55pt]
+        ({\xorigin+\cellw},\yorigin) -- ({\xorigin+\cellw},{\yorigin+2*\cellh});
+    \draw[cmRule, line width=0.55pt]
+        (\xorigin,{\yorigin+\cellh}) -- ({\xorigin+2*\cellw},{\yorigin+\cellh});
+
+    \node[font=\fontsize{24}{28}\selectfont\bfseries, text=white]
+        at ({\xorigin+0.5*\cellw},{\yorigin+1.5*\cellh+0.12}) {21};
+    \node[font=\small, text=white]
+        at ({\xorigin+0.5*\cellw},{\yorigin+1.5*\cellh-0.34}) {(100.0\%)};
+
+    \node[font=\fontsize{24}{28}\selectfont\bfseries, text=black]
+        at ({\xorigin+1.5*\cellw},{\yorigin+1.5*\cellh+0.12}) {0};
+    \node[font=\small, text=black!70]
+        at ({\xorigin+1.5*\cellw},{\yorigin+1.5*\cellh-0.34}) {(0.0\%)};
+
+    \node[font=\fontsize{24}{28}\selectfont\bfseries, text=black]
+        at ({\xorigin+0.5*\cellw},{\yorigin+0.5*\cellh+0.12}) {4};
+    \node[font=\small, text=black!70]
+        at ({\xorigin+0.5*\cellw},{\yorigin+0.5*\cellh-0.34}) {(12.1\%)};
+
+    \node[font=\fontsize{24}{28}\selectfont\bfseries, text=white]
+        at ({\xorigin+1.5*\cellw},{\yorigin+0.5*\cellh+0.12}) {29};
+    \node[font=\small, text=white]
+        at ({\xorigin+1.5*\cellw},{\yorigin+0.5*\cellh-0.34}) {(87.9\%)};
+\end{tikzpicture}
+\end{document}
