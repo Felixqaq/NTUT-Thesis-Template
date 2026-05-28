@@ -85,7 +85,7 @@ TAP-CT相關套件 & transformers、timm、einops \\
 \section{實驗結果分析}
 \subsection{RQ1 量化特徵二分類結果}
 
-量化特徵二分類之五折交叉驗證結果如表~\ref{tab:rq1_quant_result} 所示，整體混淆矩陣如圖~\ref{fig:rq1_quant_cm} 所示。
+量化特徵二分類以 12 項 CT-derived biomarkers 作為輸入，並採五折交叉驗證評估 Normal 與 Abnormal 個案之辨識能力。從表~\ref{tab:rq1_quant_result} 與圖~\ref{fig:rq1_quant_cm} 可以看出，CT 量化生物標記於 Normal/Abnormal 二分類中具有穩定辨識能力，整體 Accuracy 為 0.9259，AUC 為 0.9784。模型之 Precision 與 Specificity 皆為 1.0000，表示本實驗中未將 Normal 個案誤判為 Abnormal；然而 Sensitivity 為 0.8788，混淆矩陣中仍有 4 筆 Abnormal 個案被判為 Normal。此結果顯示，肺氣腫比例、肺容積、血管與氣道等量化特徵能有效支援二分類判讀，但對部分異常個案仍可能出現低估。
 
 \begin{table}[htbp]
 \centering
@@ -114,8 +114,7 @@ AUC & 0.9784 & \(0.9657 \pm 0.0430\) \\
 \caption{RQ1 量化特徵二分類混淆矩陣圖}
 \label{fig:rq1_quant_cm}
 \end{figure}
-
-從表~\ref{tab:rq1_quant_result} 與圖~\ref{fig:rq1_quant_cm} 可以看出，CT 量化生物標記於 Normal/Abnormal 二分類中具有穩定辨識能力，整體 Accuracy 為 0.9259，AUC 為 0.9784。模型之 Precision 與 Specificity 皆為 1.0000，表示本實驗中未將 Normal 個案誤判為 Abnormal；然而 Sensitivity 為 0.8788，混淆矩陣中仍有 4 筆 Abnormal 個案被判為 Normal。此結果顯示，肺氣腫比例、肺容積、血管與氣道等量化特徵能有效支援二分類判讀，但對部分異常個案仍可能出現低估。
+\FloatBarrier
 
 \subsection{RQ2 三維影像模型二分類結果}
 
