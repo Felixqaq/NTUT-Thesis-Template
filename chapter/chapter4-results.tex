@@ -305,7 +305,7 @@ Hybrid Mamba-Attention & aug300 & \(0.7593 \pm 0.1173\) & \(0.5713 \pm 0.0748\) 
 
 \subsection{RQ5 三維影像GOLD四分類結果}
 
-GOLD 相關候選分級結果如表~\ref{tab:rq5_gold_result} 所示。
+GOLD 相關候選分級結果如表~\ref{tab:rq5_gold_result} 所示。由於四類樣本數分布不均，且 GOLD 4 樣本數最少，本研究以 Macro-F1 作為主要排序指標，避免模型僅因偏向多數類別而取得較高 Accuracy。表中 \texttt{aug36/class} 表示在每一個 training fold 內以虛擬資料補強方式將四個 GOLD 類別補至每類 36 筆，再搭配每一 epoch 之平衡取樣；\texttt{aug200/class} 則代表更高強度的每類 200 筆補強。結果來源為本研究 GOLD 分級實驗紀錄\footnote{彙整結果取自 \path{nnMamba_paper_experiment_notes/results/GOLD_stage_classification.md}，最佳候選之 fold-level 指標核對自 \path{nnMamba_paper_experiment_notes/runs/regression/GOLD_stage_classification/hybrid_mamba_attention_gold_balanced_sampling_aug36_class_2026-05-07_11_17_40.md}。}。
 
 \begin{table}[htbp]
 \centering
@@ -315,21 +315,22 @@ GOLD 相關候選分級結果如表~\ref{tab:rq5_gold_result} 所示。
 \footnotesize
 \renewcommand{\arraystretch}{1.25}
 \setlength{\tabcolsep}{3pt}
-\begin{tabular}{p{0.30\textwidth} p{0.14\textwidth} c c c}
+\begin{tabular}{p{0.25\textwidth} p{0.16\textwidth} c c c c}
 \hline
-模型 & 設定 & Accuracy & Macro-F1 & Bal. acc. \\
+模型 & 設定 & Folds & Accuracy & Macro-F1 & Bal. acc. \\
 \hline
-Hybrid Mamba-Attention & aug36 & \(0.5606 \pm 0.1134\) & \(0.5323 \pm 0.0479\) & \(0.5222 \pm 0.0463\) \\
-Hybrid Mamba-Attention & baseline & \(0.5152 \pm 0.1868\) & \(0.4639 \pm 0.1645\) & \(0.5194 \pm 0.0834\) \\
-Hybrid Mamba-Attention & aug200 & \(0.5606 \pm 0.0773\) & \(0.4436 \pm 0.0674\) & \(0.4611 \pm 0.0307\) \\
-SwinUNETR & baseline & \(0.4444 \pm 0.1361\) & \(0.3144 \pm 0.1559\) & \(0.3472 \pm 0.1084\) \\
-Mamba & baseline & \(0.4259 \pm 0.1458\) & \(0.3107 \pm 0.0392\) & \(0.3674 \pm 0.0606\) \\
+Hybrid Mamba-Attention & \shortstack[l]{aug36\\class} & 3 & \(0.5606 \pm 0.1134\) & \(0.5323 \pm 0.0479\) & \(0.5222 \pm 0.0463\) \\
+Hybrid Mamba-Attention & \shortstack[l]{baseline\\best F1} & 3 & \(0.5152 \pm 0.1868\) & \(0.4639 \pm 0.1645\) & \(0.5194 \pm 0.0834\) \\
+Hybrid Mamba-Attention & \shortstack[l]{aug200\\class} & 3 & \(0.5606 \pm 0.0773\) & \(0.4436 \pm 0.0674\) & \(0.4611 \pm 0.0307\) \\
+Hybrid Mamba-Attention & \shortstack[l]{baseline\\best Acc.} & 3 & \(0.5758 \pm 0.0857\) & \(0.4355 \pm 0.0532\) & \(0.5000 \pm 0.0780\) \\
+SwinUNETR & baseline & 3 & \(0.4444 \pm 0.1361\) & \(0.3144 \pm 0.1559\) & \(0.3472 \pm 0.1084\) \\
+Mamba & baseline & 3 & \(0.4259 \pm 0.1458\) & \(0.3107 \pm 0.0392\) & \(0.3674 \pm 0.0606\) \\
 \hline
 \end{tabular}
 \endgroup
 \end{table}
 
-從表~\ref{tab:rq5_gold_result} 與圖~\ref{fig:rq5_gold_result} 可以看出，GOLD 相關候選分級中表現最佳者為 Hybrid Mamba-Attention 搭配 aug36，Accuracy 為 \(0.5606 \pm 0.1134\)，Macro-F1 為 \(0.5323 \pm 0.0479\)。與未使用類別補強之 Hybrid Mamba-Attention 相比，aug36 的 Macro-F1 由 0.4639 提升至 0.5323，顯示在 GOLD 類別分布不平衡的情況下，適度資料增強有助於改善平均分類表現。相較之下，aug200 雖然 Accuracy 同為 0.5606，但 Macro-F1 降至 0.4436，代表過量補強未必能進一步提升各類別辨識能力。
+從表~\ref{tab:rq5_gold_result} 與圖~\ref{fig:rq5_gold_result} 可以看出，GOLD 相關候選分級中表現最佳者為 Hybrid Mamba-Attention 搭配 aug36/class，Accuracy 為 \(0.5606 \pm 0.1134\)，Macro-F1 為 \(0.5323 \pm 0.0479\)，Balanced accuracy 為 \(0.5222 \pm 0.0463\)。最佳候選之三個 fold 的 Accuracy 分別為 0.6818、0.5909 與 0.4091，Macro-F1 分別為 0.6000、0.5000 與 0.4969，顯示在小樣本四分類設定下仍存在明顯 fold 間變異。與未使用類別補強且 Macro-F1 較佳之 baseline 相比，aug36/class 的 Macro-F1 由 0.4639 提升至 0.5323；然而另一組 baseline 雖取得最高 Accuracy 0.5758，其 Macro-F1 僅為 0.4355，表示整體正確率較高不必然代表各 GOLD 類別皆能穩定辨識。相較之下，aug200/class 雖然 Accuracy 同為 0.5606，但 Macro-F1 降至 0.4436，代表過量補強未必能進一步提升各類別平均表現。
 
 \begin{figure}[htbp]
 \centering
@@ -341,17 +342,17 @@ Mamba & baseline & \(0.4259 \pm 0.1458\) & \(0.3107 \pm 0.0392\) & \(0.3674 \pm 
     ymin=0,
     ymax=0.7,
     ylabel={Score},
-    symbolic x coords={Hybrid aug36,Hybrid,Hybrid aug200,SwinUNETR,Mamba},
+    symbolic x coords={Hybrid aug36,Base F1,Hybrid aug200,Base Acc,SwinUNETR,Mamba},
     xtick=data,
-    x tick label style={rotate=20, anchor=east},
+    x tick label style={rotate=24, anchor=east},
     bar width=8pt,
     enlarge x limits=0.14,
     legend style={at={(0.5,-0.28)}, anchor=north, legend columns=2},
     ymajorgrids=true,
     grid style={gray!25}
 ]
-\addplot coordinates {(Hybrid aug36,0.5606) (Hybrid,0.5152) (Hybrid aug200,0.5606) (SwinUNETR,0.4444) (Mamba,0.4259)};
-\addplot coordinates {(Hybrid aug36,0.5323) (Hybrid,0.4639) (Hybrid aug200,0.4436) (SwinUNETR,0.3144) (Mamba,0.3107)};
+\addplot coordinates {(Hybrid aug36,0.5606) (Base F1,0.5152) (Hybrid aug200,0.5606) (Base Acc,0.5758) (SwinUNETR,0.4444) (Mamba,0.4259)};
+\addplot coordinates {(Hybrid aug36,0.5323) (Base F1,0.4639) (Hybrid aug200,0.4436) (Base Acc,0.4355) (SwinUNETR,0.3144) (Mamba,0.3107)};
 \legend{Accuracy, Macro-F1}
 \end{axis}
 \end{tikzpicture}
