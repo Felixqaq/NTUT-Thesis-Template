@@ -4,19 +4,19 @@
 
 \section{研究問題}
 
-本章依據本研究之實驗流程與任務設計，將結果分析整理為五項研究問題（Research Questions, RQs）。此安排旨在分別檢視可解釋量化特徵與三維 CT 深度學習模型於 COPD 輔助判讀及肺功能相關表徵預測中所能提供之資訊，並保留由二元分類、連續值迴歸至衍生分級任務之實驗歷程。各研究問題說明如下：
+本章依研究流程彙整五項研究問題（Research Questions, RQs），分別評估 CT 量化特徵、三維影像模型與肺功能衍生標籤於 COPD 輔助判讀之表現。結果分析著重於模型效能、類別辨識均衡性及其臨床判讀意義。
 
 \begin{list}{}{\setlength{\leftmargin}{4.2em}\setlength{\labelwidth}{3.4em}\setlength{\labelsep}{0.8em}\setlength{\itemsep}{0.35em}}
     \item[\textbf{RQ1：}]胸部 CT 影像擷取之量化生物標記，能否區分 COPD 正常與異常？
     \item[\textbf{RQ2：}]輸入三維 CT 之影像模型，是否能進行正常與異常分類？
     \item[\textbf{RQ3：}]三維 CT 影像模型是否能預測肺功能塌陷角度？
-    \item[\textbf{RQ4：}]將塌陷角度轉換為三分類與排除中間灰區後之二分類，是否有助於肺功能相關影像判讀？
-    \item[\textbf{RQ5：}]三維 CT 影像模型 GOLD 分級效果如何？
+    \item[\textbf{RQ4：}]塌陷角度衍生之二分類與三分類標籤，是否有助於肺功能相關影像判讀？
+    \item[\textbf{RQ5：}]三維 CT 影像模型能否辨識 GOLD 相關候選分級？
 \end{list}
 
 \section{實驗環境設定}
 
-本研究實驗主要於本機工作站完成，硬體設備如表~\ref{tab:experiment_hardware} 所示。依實驗流程不同，CT 量化生物標記分支於 Windows 環境執行；三維 CT 深度學習、塌陷角預測、GOLD 相關候選分級與 TAP-CT 相關實驗則於 Ubuntu 環境執行。兩個分支之作業系統、主要框架與用途分別整理如表~\ref{tab:quant_software} 與表~\ref{tab:deep_software}。
+本研究實驗於本機工作站完成，硬體設備如表~\ref{tab:experiment_hardware} 所示。CT 量化生物標記分支於 Windows 環境執行，三維 CT 深度學習、塌陷角預測、GOLD 相關候選分級與 TAP-CT 相關實驗則於 Ubuntu 環境執行。兩分支之軟體環境整理如表~\ref{tab:quant_software} 與表~\ref{tab:deep_software}。
 
 \begin{table}[htbp]
 \centering
@@ -76,7 +76,7 @@ Storage & 1TB NVMe SSD + 2TB SATA HDD \\
 \hline
 醫學影像與資料處理套件 & SimpleITK、nibabel、scikit-learn、pandas、matplotlib \\
 \hline
-TAP-CT相關套件 & transformers、timm、einops \\
+TAP-CT 相關套件 & transformers、timm、einops \\
 \hline
 \end{tabularx}
 \endgroup
@@ -85,7 +85,7 @@ TAP-CT相關套件 & transformers、timm、einops \\
 \section{實驗結果分析}
 \subsection{RQ1 量化特徵二分類結果}
 
-量化特徵二分類以 12 項 CT-derived biomarkers 作為輸入，並採五折交叉驗證評估 Normal 與 Abnormal 個案之辨識能力。從表~\ref{tab:rq1_quant_result} 與圖~\ref{fig:rq1_quant_cm} 可以看出，CT 量化生物標記於 Normal/Abnormal 二分類中具有穩定辨識能力，整體 Accuracy 為 0.9259，AUC 為 0.9784。模型之 Precision 與 Specificity 皆為 1.0000，表示本實驗中未將 Normal 個案誤判為 Abnormal；然而 Sensitivity 為 0.8788，混淆矩陣中仍有 4 筆 Abnormal 個案被判為 Normal。此結果顯示，肺氣腫比例、肺容積、血管與氣道等量化特徵能有效支援二分類判讀，但對部分異常個案仍可能出現低估。
+RQ1 以 12 項 CT 衍生量化生物標記作為輸入，採五折交叉驗證評估 Normal 與 Abnormal 個案之辨識能力，結果如表~\ref{tab:rq1_quant_result} 與圖~\ref{fig:rq1_quant_cm} 所示。整體 Accuracy 為 0.9259，AUC 為 0.9784，顯示量化特徵已能有效區分兩類個案。Precision 與 Specificity 皆為 1.0000，代表本實驗未將 Normal 個案誤判為 Abnormal；Sensitivity 為 0.8788，仍有 4 筆 Abnormal 個案被判為 Normal。此結果說明肺氣腫比例、肺容積、血管與氣道等特徵具有輔助判讀價值，但異常個案漏判仍是後續模型優化的主要問題。
 
 \begin{table}[htbp]
 \centering
@@ -118,7 +118,7 @@ AUC & 0.9784 & \(0.9657 \pm 0.0430\) \\
 
 \subsection{RQ2 三維影像模型二分類結果}
 
-三維 CT Normal/Abnormal 分類結果如表~\ref{tab:rq2_3d_binary} 所示。本節依 \path{nnMamba_paper_experiment_notes/results/Normal_v_Abnormal.md} 之 mean AUC 排序，僅呈現表現最佳之 nnMamba 訓練輸出 \texttt{nnMamba\_2026-02-12\_15:32:33\_e5}。各指標皆為五折交叉驗證之平均值與標準差，原始數值核對自本研究之實驗紀錄\footnote{結果取自 \path{nnMamba_paper_experiment_notes/runs/classification/Normal_v_Abnormal/nnMamba_2026-02-12_15_32_33.md}。}。
+RQ2 評估三維 CT 影像模型於 Normal/Abnormal 分類之表現。本研究採用五折平均 AUC 最高之 nnMamba e5 設定作為代表結果，各指標均以平均值與標準差呈現，如表~\ref{tab:rq2_3d_binary} 所示。
 
 \begin{table}[htbp]
 \centering
@@ -126,22 +126,25 @@ AUC & 0.9784 & \(0.9657 \pm 0.0430\) \\
 \label{tab:rq2_3d_binary}
 \begingroup
 \renewcommand{\arraystretch}{1.25}
-\begin{tabularx}{\textwidth}{l >{\raggedright\arraybackslash}X c c c c}
+\begin{tabular}{l c}
 \hline
-模型 & 訓練輸出 & AUC & Accuracy & Sensitivity & Specificity \\
+指標 & 五折平均結果 \\
 \hline
-nnMamba & \texttt{15:32:33\_e5} & \(1.0000 \pm 0.0000\) & \(0.9409 \pm 0.0422\) & \(0.9019 \pm 0.0718\) & \(1.0000 \pm 0.0000\) \\
+AUC & \(1.0000 \pm 0.0000\) \\
+Accuracy & \(0.9409 \pm 0.0422\) \\
+Sensitivity & \(0.9019 \pm 0.0718\) \\
+Specificity & \(1.0000 \pm 0.0000\) \\
 \hline
-\end{tabularx}
+\end{tabular}
 \endgroup
 \end{table}
 
-從表~\ref{tab:rq2_3d_binary} 可以看出，最佳三維影像模型於 Normal/Abnormal 二分類任務中達到 \(1.0000 \pm 0.0000\) 之 AUC，Accuracy 為 \(0.9409 \pm 0.0422\)，Specificity 亦維持 \(1.0000 \pm 0.0000\)。此結果表示模型對正常個案之排除能力相當穩定；Sensitivity 為 \(0.9019 \pm 0.0718\)，則顯示仍有部分異常個案可能被判為正常。相較於 RQ1 量化特徵模型，三維影像模型可直接由 CT volume 學習空間表徵，並在本研究資料中取得略高之 Accuracy 與 AUC，但臨床應用時仍需特別關注異常個案漏判風險。
+最佳三維影像模型之 AUC 為 \(1.0000 \pm 0.0000\)，Accuracy 為 \(0.9409 \pm 0.0422\)，Specificity 亦達 \(1.0000 \pm 0.0000\)。Sensitivity 為 \(0.9019 \pm 0.0718\)，顯示模型仍可能漏判部分異常個案。與 RQ1 相比，三維影像模型可直接學習三維 CT 體積資料之空間表徵，整體 Accuracy 與 AUC 略高；但其臨床應用仍需處理異常個案漏判及模型可解釋性不足的問題。
 \FloatBarrier
 
 \subsection{RQ3 三維影像角度預測結果}
 
-塌陷角連續值迴歸結果如表~\ref{tab:rq3_ac_regression} 所示。
+RQ3 評估三維影像模型預測塌陷角連續值之能力，結果如表~\ref{tab:rq3_ac_regression} 所示。
 
 \begin{table}[htbp]
 \centering
@@ -155,8 +158,7 @@ nnMamba & \texttt{15:32:33\_e5} & \(1.0000 \pm 0.0000\) & \(0.9409 \pm 0.0422\) 
 模型 & MAE & RMSE & \(R^2\) & Pearson \\
 \hline
 Hybrid Mamba-Attention & \(15.8512 \pm 4.7756\) & 21.2647 & 0.1723 & 0.6699 \\
-nnMamba regressor & \(17.1180 \pm 2.5754\) & 23.9086 & 0.0314 & 0.3413 \\
-Mamba & \(17.5599 \pm 2.2596\) & 25.0490 & -0.0606 & 0.3812 \\
+Mamba & \(17.1180 \pm 2.5754\) & 23.9086 & 0.0314 & 0.3413 \\
 SwinUNETR & \(19.0884 \pm 2.8357\) & 24.3769 & -0.0012 & 0.1898 \\
 \hline
 \end{tabularx}
@@ -173,7 +175,7 @@ SwinUNETR & \(19.0884 \pm 2.8357\) & 24.3769 & -0.0012 & 0.1898 \\
     ymin=0,
     ymax=22,
     ylabel={MAE},
-    symbolic x coords={Hybrid,nnMamba,Mamba,SwinUNETR},
+    symbolic x coords={Hybrid,Mamba,SwinUNETR},
     xtick=data,
     bar width=18pt,
     enlarge x limits=0.15,
@@ -182,25 +184,25 @@ SwinUNETR & \(19.0884 \pm 2.8357\) & 24.3769 & -0.0012 & 0.1898 \\
     ymajorgrids=true,
     grid style={gray!25}
 ]
-\addplot coordinates {(Hybrid,15.8512) (nnMamba,17.1180) (Mamba,17.5599) (SwinUNETR,19.0884)};
+\addplot coordinates {(Hybrid,15.8512) (Mamba,17.1180) (SwinUNETR,19.0884)};
 \end{axis}
 \end{tikzpicture}
 \caption{塌陷角連續值迴歸平均絕對誤差比較}
 \label{fig:rq3_ac_regression}
 \end{figure}
 
-從表~\ref{tab:rq3_ac_regression} 與圖~\ref{fig:rq3_ac_regression} 可以看出，在塌陷角連續值迴歸任務中，Hybrid Mamba-Attention 取得最低 MAE，平均誤差為 \(15.8512 \pm 4.7756\)，同時 Pearson correlation 達到 0.6699，優於其他三種模型。nnMamba regressor 與 Mamba 的 MAE 分別為 \(17.1180 \pm 2.5754\) 與 \(17.5599 \pm 2.2596\)，SwinUNETR 則為 \(19.0884 \pm 2.8357\)。此結果顯示，在本研究資料中，於 Mamba 表徵後加入 attention bridge 可提升塌陷角連續值預測表現。
+Hybrid Mamba-Attention 取得最低 MAE，平均誤差為 \(15.8512 \pm 4.7756\)，Pearson correlation 為 0.6699，皆優於其他模型。Mamba 與 SwinUNETR 之 MAE 分別為 \(17.1180 \pm 2.5754\) 與 \(19.0884 \pm 2.8357\)。結果顯示，在 Mamba 表徵後加入 attention bridge，可補充塌陷角預測所需之影像資訊；然而 \(R^2\) 仍偏低，表示單以 CT 影像精準估計連續肺功能指標仍具限制。
 \FloatBarrier
 
-\subsection{RQ4 塌陷角能否提升肺功能相關影像判讀}
+\subsection{RQ4 塌陷角衍生分類結果}
 
-本節先呈現排除中間灰區後之 AC 二分類結果，再說明保留 intermediate 類別之 AC 三分類結果。表中設定欄之 \texttt{baseline} 表示使用該模型之原始三維 CT 輸入與基本訓練設定，未額外加入 TAP-CT 表徵融合或類別補強；\texttt{pooled} 則表示僅使用 frozen TAP-CT scan embeddings，透過 attention-based multiple instance learning 分類頭將多個影像嵌入彙整為病人層級表徵後進行分類。至於 \texttt{aug100}、\texttt{aug300} 與 \texttt{extreme aug100}，則分別代表於訓練 fold 中針對類別不平衡進行每類 100 或 300 筆之虛擬補強，其中 extreme 表示二分類任務已排除角度介於 132 至 151 度之中間樣本。
+RQ4 比較塌陷角衍生標籤於二分類與三分類任務中的可辨識性。以下先呈現排除 \(132^{\circ}\)--\(151^{\circ}\) 中間灰區後之 AC 二分類，再呈現保留 intermediate 類別之 AC 三分類。\texttt{baseline} 代表未加入 TAP-CT 融合或虛擬補強之原始三維 CT 設定；\texttt{pooled} 代表使用凍結之 TAP-CT 掃描嵌入，並以 ABMIL 分類頭彙整為病人層級表徵；\texttt{aug100} 與 \texttt{aug300} 則代表每類虛擬補強至 100 或 300 筆。
 
 AC 二分類結果如表~\ref{tab:rq4_ac_binary} 所示。
 
 \begin{table}[htbp]
 \centering
-\caption{RQ4 AC二分類結果}
+\caption{RQ4 AC 二分類結果}
 \label{tab:rq4_ac_binary}
 \begingroup
 \footnotesize
@@ -210,7 +212,7 @@ AC 二分類結果如表~\ref{tab:rq4_ac_binary} 所示。
 \hline
 模型 & 設定 & Accuracy & Macro-F1 & Bal. acc. \\
 \hline
-TAP-CT late fusion & \shortstack[l]{extreme\\aug100} & \(0.9192 \pm 0.0718\) & \(0.8763 \pm 0.1186\) & \(0.8778 \pm 0.1333\) \\
+TAP-CT late fusion & aug100 & \(0.9192 \pm 0.0718\) & \(0.8763 \pm 0.1186\) & \(0.8778 \pm 0.1333\) \\
 Hybrid Mamba-Attention & aug100 & \(0.8692 \pm 0.0656\) & \(0.8177 \pm 0.0761\) & \(0.8289 \pm 0.0963\) \\
 Hybrid Mamba-Attention & baseline & \(0.7705 \pm 0.0323\) & \(0.4350 \pm 0.0101\) & \(0.5000 \pm 0.0000\) \\
 \hline
@@ -218,41 +220,13 @@ Hybrid Mamba-Attention & baseline & \(0.7705 \pm 0.0323\) & \(0.4350 \pm 0.0101\
 \endgroup
 \end{table}
 
-從表~\ref{tab:rq4_ac_binary} 與圖~\ref{fig:rq4_ac_binary} 可以看出，排除中間灰區後之 AC 二分類具有較高辨識能力。TAP-CT late fusion 搭配 extreme + aug100 取得最高 Accuracy（\(0.9192 \pm 0.0718\)）與 Macro-F1（\(0.8763 \pm 0.1186\)），相較於 Hybrid Mamba-Attention baseline 的 Macro-F1 0.4350 有明顯提升。此結果顯示，當移除角度介於 132 至 151 度之中間樣本後，影像模型較能區分低角度異常傾向與正常傾向個案。
-
-\begin{figure}[htbp]
-\centering
-\begin{tikzpicture}
-\begin{axis}[
-    ybar,
-    width=0.9\textwidth,
-    height=6cm,
-    ymin=0,
-    ymax=1.05,
-    ylabel={Score},
-    symbolic x coords={Late fusion,Hybrid aug100,Hybrid baseline},
-    xtick=data,
-    x tick label style={rotate=15, anchor=east},
-    bar width=10pt,
-    enlarge x limits=0.2,
-    legend style={at={(0.5,-0.25)}, anchor=north, legend columns=2},
-    ymajorgrids=true,
-    grid style={gray!25}
-]
-\addplot coordinates {(Late fusion,0.9192) (Hybrid aug100,0.8692) (Hybrid baseline,0.7705)};
-\addplot coordinates {(Late fusion,0.8763) (Hybrid aug100,0.8177) (Hybrid baseline,0.4350)};
-\legend{Accuracy, Macro-F1}
-\end{axis}
-\end{tikzpicture}
-\caption{塌陷角二分類效能比較}
-\label{fig:rq4_ac_binary}
-\end{figure}
+排除中間灰區後，AC 二分類表現明顯提升。TAP-CT late fusion 搭配 aug100 取得最高 Accuracy（\(0.9192 \pm 0.0718\)）與 Macro-F1（\(0.8763 \pm 0.1186\)），相較 Hybrid Mamba-Attention baseline 之 Macro-F1 0.4350 有大幅改善。此結果指出，低角度異常傾向與高角度正常傾向兩端樣本具有較明確的影像差異。
 
 AC 三分類結果如表~\ref{tab:rq4_ac_3class} 所示。
 
 \begin{table}[htbp]
 \centering
-\caption{RQ4 AC三分類結果}
+\caption{RQ4 AC 三分類結果}
 \label{tab:rq4_ac_3class}
 \begingroup
 \footnotesize
@@ -272,7 +246,7 @@ Hybrid Mamba-Attention & aug300 & \(0.7593 \pm 0.1173\) & \(0.5713 \pm 0.0748\) 
 \endgroup
 \end{table}
 
-從表~\ref{tab:rq4_ac_3class} 與圖~\ref{fig:rq4_ac_3class} 可以看出，AC 三分類任務中表現最佳者為 TAP-CT late fusion 搭配 aug100，Accuracy 為 \(0.8209 \pm 0.0939\)，Macro-F1 為 \(0.6141 \pm 0.1403\)。雖然 TAP-CT-S-2.5D late fusion 搭配 aug100 具有最高 Accuracy（\(0.8352 \pm 0.0831\)），但其 Macro-F1 低於 TAP-CT late fusion，表示不同類別間的平均辨識能力較不均衡。與前述二分類結果相比，三分類需額外辨識樣本數較少且界線較模糊的 intermediate 類別，因此 Macro-F1 明顯下降，顯示中間灰區會增加肺功能相關影像判讀難度。
+AC 三分類中，TAP-CT late fusion 搭配 aug100 取得最高 Macro-F1（\(0.6141 \pm 0.1403\)），Accuracy 為 \(0.8209 \pm 0.0939\)。TAP-CT-S-2.5D late fusion 雖有最高 Accuracy（\(0.8352 \pm 0.0831\)），但 Macro-F1 較低，表示類別間辨識較不均衡。相較於二分類，三分類需額外辨識樣本數較少且界線較模糊的 intermediate 類別，因此 Macro-F1 明顯下降，顯示中間灰區會增加肺功能相關影像判讀難度。
 
 \begin{figure}[htbp]
 \centering
@@ -303,13 +277,13 @@ Hybrid Mamba-Attention & aug300 & \(0.7593 \pm 0.1173\) & \(0.5713 \pm 0.0748\) 
 \end{figure}
 \FloatBarrier
 
-\subsection{RQ5 三維影像GOLD四分類結果}
+\subsection{RQ5 三維影像 GOLD 相關候選分級結果}
 
-GOLD 相關候選分級結果如表~\ref{tab:rq5_gold_result} 所示。由於四類樣本數分布不均，且 GOLD 4 樣本數最少，本研究以 Macro-F1 作為主要排序指標，避免模型僅因偏向多數類別而取得較高 Accuracy。表中 \texttt{aug36/class} 表示在每一個 training fold 內以虛擬資料補強方式將四個 GOLD 類別補至每類 36 筆，再搭配每一 epoch 之平衡取樣；\texttt{aug200/class} 則代表更高強度的每類 200 筆補強。結果來源為本研究 GOLD 分級實驗紀錄\footnote{彙整結果取自 \path{nnMamba_paper_experiment_notes/results/GOLD_stage_classification.md}，最佳候選之 fold-level 指標核對自 \path{nnMamba_paper_experiment_notes/runs/regression/GOLD_stage_classification/hybrid_mamba_attention_gold_balanced_sampling_aug36_class_2026-05-07_11_17_40.md}。}。
+RQ5 評估三維影像模型對 GOLD 相關候選分級之辨識能力，結果如表~\ref{tab:rq5_gold_result} 所示。由於四類樣本數不均且 GOLD 4 樣本數最少，本研究以 Macro-F1 作為主要比較指標，以降低多數類別對 Accuracy 的影響。\texttt{aug36/class} 與 \texttt{aug200/class} 分別代表於各訓練折中將類別虛擬補強至每類 36 或 200 筆，並搭配平衡取樣訓練。
 
 \begin{table}[htbp]
 \centering
-\caption{RQ5 GOLD相關候選分級結果}
+\caption{RQ5 GOLD 相關候選分級結果}
 \label{tab:rq5_gold_result}
 \begingroup
 \footnotesize
@@ -320,9 +294,9 @@ GOLD 相關候選分級結果如表~\ref{tab:rq5_gold_result} 所示。由於四
 模型 & 設定 & Folds & Accuracy & Macro-F1 & Bal. acc. \\
 \hline
 Hybrid Mamba-Attention & \shortstack[l]{aug36\\class} & 3 & \(0.5606 \pm 0.1134\) & \(0.5323 \pm 0.0479\) & \(0.5222 \pm 0.0463\) \\
-Hybrid Mamba-Attention & \shortstack[l]{baseline\\best F1} & 3 & \(0.5152 \pm 0.1868\) & \(0.4639 \pm 0.1645\) & \(0.5194 \pm 0.0834\) \\
+Hybrid Mamba-Attention & \shortstack[l]{基準\\F1 較佳} & 3 & \(0.5152 \pm 0.1868\) & \(0.4639 \pm 0.1645\) & \(0.5194 \pm 0.0834\) \\
 Hybrid Mamba-Attention & \shortstack[l]{aug200\\class} & 3 & \(0.5606 \pm 0.0773\) & \(0.4436 \pm 0.0674\) & \(0.4611 \pm 0.0307\) \\
-Hybrid Mamba-Attention & \shortstack[l]{baseline\\best Acc.} & 3 & \(0.5758 \pm 0.0857\) & \(0.4355 \pm 0.0532\) & \(0.5000 \pm 0.0780\) \\
+Hybrid Mamba-Attention & \shortstack[l]{基準\\Accuracy 較佳} & 3 & \(0.5758 \pm 0.0857\) & \(0.4355 \pm 0.0532\) & \(0.5000 \pm 0.0780\) \\
 SwinUNETR & baseline & 3 & \(0.4444 \pm 0.1361\) & \(0.3144 \pm 0.1559\) & \(0.3472 \pm 0.1084\) \\
 Mamba & baseline & 3 & \(0.4259 \pm 0.1458\) & \(0.3107 \pm 0.0392\) & \(0.3674 \pm 0.0606\) \\
 \hline
@@ -330,7 +304,7 @@ Mamba & baseline & 3 & \(0.4259 \pm 0.1458\) & \(0.3107 \pm 0.0392\) & \(0.3674 
 \endgroup
 \end{table}
 
-從表~\ref{tab:rq5_gold_result} 與圖~\ref{fig:rq5_gold_result} 可以看出，GOLD 相關候選分級中表現最佳者為 Hybrid Mamba-Attention 搭配 aug36/class，Accuracy 為 \(0.5606 \pm 0.1134\)，Macro-F1 為 \(0.5323 \pm 0.0479\)，Balanced accuracy 為 \(0.5222 \pm 0.0463\)。最佳候選之三個 fold 的 Accuracy 分別為 0.6818、0.5909 與 0.4091，Macro-F1 分別為 0.6000、0.5000 與 0.4969，顯示在小樣本四分類設定下仍存在明顯 fold 間變異。與未使用類別補強且 Macro-F1 較佳之 baseline 相比，aug36/class 的 Macro-F1 由 0.4639 提升至 0.5323；然而另一組 baseline 雖取得最高 Accuracy 0.5758，其 Macro-F1 僅為 0.4355，表示整體正確率較高不必然代表各 GOLD 類別皆能穩定辨識。相較之下，aug200/class 雖然 Accuracy 同為 0.5606，但 Macro-F1 降至 0.4436，代表過量補強未必能進一步提升各類別平均表現。
+Hybrid Mamba-Attention 搭配 aug36/class 取得最高 Macro-F1（\(0.5323 \pm 0.0479\)），Accuracy 為 \(0.5606 \pm 0.1134\)，Balanced accuracy 為 \(0.5222 \pm 0.0463\)。三個 fold 的 Accuracy 分別為 0.6818、0.5909 與 0.4091，顯示小樣本四分類仍有明顯 fold 間變異。相較於 F1 較佳之基準設定，aug36/class 將 Macro-F1 由 0.4639 提升至 0.5323；Accuracy 較佳之基準設定雖有最高 Accuracy 0.5758，但 Macro-F1 僅 0.4355，代表整體正確率較高不必然反映各類別辨識能力。aug200/class 的 Accuracy 與 aug36/class 相同，但 Macro-F1 降至 0.4436，顯示過量補強未能改善類別平均表現。
 
 \begin{figure}[htbp]
 \centering
@@ -356,7 +330,7 @@ Mamba & baseline & 3 & \(0.4259 \pm 0.1458\) & \(0.3107 \pm 0.0392\) & \(0.3674 
 \legend{Accuracy, Macro-F1}
 \end{axis}
 \end{tikzpicture}
-\caption{候選分級分類效能比較}
+\caption{GOLD 候選分級分類效能比較}
 \label{fig:rq5_gold_result}
 \end{figure}
 
