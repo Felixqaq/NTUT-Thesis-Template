@@ -169,18 +169,18 @@ z_{ij} = \frac{x_{ij}-\mu_j}{\sigma_j}\, .
 
 \section{TAP-CT 影像嵌入與融合策略}
 
-除由本研究資料訓練之三維 CT 影像編碼器外，本研究亦納入預訓練 CT foundation model 之影像嵌入作為輔助表徵。TAP-CT 係針對體積式 CT 影像建立之 task-agnostic 預訓練模型，將 Vision Transformer 與自監督式表徵學習延伸至三維 CT volume，使模型可在下游任務中提供 frozen representation 作為特徵來源\cite{veenboer2025tapct}。考量本研究之三維影像資料量有限，本文未直接以 PFT 標籤完整微調 TAP-CT backbone，而是先擷取固定之 TAP-CT 影像嵌入，再與第 3.6 節所述 Hybrid Mamba-Attention 特徵進行比較或融合。
+本研究另使用 TAP-CT 作為預訓練 CT 影像特徵來源。TAP-CT 為針對三維 CT 建立之預訓練模型，可將 CT volume 轉換為影像特徵向量\cite{veenboer2025tapct}。由於本研究樣本數有限，本文不重新訓練 TAP-CT 權重，而是固定模型參數，僅擷取每位病人之 CT 影像特徵，供後續分類或融合模型使用。
 
-TAP-CT 影像嵌入由每位病人之 CT volume 產生，並依病人識別碼與塌陷角衍生分類標籤對應。特徵擷取流程先以深度方向之視窗讀取體積影像，取得預訓練模型輸出後，再將同一病人之視窗層級資訊彙整為病人層級向量。依實驗設定不同，本文使用 TAP-CT-B-3D、TAP-CT-S-3D 或 TAP-CT-S-2.5D 所產生之 frozen embedding；其中 TAP-CT-B-3D 融合設定使用 2304 維病人層級向量，TAP-CT-S 系列融合設定使用 1152 維向量。此作法使預訓練 CT 表徵可直接作為後續分類器或融合模組之輸入，而不需在每一個交叉驗證 fold 重新更新 TAP-CT 權重。
+每位病人的 CT volume 先輸入 TAP-CT 以取得一個代表該病人的影像向量。本文所稱病人層級，是指每位病人最後只對應一筆影像特徵與一組標籤；即使完整 CT volume 被切成多個區段處理，也會先整合同一病人的多段特徵，再作為單一樣本進入後續模型。本文依實驗設定使用 TAP-CT-B-3D、TAP-CT-S-3D 與 TAP-CT-S-2.5D，其中 TAP-CT-B-3D 產生 2304 維向量，TAP-CT-S 系列產生 1152 維向量。取得特徵後，再依病人識別碼對應塌陷角衍生標籤或 GOLD 相關候選分級標籤。
 
-在進行融合前，本研究先以 TAP-CT frozen embedding 建立輕量分類探測設定，觀察預訓練影像嵌入本身對塌陷角衍生標籤是否保留可用訊息。其後，TAP-CT 相關實驗主要用於 AC 三分類與排除中間灰區後之 AC 二分類，並比較下列策略：
+TAP-CT 特徵主要用於 COPD 相關塌陷角（AC）分類與 GOLD 相關候選分級。本研究比較下列兩種使用方式：
 
 \begin{enumerate}
-    \item \textbf{TAP-CT 單獨分類：}僅載入 TAP-CT frozen embedding，不再輸入原始三維 CT volume。本文以 attention-based multiple instance learning（ABMIL）分類頭彙整 embedding 表徵，再輸出塌陷角分類結果，用以作為預訓練 CT 特徵單獨使用時之比較基準\cite{ilse2018attentionmil}。
-    \item \textbf{Late fusion：}Hybrid Mamba-Attention 分支先由 CT volume 產生病人層級特徵，TAP-CT embedding 則先投影至融合維度；兩類特徵串接後輸入 MLP 分類頭。此設定直接保留本研究自訓練之三維 CT 特徵與預訓練 CT 表徵，觀察兩者結合後是否能補充塌陷角分類所需資訊。
+    \item \textbf{TAP-CT 單獨分類：}僅使用 TAP-CT 影像特徵作為輸入，不再輸入原始 CT volume。本文以 attention-based multiple instance learning（ABMIL）分類頭進行分類，用以評估預訓練 CT 特徵本身之分類能力\cite{ilse2018attentionmil}。
+    \item \textbf{Late fusion：}Hybrid Mamba-Attention 先由原始 CT volume 產生影像特徵，再與 TAP-CT 特徵串接，最後輸入 MLP 分類頭。此設定用以比較自訓練三維影像特徵與預訓練 CT 特徵融合後之分類表現。
 \end{enumerate}
 
-上述策略皆以病人層級資料切分為前提；TAP-CT 特徵與原始 CT volume 需對應至同一病人，且資料增強所產生之訓練視圖僅能出現在 training fold。藉由同時保留 TAP-CT 單獨分類與 late fusion，本研究可分別觀察預訓練 CT 表徵之獨立資訊量，以及其與任務導向三維影像特徵結合後對 AC 分類任務之補充效果。
+上述實驗皆以病人為資料切分單位。同一病人之原始 CT、TAP-CT 特徵與資料增強樣本僅能出現在同一 training 或 validation fold，以避免資料洩漏。
 
 \section{交叉驗證、資料增強與平衡取樣}
 
@@ -198,7 +198,7 @@ TAP-CT 影像嵌入由每位病人之 CT volume 產生，並依病人識別碼�
     \begin{itemize}
         \item \textbf{AC 三分類：}包含僅進行每個 epoch 之少數類別基準下採樣而不額外補樣本之設定，以及將各類別補至 50、75、100、200 與 300 筆訓練樣本之設定；另測試先平衡後增強之設定，於每一 epoch 先取平衡基礎樣本，再為每筆樣本產生 12 個訓練視圖。
         \item \textbf{AC 二分類：}排除中間灰區後之二分類主要測試將兩類補至每類 100 筆訓練樣本之設定。
-        \item \textbf{TAP-CT late fusion：}AC 三分類與 AC 二分類之 TAP-CT late fusion 主要採用每類 100 筆訓練樣本之虛擬增強設定。
+        \item \textbf{TAP-CT late fusion：}AC 三分類與 AC 二分類之 TAP-CT late fusion 主要採用每類 100 筆訓練樣本之虛擬增強設定；GOLD 相關候選分級則採用每類 36 筆訓練樣本之設定。
         \item \textbf{GOLD 相關候選分級：}測試將四個 GOLD 相關候選類別補至每類 36 筆與 200 筆訓練樣本之設定。
     \end{itemize}
 \end{itemize}
