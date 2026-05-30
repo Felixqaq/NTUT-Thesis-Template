@@ -1,4 +1,6 @@
 #!/bin/bash
+set -e
 xelatex main
-bibtex main
+biber main
+xelatex main
 xelatex main

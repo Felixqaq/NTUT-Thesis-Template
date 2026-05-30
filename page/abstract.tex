@@ -6,11 +6,7 @@
     \end{ZhAbstractItems}
 
     \begin{ZhAbstractDescription}
-        慢性阻塞性肺病（Chronic Obstructive Pulmonary Disease, COPD）為一種與氣道阻塞、肺氣腫相關之慢性呼吸道疾病。臨床上雖以肺功能檢查作為主要診斷依據，胸部電腦斷層影像（computed tomography, CT）仍可提供肺實質、氣道、血管等結構性資訊，具備作為輔助診斷與疾病表徵分析之潛力。本研究旨在建立以胸部 CT 影像為基礎之 COPD 輔助診斷流程，並結合可解釋之影像量化生物標記與 3D 深度影像模型，探討 CT 影像於正異常分類與肺功能相關塌陷角度分級之應用可行性。
-
-        本研究首先針對 54 筆臨床胸部 CT 影像建立量化特徵分析流程，由 CT 影像產生肺葉、血管與氣道相關分割標籤，並擷取 12 項具臨床意義之量化生物標記，包括全肺與分葉肺氣腫比例、小血管體積比例、氣道壁比例、血管密度、氣道肺體積比例、總肺容積及肺動脈直徑。分類模型採用全連接神經網路，並以 stratified five-fold cross validation 評估 Normal/Abnormal 分類效能。實驗結果顯示，量化特徵模型可達 92.59\% 之整體準確率、0.9355 之 F1-score 與 0.9784 之 AUC，顯示胸部 CT 量化生物標記可提供具可解釋性之 COPD 輔助判讀依據。
-
-        其次，本研究進一步使用 66 筆具肺功能相關標籤之 3D CT 影像，將原始影像輸入 Mamba、SwinUNETR 與 Hybrid Mamba-Attention 等模型，分別進行以 $131^{\circ}$ 與 $152^{\circ}$ 為門檻之塌陷角度（Angle of Collapse, AC）三分類，以及排除 $132^{\circ}$ 至 $151^{\circ}$ 區間的二分類。為降低小樣本與類別不平衡的偏差，本研究採用交叉驗證，並僅於訓練中進行資料增強與平衡取樣。結果顯示，結合預先萃取之 TAP-CT 影像嵌入後，AC 三分類可達 0.8209 之 accuracy、0.6141 之 Macro-F1 與 0.6326 之 balanced accuracy，極端二分類則可達 0.9192 之 accuracy、0.8763 之 Macro-F1 與 0.8778 之 balanced accuracy。整體而言，本研究結果顯示，胸部 CT 量化生物標記與 3D 深度影像模型具有互補性，可分別提供可解釋之結構量化依據與影像層級之肺功能表徵學習能力，並可作為 COPD 輔助診斷之參考。
+        慢性阻塞性肺病（Chronic Obstructive Pulmonary Disease, COPD）之臨床評估主要仰賴肺功能檢查，但胸部電腦斷層影像（computed tomography, CT）亦可提供肺部結構資訊。本研究建立以胸部 CT 為基礎之 COPD 輔助判讀流程，結合可解釋量化生物標記與三維深度影像模型。量化分支使用 54 例 CT，擷取 12 項肺氣腫、肺容積、氣道與血管相關特徵，經分層五折交叉驗證後，Normal/Abnormal 分類之準確率為 92.59\%，AUC 為 0.9784。三維影像分支使用擴充後之 66 例 CT，以 Mamba、SwinUNETR、Hybrid Mamba-Attention 與 TAP-CT 融合模型評估肺功能相關塌陷角度分類；排除中間灰區後，最佳二分類準確率為 0.9192，Macro-F1 為 0.8763。結果顯示，兩類方法可分別提供結構量化依據與影像表徵學習能力，作為 COPD 輔助判讀之參考。
     \end{ZhAbstractDescription}
     
 \end{ZhAbstract}

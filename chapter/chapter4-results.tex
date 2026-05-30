@@ -118,7 +118,7 @@ AUC & 0.9784 & \(0.9657 \pm 0.0430\) \\
 
 \subsection{RQ2 三維影像模型二分類結果}
 
-RQ2 評估三維 CT 影像模型於 Normal/Abnormal 分類之表現。本研究採用五折平均 AUC 最高之 nnMamba e5 設定作為代表結果，各指標均以平均值與標準差呈現，如表~\ref{tab:rq2_3d_binary} 所示。
+RQ2 評估三維 CT 影像模型於 Normal/Abnormal 分類之表現。本研究採用五折平均 AUC 最高之執行設定 \texttt{nnMamba\_2026-02-12\_15:32:33\_e5} 作為代表結果，以下簡稱 nnMamba e5。各指標均以平均值與標準差呈現，如表~\ref{tab:rq2_3d_binary} 所示。
 
 \begin{table}[htbp]
 \centering
@@ -144,7 +144,7 @@ Specificity & \(1.0000 \pm 0.0000\) \\
 
 \subsection{RQ3 三維影像角度預測結果}
 
-RQ3 評估三維影像模型預測塌陷角連續值之能力，結果如表~\ref{tab:rq3_ac_regression} 所示。
+RQ3 評估三維影像模型預測塌陷角連續值之能力，結果如表~\ref{tab:rq3_ac_regression} 所示。表中指標為各折評估結果之平均值，其中 MAE 另列標準差。
 
 \begin{table}[htbp]
 \centering
@@ -167,38 +167,12 @@ SwinUNETR & \(19.0884 \pm 2.8357\) & 24.3769 & -0.0012 & 0.1898 \\
 
 \begin{figure}[H]
 \centering
-\begin{tikzpicture}
-\begin{axis}[
-    ybar,
-    width=0.95\textwidth,
-    height=6cm,
-    ymin=0,
-    ymax=22,
-    ylabel={MAE},
-    symbolic x coords={Hybrid,Mamba,SwinUNETR},
-    xtick=data,
-    bar width=18pt,
-    enlarge x limits=0.15,
-    nodes near coords,
-    nodes near coords style={font=\small, /pgf/number format/fixed, /pgf/number format/precision=2},
-    ymajorgrids=true,
-    grid style={gray!25}
-]
-\addplot coordinates {(Hybrid,15.8512) (Mamba,17.1180) (SwinUNETR,19.0884)};
-\end{axis}
-\end{tikzpicture}
-\caption{塌陷角連續值迴歸平均絕對誤差比較}
-\label{fig:rq3_ac_regression}
-\end{figure}
-
-\begin{figure}[H]
-\centering
 \includegraphics[width=0.76\textwidth]{figures/rq3_ac_regression_scatter.png}
-\caption{Hybrid Mamba-Attention 塌陷角預測散佈圖}
+\caption{Hybrid Mamba-Attention 合併五折測試樣本之塌陷角預測散佈圖}
 \label{fig:rq3_ac_regression_scatter}
 \end{figure}
 
-Hybrid Mamba-Attention 取得最低 MAE，平均誤差為 \(15.8512 \pm 4.7756\)，Pearson correlation 為 0.6699，皆優於其他模型。Mamba 與 SwinUNETR 之 MAE 分別為 \(17.1180 \pm 2.5754\) 與 \(19.0884 \pm 2.8357\)。由圖~\ref{fig:rq3_ac_regression_scatter} 可見，合併五折測試樣本之真實塌陷角與預測塌陷角呈正相關，Pearson correlation 為 0.523，顯示模型能捕捉部分連續角度變化趨勢。然而迴歸線斜率低於 identity line，且多數預測值集中於約 \(155^{\circ}\)--\(175^{\circ}\)，表示模型對低角度樣本有高估傾向，對高角度樣本則略有低估。整體而言，在 Mamba 表徵後加入 attention bridge 可補充塌陷角預測所需之影像資訊；然而 \(R^2\) 仍偏低，表示單以 CT 影像精準估計連續肺功能指標仍具限制。
+Hybrid Mamba-Attention 取得最低 MAE，平均誤差為 \(15.8512 \pm 4.7756\)，五折 Pearson correlation 平均值為 0.6699，皆優於其他模型。Mamba 與 SwinUNETR 之 MAE 分別為 \(17.1180 \pm 2.5754\) 與 \(19.0884 \pm 2.8357\)。由圖~\ref{fig:rq3_ac_regression_scatter} 可見，合併五折測試樣本後，真實塌陷角與預測塌陷角仍呈正相關，整體 Pearson correlation 為 0.523。此數值與表~\ref{tab:rq3_ac_regression} 所列之五折平均值採用不同彙整方式，前者將各折測試預測合併後計算，後者則先分別計算各折相關係數再取平均。散佈圖顯示模型能捕捉部分連續角度變化趨勢；然而迴歸線斜率低於 identity line，且多數預測值集中於約 \(155^{\circ}\)--\(175^{\circ}\)，表示模型對低角度樣本有高估傾向，對高角度樣本則略有低估。整體而言，在 Mamba 表徵後加入 attention bridge 可補充塌陷角預測所需之影像資訊；然而 \(R^2\) 仍偏低，表示單以 CT 影像精準估計連續肺功能指標仍具限制。
 \FloatBarrier
 
 \subsection{RQ4 塌陷角衍生分類結果}
@@ -253,7 +227,7 @@ Hybrid Mamba-Attention & aug300 & \(0.7593 \pm 0.1173\) & \(0.5713 \pm 0.0748\) 
 \endgroup
 \end{table}
 
-AC 三分類中，TAP-CT late fusion 搭配 aug100 取得最高 Macro-F1（\(0.6141 \pm 0.1403\)），Accuracy 為 \(0.8209 \pm 0.0939\)。TAP-CT-S-2.5D late fusion 雖有最高 Accuracy（\(0.8352 \pm 0.0831\)），但 Macro-F1 較低，表示類別間辨識較不均衡。由圖~\ref{fig:rq4_ac_3class} 可見，TAP-CT-S-2.5D late fusion 對 Normal 與 Abnormal 類別具有較穩定的判別能力，五折測試樣本中分別正確分類 43 例與 12 例；然而 intermediate 類別 5 例皆被判為 Normal，顯示模型傾向將中間灰區樣本歸入正常端。相較於二分類，三分類需額外辨識樣本數較少且界線較模糊的 intermediate 類別，因此 Macro-F1 明顯下降，顯示中間灰區會增加肺功能相關影像判讀難度。
+AC 三分類中，TAP-CT late fusion 搭配 aug100 取得最高 Macro-F1（\(0.6141 \pm 0.1403\)），Accuracy 為 \(0.8209 \pm 0.0939\)。TAP-CT-S-2.5D late fusion 雖有最高 Accuracy（\(0.8352 \pm 0.0831\)），但 Macro-F1 較低，表示類別間辨識較不均衡。為呈現整體 Accuracy 最高設定之錯誤分布，圖~\ref{fig:rq4_ac_3class} 採用 TAP-CT-S-2.5D late fusion 繪製混淆矩陣；該模型對 Normal 與 Abnormal 類別具有較穩定的判別能力，五折測試樣本中分別正確分類 43 例與 12 例。然而，intermediate 類別 5 例皆被判為 Normal，顯示模型傾向將中間灰區樣本歸入正常端。相較於二分類，三分類需額外辨識樣本數較少且界線較模糊的 intermediate 類別，因此 Macro-F1 明顯下降，顯示中間灰區會增加肺功能相關影像判讀難度。
 
 \begin{figure}[htbp]
 \centering

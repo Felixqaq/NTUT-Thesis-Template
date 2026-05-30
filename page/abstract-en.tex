@@ -1,16 +1,12 @@
 % 英文摘要頁
 \begin{EnAbstract}
     \begin{EnAbstractItems}
-        \noindent \text Keyword: chest CT, COPD, quantitative biomarkers, Hybrid Mamba-Attention, TAP-CT, class imbalance
+        \noindent \text Keywords: chest CT, COPD, quantitative biomarkers, Hybrid Mamba-Attention, TAP-CT, class imbalance
 
     \end{EnAbstractItems}
 
     \begin{EnAbstractDescription}
-        Chronic obstructive pulmonary disease (COPD) is a chronic respiratory disease associated with airway obstruction and emphysema. Although pulmonary function testing remains the primary clinical basis for diagnosis, chest computed tomography (CT) provides structural information about lung parenchyma, airways, and vasculature, making it a potential source of auxiliary diagnostic evidence. This study develops a CT-based COPD auxiliary diagnostic framework that combines interpretable quantitative imaging biomarkers with 3D deep learning models, and evaluates its feasibility for Normal/Abnormal classification and pulmonary-function-related angle stratification.
-
-        For quantitative analysis, 54 clinical chest CT scans were processed to generate lobe, vessel, and airway label maps. Twelve clinically meaningful biomarkers were extracted, including emphysema percentages, small vessel volume ratio, airway wall ratio, vessel density, airway-to-lung volume ratio, total lung volume, and pulmonary artery diameter. A fully connected neural network with stratified five-fold cross-validation achieved 92.59\% accuracy, an F1-score of 0.9355, and an AUC of 0.9784 for Normal/Abnormal classification, indicating that CT-derived biomarkers can provide interpretable evidence for COPD assessment.
-
-        For 3D image-based learning, 66 CT scans with pulmonary-function-related labels were evaluated using Mamba, SwinUNETR, and Hybrid Mamba-Attention models. The tasks included Angle of Collapse (AC) three-class classification using $131^{\circ}$ and $152^{\circ}$ as thresholds, and binary classification after excluding cases between $132^{\circ}$ and $151^{\circ}$. With fused TAP-CT embeddings, AC three-class classification achieved 0.8209 accuracy, 0.6141 Macro-F1, and 0.6326 balanced accuracy, while binary classification achieved 0.9192 accuracy, 0.8763 Macro-F1, and 0.8778 balanced accuracy. Overall, CT-derived biomarkers and 3D models provide complementary evidence and may serve as references for COPD auxiliary diagnosis.
+        Clinical assessment of chronic obstructive pulmonary disease (COPD) primarily relies on pulmonary function testing; however, chest computed tomography (CT) can also provide structural information about the lungs. This study establishes a chest CT-based framework for auxiliary COPD assessment by combining interpretable quantitative biomarkers with three-dimensional deep imaging models. The quantitative branch used 54 CT scans and extracted 12 emphysema-, lung-volume-, airway-, and vascular-related features. Following stratified five-fold cross-validation, Normal/Abnormal classification achieved an accuracy of 92.59\% and an AUC of 0.9784. The three-dimensional imaging branch used an expanded dataset of 66 CT scans to evaluate pulmonary-function-related Angle of Collapse classification with Mamba, SwinUNETR, Hybrid Mamba-Attention, and TAP-CT fusion models. After excluding intermediate cases, the best binary classification accuracy was 0.9192, with a Macro-F1 score of 0.8763. The results indicate that these two approaches can respectively provide structural quantitative evidence and image representation learning capabilities as references for auxiliary COPD assessment.
     \end{EnAbstractDescription}
     
 \end{EnAbstract}

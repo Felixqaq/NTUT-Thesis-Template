@@ -17,13 +17,14 @@
 
 本研究資料由北投振興醫院合作醫師提供，包含病人胸部 CT 之 DICOM 影像及肺功能檢查（pulmonary function test, PFT）資料。原始 CT 影像以 DICOM series 形式儲存，經資料轉換流程產生 NIfTI volume 後，再依不同實驗目的建立量化特徵資料集與三維影像資料集。
 
-量化生物標記分支使用其中 54 例胸部 CT，其中正常（Normal）21 例、異常或 COPD（Abnormal/COPD）33 例；其正常/異常二元標籤由合作醫師依 ATS/ERS 肺功能判讀標準與 PFT 結果判定\cite{stanojevic2022ersats}。此資料集用於肺部結構分割、量化參數擷取與正常/異常二元分類。由於本分支之核心目標為驗證 CT-derived biomarkers 是否能提供可解釋之 COPD 輔助判讀依據，因此每一例影像皆需具備可供後續特徵計算之 CT volume、肺部相關 label map 與量化參數輸出。另有後續新增之 12 例正常傾向 CT 已完成初步轉換，但未併入此 54 例量化特徵主實驗，以避免在未重跑完整分割、特徵擷取與交叉驗證流程前改變已報告之資料範圍。
+量化生物標記分支使用 54 例胸部 CT，其中正常（Normal）21 例、異常或 COPD（Abnormal/COPD）33 例；其正常/異常二元標籤由合作醫師依 ATS/ERS 肺功能判讀標準與 PFT 結果判定\cite{stanojevic2022ersats}。此資料集用於肺部結構分割、量化參數擷取與正常/異常二元分類。由於本分支之核心目標為驗證 CT-derived biomarkers 是否能提供可解釋之 COPD 輔助判讀依據，因此每一例影像皆需具備可供後續特徵計算之 CT volume、肺部相關 label map 與量化參數輸出。另有後續新增之 12 例正常傾向 CT 已完成初步轉換，但未併入此 54 例量化特徵主實驗，以避免在未重跑完整分割、特徵擷取與交叉驗證流程前改變已報告之資料範圍。
 
-三維 CT 深度學習分支使用 66 例可與 PFT 資料對應之 CT 影像。PFT 資料用於整理塌陷角度與 GOLD 相關候選標籤，並作為 Mamba、SwinUNETR、Hybrid Mamba-Attention 與 TAP-CT 融合模型訓練與驗證時之監督訊號。塌陷角度（Angle of Collapse, AC）係由肺功能檢查之呼氣流量容積曲線萃取的幾何指標，並非 CT 影像中的解剖角度。參考 Topalovic 等人提出之 AC 與肺氣腫關係，本研究採用 $131^{\circ}$ 與 $152^{\circ}$ 作為角度分級門檻\cite{topalovic2013anglecollapse}。
+三維 CT 深度學習分支則使用擴充後之 66 例資料，包含前述 54 例與新增之 12 例正常傾向 CT，且各例皆可與 PFT 資料對應。PFT 資料用於整理塌陷角度與 GOLD 相關候選標籤，並作為 Mamba、SwinUNETR、Hybrid Mamba-Attention 與 TAP-CT 融合模型訓練與驗證時之監督訊號。塌陷角度（Angle of Collapse, AC）係由肺功能檢查之呼氣流量容積曲線萃取的幾何指標，並非 CT 影像中的解剖角度。參考 Topalovic 等人提出之 AC 與肺氣腫關係，本研究採用 $131^{\circ}$ 與 $152^{\circ}$ 作為角度分級門檻\cite{topalovic2013anglecollapse}。兩分支之資料範圍與用途如表~\ref{tab:dataset_composition} 所示。
 
 \begin{table}[htbp]
 \centering
 \caption{本研究影像資料組成}
+\label{tab:dataset_composition}
 \small
 \begin{tabularx}{\textwidth}{l c X}
 \hline
@@ -37,11 +38,12 @@
 
 AC 三分類任務將影像分為三類：$AC \leq 131^{\circ}$ 為 emphysema/abnormal-like 類別，$132^{\circ} \leq AC \leq 151^{\circ}$ 為 intermediate 類別，$AC \geq 152^{\circ}$ 為 normal-like 類別。原始 66 例資料中，三類樣本數分別為 14、5 與 47 例。由於 intermediate 類別樣本數較少且可能代表肺功能曲線表徵之灰區，本研究另設計 AC 二分類任務，排除 $132^{\circ}$ 至 $151^{\circ}$ 之 5 例，只保留 $AC \leq 131^{\circ}$ 與 $AC \geq 152^{\circ}$ 兩端較明確之 61 例資料。
 
-GOLD 相關候選標籤則依肺功能檢查中 FEV1 佔預測值百分比進行整理，分為 GOLD 1、GOLD 2、GOLD 3 與 GOLD 4。於 66 例三維影像資料中，四類樣本數分別為 36、11、13 與 6 例。需要注意的是，此分組主要反映 FEV1 predicted 所對應之氣流受限嚴重度候選標籤；正式 COPD 診斷與 GOLD 分級仍需結合支氣管擴張劑後 FEV1/FVC、症狀、病史與臨床判讀。因此，本研究在方法與結果中將其稱為 GOLD 相關候選分級或肺功能導向分級，不將其直接等同於完整臨床診斷。
+GOLD 相關候選標籤則依肺功能檢查中 FEV1 佔預測值百分比進行整理，分為 GOLD 1、GOLD 2、GOLD 3 與 GOLD 4。於 66 例三維影像資料中，四類樣本數分別為 36、11、13 與 6 例。需要注意的是，此分組主要反映 FEV1 predicted 所對應之氣流受限嚴重度候選標籤；正式 COPD 診斷與 GOLD 分級仍需結合支氣管擴張劑後 FEV1/FVC、症狀、病史與臨床判讀。因此，本研究在方法與結果中將其稱為 GOLD 相關候選分級或肺功能導向分級，不將其直接等同於完整臨床診斷。各項肺功能相關標籤如表~\ref{tab:pft_label_definition} 所示。
 
 \begin{table}[htbp]
 \centering
 \caption{肺功能相關標籤定義}
+\label{tab:pft_label_definition}
 \small
 \begin{tabularx}{\textwidth}{l c c X}
 \hline
@@ -63,9 +65,10 @@ GOLD 相關候選分級 & GOLD 1--4 & 36、11、13、6 & 依 FEV1 預測值百�
 
 原始胸部 CT 以 DICOM series 形式儲存。同一病人可能具有多組掃描序列或重建影像，因此本研究先依 SeriesInstanceUID 與 DICOM metadata 將影像分組，再排除 scout、snapshot、冠狀面或矢狀面重建影像，以及不適合肺部分析之非目標序列。若同一病人具有多個可用胸部 CT series，則優先選擇適合肺部結構分析之軸向胸部或肺窗序列。完成序列選擇後，依 ImagePositionPatient 對切片排序，並利用 ImageOrientationPatient、PixelSpacing 與 SliceThickness 等欄位建立三維空間方向與 voxel spacing。
 
-CT 強度值轉換依據 DICOM 中之 RescaleSlope 與 RescaleIntercept 進行。設原始 pixel value 為 $p$，RescaleSlope 為 $m$，RescaleIntercept 為 $b$，則轉換後之 HU 值定義為：
+CT 強度值轉換依據 DICOM 中之 RescaleSlope 與 RescaleIntercept 進行。設原始 pixel value 為 $p$，RescaleSlope 為 $m$，RescaleIntercept 為 $b$，則轉換後之 HU 值定義如方程式~\eqref{eq:hu_conversion}：
 
 \begin{equation}
+\label{eq:hu_conversion}
 \mathrm{HU} = m p + b\, .
 \end{equation}
 
@@ -77,22 +80,25 @@ PFT 資料則以病人為單位與 CT volume 對應。合作醫師提供之 PFT 
 
 量化生物標記分支之目的，是將胸部 CT 中與 COPD 相關之肺葉、血管與氣道結構轉換為 12 項病人層級數值特徵。本研究以前處理後之 HU-preserved NIfTI volume 作為輸入，透過 3D Slicer 結合 MONAI Auto3DSeg 產生多類別 label map\cite{fedorov2012slicer,cardoso2022monai}。主實驗中，label 1 至 label 5 對應五個肺葉並合併為總肺遮罩；label 6 至 label 9 則對應血管、氣管、肺靜脈系統與肺動脈等結構。氣道結構另以 AeroPath 分割結果作為補充來源\cite{stoverud2024aeropath}；當 voxel-based airway mask 可取得時，優先用於氣道相關特徵，否則以 label map 中可用之氣管或氣道標籤近似估計。分割完成後，本研究檢查輸出檔案、主要 label 是否為非空值，以及各主要結構 voxel 數是否合理，再進行量化參數計算。
 
-所有體積計算皆根據 NIfTI header 中的 voxel spacing 進行。設三個方向之 spacing 分別為 $s_x$、$s_y$ 與 $s_z$，某結構區域 $R$ 之 voxel 數為 $N_R$，則單一 voxel 體積與結構體積定義如下：
+所有體積計算皆根據 NIfTI header 中的 voxel spacing 進行。設三個方向之 spacing 分別為 $s_x$、$s_y$ 與 $s_z$，某結構區域 $R$ 之 voxel 數為 $N_R$，則單一 voxel 體積與結構體積定義如方程式~\eqref{eq:volume_calculation}：
 
 \begin{equation}
+\label{eq:volume_calculation}
 v_{\mathrm{voxel}} = s_x s_y s_z,\qquad
 V_R = \frac{N_R v_{\mathrm{voxel}}}{1000}\, .
 \end{equation}
 
-其中 $v_{\mathrm{voxel}}$ 之單位為 $\mathrm{mm^3}$，$V_R$ 之單位為 $\mathrm{mL}$。肺氣腫比例採用低衰減區域（low attenuation area）概念，在總肺或指定肺葉遮罩內計算 HU 小於 $-950$ 之 voxel 比例；此門檻常用於 CT 肺氣腫定量分析\cite{gevenois1995density}。若 $R$ 表示總肺或任一肺葉區域，肺氣腫比例定義為：
+其中 $v_{\mathrm{voxel}}$ 之單位為 $\mathrm{mm^3}$，$V_R$ 之單位為 $\mathrm{mL}$。肺氣腫比例採用低衰減區域（low attenuation area）概念，在總肺或指定肺葉遮罩內計算 HU 小於 $-950$ 之 voxel 比例；此門檻常用於 CT 肺氣腫定量分析\cite{gevenois1995density}。若 $R$ 表示總肺或任一肺葉區域，肺氣腫比例定義如方程式~\eqref{eq:emphysema_ratio}：
 
 \begin{equation}
+\label{eq:emphysema_ratio}
 E_R = \frac{N_{R,\mathrm{HU}<-950}}{N_R}\times 100\%\, .
 \end{equation}
 
-血管、氣道與肺動脈相關特徵則依下列比例或等效直徑計算：
+血管、氣道與肺動脈相關特徵則依方程式~\eqref{eq:structural_biomarkers} 所列比例或等效直徑計算：
 
 \begin{equation}
+\label{eq:structural_biomarkers}
 \begin{aligned}
 D_{\mathrm{vessel}} &= \frac{V_{\mathrm{vessel}}}{V_{\mathrm{lung}}}\times 100\%\\
 \mathrm{SVV} &= \frac{V_{\mathrm{small}}}{V_{\mathrm{lung}}}\times 100\%\\
@@ -127,9 +133,10 @@ d_{\mathrm{PA}} &= 2\left(\frac{3V_{\mathrm{PA}}}{4\pi}\right)^{1/3}\, .
 
 量化生物標記分類模型以第 3.4 節所述之 12 維 CT-derived biomarkers 作為輸入，目標為區分正常與異常或 COPD 個案。相較於直接輸入完整三維 CT，量化特徵模型之輸入維度較低，且每一個特徵皆可對應至肺氣腫、肺容積、血管或氣道相關影像表徵，因此較適合用於本研究 54 例小樣本資料之可解釋分類分析。
 
-每位病人之特徵向量記為 $\mathbf{x}_i$，其包含第 3.4 節列出之 12 個實數特徵；標籤 $y_i$ 以 0 表示正常、1 表示異常或 COPD。由於各特徵單位與尺度不同，例如百分比、毫升與毫米，模型訓練前需先進行標準化。對於第 $j$ 個特徵，僅使用訓練資料計算平均值 $\mu_j$ 與標準差 $\sigma_j$，再將訓練與驗證資料轉換為：
+每位病人之特徵向量記為 $\mathbf{x}_i$，其包含第 3.4 節列出之 12 個實數特徵；標籤 $y_i$ 以 0 表示正常、1 表示異常或 COPD。由於各特徵單位與尺度不同，例如百分比、毫升與毫米，模型訓練前需先進行標準化。對於第 $j$ 個特徵，僅使用訓練資料計算平均值 $\mu_j$ 與標準差 $\sigma_j$，再依方程式~\eqref{eq:feature_standardization} 轉換訓練與驗證資料：
 
 \begin{equation}
+\label{eq:feature_standardization}
 z_{ij} = \frac{x_{ij}-\mu_j}{\sigma_j}\, .
 \end{equation}
 
@@ -205,9 +212,10 @@ TAP-CT 特徵主要用於 COPD 相關塌陷角（AC）分類與 GOLD 相關候�
 
 \section{評估指標}
 
-本研究依任務輸出型態選擇評估指標。Normal/Abnormal 二元分類以 confusion matrix、accuracy、sensitivity、specificity、precision、F1-score 與 ROC-AUC 描述模型區辨能力及錯誤分類型態。二元分類中，true positive（TP）表示異常個案被正確判定為異常，true negative（TN）表示正常個案被正確判定為正常，false positive（FP）表示正常個案被誤判為異常，false negative（FN）表示異常個案被誤判為正常。由 TP、TN、FP 與 FN 可定義 accuracy、sensitivity、specificity、precision、negative predictive value 與 F1-score 等指標\cite{he2009imbalanced}。
+本研究依任務輸出型態選擇評估指標。Normal/Abnormal 二元分類以 confusion matrix、accuracy、sensitivity、specificity、precision、F1-score 與 ROC-AUC 描述模型區辨能力及錯誤分類型態。二元分類中，true positive（TP）表示異常個案被正確判定為異常，true negative（TN）表示正常個案被正確判定為正常，false positive（FP）表示正常個案被誤判為異常，false negative（FN）表示異常個案被誤判為正常。由 TP、TN、FP 與 FN 可依方程式~\eqref{eq:binary_metrics} 定義 accuracy、sensitivity、specificity、precision、negative predictive value 與 F1-score 等指標\cite{he2009imbalanced}。
 
 \begin{equation}
+\label{eq:binary_metrics}
 \begin{alignedat}{2}
 &\mathrm{Accuracy}\quad &&= \frac{\mathrm{TP} + \mathrm{TN}}{\mathrm{TP} + \mathrm{TN} + \mathrm{FP} + \mathrm{FN}} \\
 &\mathrm{Sensitivity}\quad &&= \mathrm{Recall} = \frac{\mathrm{TP}}{\mathrm{TP} + \mathrm{FN}} \\
@@ -218,9 +226,10 @@ TAP-CT 特徵主要用於 COPD 相關塌陷角（AC）分類與 GOLD 相關候�
 \end{alignedat}
 \end{equation}
 
-Receiver operating characteristic curve（ROC curve）以 true positive rate（TPR）與 false positive rate（FPR）表示不同 decision threshold 下的分類結果。Area under the curve（AUC）為 ROC curve 下方面積，用於描述模型整體區辨能力\cite{fawcett2006roc}。
+Receiver operating characteristic curve（ROC curve）以 true positive rate（TPR）與 false positive rate（FPR）表示不同 decision threshold 下的分類結果。Area under the curve（AUC）為 ROC curve 下方面積，用於描述模型整體區辨能力，其定義如方程式~\eqref{eq:roc_auc}\cite{fawcett2006roc}。
 
 \begin{equation}
+\label{eq:roc_auc}
 \begin{alignedat}{2}
 &\mathrm{TPR}\quad &&= \frac{\mathrm{TP}}{\mathrm{TP} + \mathrm{FN}} \\
 &\mathrm{FPR}\quad &&= \frac{\mathrm{FP}}{\mathrm{FP} + \mathrm{TN}} \\
@@ -228,9 +237,10 @@ Receiver operating characteristic curve（ROC curve）以 true positive rate（T
 \end{alignedat}
 \end{equation}
 
-Precision--recall curve 以 precision 與 recall 作為座標軸。Average precision（AP）或 area under precision--recall curve（AUPRC）可表示 precision--recall curve 下方面積\cite{saito2015pr}。
+Precision--recall curve 以 precision 與 recall 作為座標軸。Average precision（AP）或 area under precision--recall curve（AUPRC）可表示 precision--recall curve 下方面積，其定義如方程式~\eqref{eq:auprc}\cite{saito2015pr}。
 
 \begin{equation}
+\label{eq:auprc}
 \begin{alignedat}{2}
 &\mathrm{Recall}\quad &&= \frac{\mathrm{TP}}{\mathrm{TP} + \mathrm{FN}} \\
 &\mathrm{Precision}\quad &&= \frac{\mathrm{TP}}{\mathrm{TP} + \mathrm{FP}} \\
@@ -238,9 +248,10 @@ Precision--recall curve 以 precision 與 recall 作為座標軸。Average preci
 \end{alignedat}
 \end{equation}
 
-AC 三分類、AC 二分類與 GOLD 相關候選分級亦需考量類別數量不均，因此本文除整體 accuracy 外，同時報告 macro-precision、macro-recall、macro-F1、balanced accuracy 與 confusion matrix。若類別數為 \(K\)，第 \(k\) 類之 true positive、false positive 與 false negative 分別為 \(\mathrm{TP}_k\)、\(\mathrm{FP}_k\) 與 \(\mathrm{FN}_k\)，則各類別之 precision、recall 與 F1-score 定義如下：
+AC 三分類、AC 二分類與 GOLD 相關候選分級亦需考量類別數量不均，因此本文除整體 accuracy 外，同時報告 macro-precision、macro-recall、macro-F1、balanced accuracy 與 confusion matrix。若類別數為 \(K\)，第 \(k\) 類之 true positive、false positive 與 false negative 分別為 \(\mathrm{TP}_k\)、\(\mathrm{FP}_k\) 與 \(\mathrm{FN}_k\)，則各類別之 precision、recall 與 F1-score 定義如方程式~\eqref{eq:classwise_metrics}：
 
 \begin{equation}
+\label{eq:classwise_metrics}
 \begin{alignedat}{2}
 &\mathrm{Precision}_k\quad &&= \frac{\mathrm{TP}_k}{\mathrm{TP}_k + \mathrm{FP}_k} \\
 &\mathrm{Recall}_k\quad &&= \frac{\mathrm{TP}_k}{\mathrm{TP}_k + \mathrm{FN}_k} \\
@@ -248,9 +259,10 @@ AC 三分類、AC 二分類與 GOLD 相關候選分級亦需考量類別數量�
 \end{alignedat}
 \end{equation}
 
-Macro-precision、macro-recall、macro-F1 與 balanced accuracy 定義如下：
+Macro-precision、macro-recall、macro-F1 與 balanced accuracy 定義如方程式~\eqref{eq:macro_metrics}：
 
 \begin{equation}
+\label{eq:macro_metrics}
 \begin{alignedat}{2}
 &\mathrm{MacroPrecision}\quad &&= \frac{1}{K}\sum_{k=1}^{K}\mathrm{Precision}_k \\
 &\mathrm{MacroRecall}\quad &&= \frac{1}{K}\sum_{k=1}^{K}\mathrm{Recall}_k \\
@@ -259,9 +271,12 @@ Macro-precision、macro-recall、macro-F1 與 balanced accuracy 定義如下：
 \end{alignedat}
 \end{equation}
 
-對於連續 AC 迴歸任務，本研究以 mean absolute error（MAE）、root mean squared error（RMSE）、coefficient of determination（\(R^2\)）與 Pearson correlation coefficient 評估預測值與真實角度之差異及相關程度。設真實值為 \(y_i\)，預測值為 \(\hat{y}_i\)，真實值平均為 \(\bar{y}\)，則 MAE、RMSE 與 \(R^2\) 定義如下：
+依本研究採用之多類別定義，macro-recall 與 balanced accuracy 皆為各類別 recall 之算術平均，因此兩者數值相同。本文仍同時列出兩項名稱，以對應分類實驗常用之報告慣例，並便於與不同實驗輸出欄位交叉核對。
+
+對於連續 AC 迴歸任務，本研究以 mean absolute error（MAE）、root mean squared error（RMSE）、coefficient of determination（\(R^2\)）與 Pearson correlation coefficient 評估預測值與真實角度之差異及相關程度。設真實值為 \(y_i\)，預測值為 \(\hat{y}_i\)，真實值平均為 \(\bar{y}\)，則 MAE、RMSE 與 \(R^2\) 定義如方程式~\eqref{eq:regression_metrics}：
 
 \begin{equation}
+\label{eq:regression_metrics}
 \begin{aligned}
 \mathrm{MAE} &= \frac{1}{N}\sum_{i=1}^{N}\left|y_i-\hat{y}_i\right|,\\
 \mathrm{RMSE} &= \sqrt{\frac{1}{N}\sum_{i=1}^{N}\left(y_i-\hat{y}_i\right)^2},\\
