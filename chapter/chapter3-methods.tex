@@ -11,6 +11,15 @@
     \item \textbf{三維 CT 深度學習模型分析分支：}此分支保留完整三維影像輸入，不先將 CT volume 壓縮為人工定義特徵。NIfTI 影像經尺寸統一、強度正規化與必要之資料增強後輸入三維模型，模型設定包含 Mamba、SwinUNETR、Hybrid Mamba-Attention 與 TAP-CT 影像嵌入融合。此分支之任務包含 Normal/Abnormal 分類、塌陷角連續值預測、塌陷角三分類、排除中間灰區後之二分類，以及 GOLD 相關候選分級分類。
 \end{enumerate}
 
+其中，CT 量化生物標記分析分支之處理流程如圖~\ref{fig:ct_quantification_pipeline} 所示。此分支先由胸部 CT 影像進行肺部、血管與氣道相關分割，再由分割結果擷取 12 項量化特徵，最後輸入全連接神經網路進行 Normal/Abnormal 二元分類。
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\textwidth]{figures/ct_quantification_pipeline.png}
+\caption{電腦斷層影像量化生物標記分類流程}
+\label{fig:ct_quantification_pipeline}
+\end{figure}
+
 兩條分支之分析重點並不相同。CT 量化生物標記分析分支著重於以具解剖意義之數值特徵支援小樣本分類；三維 CT 深度學習模型分析分支則著重於由原始影像直接學習肺部空間表徵，以補充人工定義特徵可能無法涵蓋之資訊。為避免資料洩漏，三維影像模型之訓練與驗證皆以病人為單位切分資料，使同一病人之原始影像與增強影像不會同時出現在訓練與驗證集合中。後續章節將分別說明兩類方法之資料範圍、模型設定與評估結果，並於討論中比較其互補性與限制。
 
 \section{資料集}
@@ -142,7 +151,16 @@ z_{ij} = \frac{x_{ij}-\mu_j}{\sigma_j}\, .
 
 此作法可避免總肺體積或肺動脈直徑等尺度較大的特徵主導神經網路權重，同時避免在交叉驗證中因驗證資料參與標準化參數估計而造成資料洩漏。
 
-分類器採用全連接神經網路，其模型架構、訓練設定與驗證方式如下：
+分類器採用全連接神經網路，其模型架構如圖~\ref{fig:fc_classification_architecture} 所示。模型以 12 維量化特徵作為輸入，經由三層 hidden layers 擷取特徵組合關係，最後輸出正常與異常兩類之 logits，並以 softmax 轉換為類別機率。
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\textwidth]{figures/fc_classification_architecture.pdf}
+\caption{全連接神經網路分類器架構}
+\label{fig:fc_classification_architecture}
+\end{figure}
+
+模型訓練設定與驗證方式如下：
 
 \begin{itemize}
     \item \textbf{輸入與標籤：}模型輸入為第 3.4 節所列 12 項量化特徵；標籤為二元分類，0 表示正常，1 表示異常或 COPD。標準化參數僅由 training fold 估計，避免驗證資料資訊洩漏至訓練流程。
@@ -212,7 +230,7 @@ TAP-CT 特徵主要用於 COPD 相關塌陷角（AC）分類與 GOLD 相關候�
 
 \section{評估指標}
 
-本研究依任務輸出型態選擇評估指標。Normal/Abnormal 二元分類以 confusion matrix、accuracy、sensitivity、specificity、precision、F1-score 與 ROC-AUC 描述模型區辨能力及錯誤分類型態。二元分類中，true positive（TP）表示異常個案被正確判定為異常，true negative（TN）表示正常個案被正確判定為正常，false positive（FP）表示正常個案被誤判為異常，false negative（FN）表示異常個案被誤判為正常。由 TP、TN、FP 與 FN 可依方程式~\eqref{eq:binary_metrics} 定義 accuracy、sensitivity、specificity、precision、negative predictive value 與 F1-score 等指標\cite{he2009imbalanced}。
+本研究依任務輸出型態選擇評估指標。Normal/Abnormal 二元分類以 confusion matrix、accuracy、sensitivity、specificity、precision、F1-score 與 ROC-AUC 描述模型區辨能力及錯誤分類型態。二元分類中，true positive（TP）表示異常個案被正確判定為異常，true negative（TN）表示正常個案被正確判定為正常，false positive（FP）表示正常個案被誤判為異常，false negative（FN）表示異常個案被誤判為正常。由 TP、TN、FP 與 FN 可依方程式~\eqref{eq:binary_metrics} 定義 accuracy、sensitivity、specificity、precision 與 F1-score 等指標\cite{he2009imbalanced}。
 
 \begin{equation}
 \label{eq:binary_metrics}
@@ -221,34 +239,13 @@ TAP-CT 特徵主要用於 COPD 相關塌陷角（AC）分類與 GOLD 相關候�
 &\mathrm{Sensitivity}\quad &&= \mathrm{Recall} = \frac{\mathrm{TP}}{\mathrm{TP} + \mathrm{FN}} \\
 &\mathrm{Specificity}\quad &&= \frac{\mathrm{TN}}{\mathrm{TN} + \mathrm{FP}} \\
 &\mathrm{Precision}\quad &&= \frac{\mathrm{TP}}{\mathrm{TP} + \mathrm{FP}} \\
-&\mathrm{NPV}\quad &&= \frac{\mathrm{TN}}{\mathrm{TN} + \mathrm{FN}} \\
 &\mathrm{F1}\quad &&= \frac{2 \times \mathrm{Precision} \times \mathrm{Recall}}{\mathrm{Precision} + \mathrm{Recall}}
 \end{alignedat}
 \end{equation}
 
-Receiver operating characteristic curve（ROC curve）以 true positive rate（TPR）與 false positive rate（FPR）表示不同 decision threshold 下的分類結果。Area under the curve（AUC）為 ROC curve 下方面積，用於描述模型整體區辨能力，其定義如方程式~\eqref{eq:roc_auc}\cite{fawcett2006roc}。
+Receiver operating characteristic curve（ROC curve）呈現不同 decision threshold 下 true positive rate 與 false positive rate 的變化關係。Area under the curve（AUC）為 ROC curve 下方面積，用於描述模型整體區辨能力\cite{fawcett2006roc}。
 
-\begin{equation}
-\label{eq:roc_auc}
-\begin{alignedat}{2}
-&\mathrm{TPR}\quad &&= \frac{\mathrm{TP}}{\mathrm{TP} + \mathrm{FN}} \\
-&\mathrm{FPR}\quad &&= \frac{\mathrm{FP}}{\mathrm{FP} + \mathrm{TN}} \\
-&\mathrm{AUC}\quad &&= \int_{0}^{1} \mathrm{TPR}(\mathrm{FPR})\,\mathrm{d}\mathrm{FPR}
-\end{alignedat}
-\end{equation}
-
-Precision--recall curve 以 precision 與 recall 作為座標軸。Average precision（AP）或 area under precision--recall curve（AUPRC）可表示 precision--recall curve 下方面積，其定義如方程式~\eqref{eq:auprc}\cite{saito2015pr}。
-
-\begin{equation}
-\label{eq:auprc}
-\begin{alignedat}{2}
-&\mathrm{Recall}\quad &&= \frac{\mathrm{TP}}{\mathrm{TP} + \mathrm{FN}} \\
-&\mathrm{Precision}\quad &&= \frac{\mathrm{TP}}{\mathrm{TP} + \mathrm{FP}} \\
-&\mathrm{AUPRC}\quad &&= \int_{0}^{1} \mathrm{Precision}(\mathrm{Recall})\,\mathrm{d}\mathrm{Recall}
-\end{alignedat}
-\end{equation}
-
-AC 三分類、AC 二分類與 GOLD 相關候選分級亦需考量類別數量不均，因此本文除整體 accuracy 外，同時報告 macro-precision、macro-recall、macro-F1、balanced accuracy 與 confusion matrix。若類別數為 \(K\)，第 \(k\) 類之 true positive、false positive 與 false negative 分別為 \(\mathrm{TP}_k\)、\(\mathrm{FP}_k\) 與 \(\mathrm{FN}_k\)，則各類別之 precision、recall 與 F1-score 定義如方程式~\eqref{eq:classwise_metrics}：
+AC 三分類、AC 二分類與 GOLD 相關候選分級亦需考量類別數量不均，因此本文除整體 accuracy 外，同時報告 macro-F1、balanced accuracy 與 confusion matrix。若類別數為 \(K\)，第 \(k\) 類之 true positive、false positive 與 false negative 分別為 \(\mathrm{TP}_k\)、\(\mathrm{FP}_k\) 與 \(\mathrm{FN}_k\)，則各類別之 precision、recall 與 F1-score 定義如方程式~\eqref{eq:classwise_metrics}：
 
 \begin{equation}
 \label{eq:classwise_metrics}
@@ -259,21 +256,17 @@ AC 三分類、AC 二分類與 GOLD 相關候選分級亦需考量類別數量�
 \end{alignedat}
 \end{equation}
 
-Macro-precision、macro-recall、macro-F1 與 balanced accuracy 定義如方程式~\eqref{eq:macro_metrics}：
+Macro-F1 與 balanced accuracy 定義如方程式~\eqref{eq:macro_metrics}：
 
 \begin{equation}
 \label{eq:macro_metrics}
 \begin{alignedat}{2}
-&\mathrm{MacroPrecision}\quad &&= \frac{1}{K}\sum_{k=1}^{K}\mathrm{Precision}_k \\
-&\mathrm{MacroRecall}\quad &&= \frac{1}{K}\sum_{k=1}^{K}\mathrm{Recall}_k \\
 &\mathrm{MacroF1}\quad &&= \frac{1}{K}\sum_{k=1}^{K}\mathrm{F1}_k \\
 &\mathrm{BalancedAccuracy}\quad &&= \frac{1}{K}\sum_{k=1}^{K}\mathrm{Recall}_k
 \end{alignedat}
 \end{equation}
 
-依本研究採用之多類別定義，macro-recall 與 balanced accuracy 皆為各類別 recall 之算術平均，因此兩者數值相同。本文仍同時列出兩項名稱，以對應分類實驗常用之報告慣例，並便於與不同實驗輸出欄位交叉核對。
-
-對於連續 AC 迴歸任務，本研究以 mean absolute error（MAE）、root mean squared error（RMSE）、coefficient of determination（\(R^2\)）與 Pearson correlation coefficient 評估預測值與真實角度之差異及相關程度。設真實值為 \(y_i\)，預測值為 \(\hat{y}_i\)，真實值平均為 \(\bar{y}\)，則 MAE、RMSE 與 \(R^2\) 定義如方程式~\eqref{eq:regression_metrics}：
+對於連續 AC 迴歸任務，本研究以 mean absolute error（MAE）、root mean squared error（RMSE）、coefficient of determination（\(R^2\)）與 Pearson correlation coefficient 評估預測值與真實角度之差異及相關程度。設真實值為 \(y_i\)，預測值為 \(\hat{y}_i\)，其平均值分別為 \(\bar{y}\) 與 \(\bar{\hat{y}}\)，則各項指標定義如方程式~\eqref{eq:regression_metrics}：
 
 \begin{equation}
 \label{eq:regression_metrics}
@@ -281,10 +274,14 @@ Macro-precision、macro-recall、macro-F1 與 balanced accuracy 定義如方程�
 \mathrm{MAE} &= \frac{1}{N}\sum_{i=1}^{N}\left|y_i-\hat{y}_i\right|,\\
 \mathrm{RMSE} &= \sqrt{\frac{1}{N}\sum_{i=1}^{N}\left(y_i-\hat{y}_i\right)^2},\\
 R^2 &= 1-\frac{\sum_{i=1}^{N}\left(y_i-\hat{y}_i\right)^2}
-{\sum_{i=1}^{N}\left(y_i-\bar{y}\right)^2}\, .
+{\sum_{i=1}^{N}\left(y_i-\bar{y}\right)^2},\\
+\mathrm{Pearson} &=
+\frac{\sum_{i=1}^{N}\left(y_i-\bar{y}\right)\left(\hat{y}_i-\bar{\hat{y}}\right)}
+{\sqrt{\sum_{i=1}^{N}\left(y_i-\bar{y}\right)^2}
+\sqrt{\sum_{i=1}^{N}\left(\hat{y}_i-\bar{\hat{y}}\right)^2}}\, .
 \end{aligned}
 \end{equation}
 
-MAE 可直接表示預測角度與真實角度之平均絕對差距；RMSE 對較大誤差較為敏感；\(R^2\) 用於描述模型相對於真實值變異之解釋程度；Pearson correlation coefficient 則用於觀察預測值與真實值之線性相關方向與強度。由於本文目前報告之主要深度模型結果為分類與迴歸輸出，而非分割模型比較，因此 Dice similarity coefficient 與 Hausdorff distance 不列為主要實驗結果指標。
+MAE 可直接表示預測角度與真實角度之平均絕對差距；RMSE 對較大誤差較為敏感；\(R^2\) 用於描述模型相對於真實值變異之解釋程度；Pearson correlation coefficient 則用於觀察預測值與真實值之線性相關方向與強度。
 
 \end{ZhChapter}
