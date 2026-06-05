@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1900" height="650" viewBox="0 0 1900 650" role="img" aria-labelledby="title desc">
+  <title id="title">Residual Mamba Block</title>
+  <desc id="desc">Thesis-ready residual Mamba block diagram showing normalization, projection, tokenization, Mamba sequence mixing, reshaping, residual addition, and GELU activation.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="strokeWidth">
+      <path d="M2,2 L10,6 L2,10 Z" fill="#2c5f93"/>
+    </marker>
+    <marker id="arrow-gray" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="strokeWidth">
+      <path d="M2,2 L10,6 L2,10 Z" fill="#5f6875"/>
+    </marker>
+    <style>
+      .bg { fill: #ffffff; }
+      .title { font: 700 38px "Times New Roman", Times, serif; fill: #172033; }
+      .subtitle { font: 400 22px "Times New Roman", Times, serif; fill: #4f5b6b; }
+      .label { font: 700 21px "Times New Roman", Times, serif; fill: #172033; }
+      .body { font: 400 18px "Times New Roman", Times, serif; fill: #334155; }
+      .small { font: 400 16px "Times New Roman", Times, serif; fill: #4b5563; }
+      .dim { font: 600 16px "Times New Roman", Times, serif; fill: #26384f; }
+      .panel { fill: #fbfdff; stroke: #c8d4e3; stroke-width: 2; rx: 22; }
+      .node { fill: #ffffff; stroke: #9fb2ca; stroke-width: 2; rx: 14; }
+      .blue { fill: #eaf4ff; stroke: #477ec1; stroke-width: 2.4; rx: 14; }
+      .orange { fill: #fff2dc; stroke: #c97d30; stroke-width: 2.4; rx: 14; }
+      .note { fill: #f2f6fb; stroke: #d4deea; stroke-width: 1.6; rx: 14; }
+      .arrow { fill: none; stroke: #2c5f93; stroke-width: 3; marker-end: url(#arrow); }
+      .skip { fill: none; stroke: #5f6875; stroke-width: 2.5; stroke-dasharray: 9 8; marker-end: url(#arrow-gray); }
+    </style>
+  </defs>
+
+  <rect class="bg" x="0" y="0" width="1900" height="650"/>
+  <text class="title" x="70" y="72">Residual Mamba Block</text>
+  <text class="subtitle" x="70" y="107">A 3D feature map is converted into a token sequence for Mamba mixing and then restored through a residual path.</text>
+
+  <rect class="panel" x="60" y="170" width="1780" height="350"/>
+
+  <!-- Main path -->
+  <g transform="translate(95 312)">
+    <rect class="node" x="0" y="0" width="160" height="82"/>
+    <text class="label" x="24" y="34">Input feature</text>
+    <text class="dim" x="19" y="60">B x C x D x H x W</text>
+  </g>
+
+  <g transform="translate(305 312)">
+    <rect class="node" x="0" y="0" width="142" height="82"/>
+    <text class="label" x="23" y="34">GroupNorm</text>
+    <text class="small" x="34" y="60">spatial map</text>
+  </g>
+
+  <g transform="translate(497 312)">
+    <rect class="node" x="0" y="0" width="142" height="82"/>
+    <text class="label" x="21" y="34">1x1x1 Conv</text>
+    <text class="small" x="37" y="60">projection</text>
+  </g>
+
+  <g transform="translate(689 312)">
+    <rect class="orange" x="0" y="0" width="155" height="82"/>
+    <text class="label" x="48" y="34">Flatten</text>
+    <text class="dim" x="33" y="60">DHW tokens</text>
+  </g>
+
+  <g transform="translate(894 290)">
+    <rect class="blue" x="0" y="0" width="190" height="126"/>
+    <text class="label" x="62" y="42">Mamba</text>
+    <text class="body" x="42" y="72">sequence mixer</text>
+    <text class="small" x="43" y="101">global context</text>
+  </g>
+
+  <g transform="translate(1134 312)">
+    <rect class="orange" x="0" y="0" width="155" height="82"/>
+    <text class="label" x="42" y="34">Reshape</text>
+    <text class="small" x="28" y="60">tokens to volume</text>
+  </g>
+
+  <g transform="translate(1339 312)">
+    <rect class="node" x="0" y="0" width="142" height="82"/>
+    <text class="label" x="23" y="34">GroupNorm</text>
+    <text class="small" x="36" y="60">3D feature</text>
+  </g>
+
+  <g transform="translate(1531 312)">
+    <rect class="node" x="0" y="0" width="142" height="82"/>
+    <text class="label" x="21" y="34">1x1x1 Conv</text>
+    <text class="small" x="37" y="60">projection</text>
+  </g>
+
+  <g transform="translate(1718 302)">
+    <circle cx="50" cy="50" r="42" fill="#fff8ef" stroke="#c97d30" stroke-width="2.5"/>
+    <path d="M30 50 L70 50 M50 30 L50 70" stroke="#c97d30" stroke-width="5" stroke-linecap="round"/>
+  </g>
+
+  <g transform="translate(1715 438)">
+    <rect class="blue" x="0" y="0" width="106" height="52"/>
+    <text class="label" x="28" y="34">GELU</text>
+  </g>
+
+  <!-- Arrows -->
+  <path class="arrow" d="M255 353 L297 353"/>
+  <path class="arrow" d="M447 353 L489 353"/>
+  <path class="arrow" d="M639 353 L681 353"/>
+  <path class="arrow" d="M844 353 L886 353"/>
+  <path class="arrow" d="M1084 353 L1126 353"/>
+  <path class="arrow" d="M1289 353 L1331 353"/>
+  <path class="arrow" d="M1481 353 L1523 353"/>
+  <path class="arrow" d="M1673 353 L1710 353"/>
+  <path class="arrow" d="M1768 394 L1768 430"/>
+
+  <!-- Skip path -->
+  <path class="skip" d="M175 312 C175 225 1765 225 1768 296"/>
+
+  <g transform="translate(540 548)">
+    <rect class="note" x="0" y="0" width="820" height="56"/>
+    <text class="body" x="24" y="35">This block is repeated three times in each encoder stage; the dashed line denotes the residual connection.</text>
+  </g>
+</svg>

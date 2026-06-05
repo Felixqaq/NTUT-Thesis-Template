@@ -8,7 +8,7 @@
 
 \begin{enumerate}
     \item \textbf{CT 量化生物標記分析分支：}此分支強調影像特徵之可解釋性。轉換後之 CT 影像先經肺部、肺葉、血管與氣道相關分割流程產生 label map，再依各結構遮罩計算肺氣腫比例、肺容積、血管密度、小血管體積比例、氣道相關比例與肺動脈直徑等數值特徵。上述特徵可對應肺實質、血管與氣道結構變化，故本研究將其視為 CT 量化生物標記，並以全連接神經網路進行 Normal/Abnormal 二元分類。
-    \item \textbf{三維 CT 深度學習模型分析分支：}此分支保留完整三維影像輸入，不先將 CT volume 壓縮為人工定義特徵。NIfTI 影像經尺寸統一、強度正規化與必要之資料增強後輸入三維模型，模型設定包含 Mamba、SwinUNETR、Hybrid Mamba-Attention 與 TAP-CT 影像嵌入融合。此分支之任務包含 Normal/Abnormal 分類、塌陷角連續值預測、塌陷角三分類、排除中間灰區後之二分類，以及 GOLD 相關候選分級分類。
+    \item \textbf{三維 CT 深度學習模型分析分支：}此分支保留完整三維影像輸入，不先將 CT volume 壓縮為人工定義特徵。NIfTI 影像經尺寸統一、強度正規化與必要之資料增強後輸入三維模型，模型設定包含 Mamba、SwinUNETR、Hybrid Mamba-Attention 與 TAP-CT 影像嵌入融合。此分支之任務包含 Normal/Abnormal 分類、塌陷角連續值預測、塌陷角三分類、排除中間灰區後之二分類、二分類 hard voting 決策彙整，以及 GOLD 相關候選分級分類。
 \end{enumerate}
 
 其中，CT 量化生物標記分析分支之處理流程如圖~\ref{fig:ct_quantification_pipeline} 所示。此分支先由胸部 CT 影像進行肺部、血管與氣道相關分割，再由分割結果擷取 12 項量化特徵，最後輸入全連接神經網路進行 Normal/Abnormal 二元分類。
@@ -18,6 +18,15 @@
 \includegraphics[width=\textwidth]{figures/ct_quantification_pipeline.png}
 \caption{電腦斷層影像量化生物標記分類流程}
 \label{fig:ct_quantification_pipeline}
+\end{figure}
+
+三維 CT 深度學習模型分支之後期融合流程如圖~\ref{fig:tapct_late_fusion_pipeline} 所示。訓練階段先對三維 CT volume 施加旋轉、平移、縮放、強度縮放、強度平移與高斯雜訊等資料增強，再將增強後影像輸入 Hybrid Mamba-Attention 編碼器取得 352 維影像表示。同一病人之 TAP-CT 特徵則作為另一組病人層級表示，經串接後輸入 MLP 分類頭，使自訓練三維影像特徵與預訓練 CT 特徵能在決策前共同參與分類。
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\textwidth]{figures/3DCT/3D CT 流程圖.png}
+\caption{三維電腦斷層影像後期融合模型流程}
+\label{fig:tapct_late_fusion_pipeline}
 \end{figure}
 
 兩條分支之分析重點並不相同。CT 量化生物標記分析分支著重於以具解剖意義之數值特徵支援小樣本分類；三維 CT 深度學習模型分析分支則著重於由原始影像直接學習肺部空間表徵，以補充人工定義特徵可能無法涵蓋之資訊。為避免資料洩漏，三維影像模型之訓練與驗證皆以病人為單位切分資料，使同一病人之原始影像與增強影像不會同時出現在訓練與驗證集合中。後續章節將分別說明兩類方法之資料範圍、模型設定與評估結果，並於討論中比較其互補性與限制。
@@ -182,6 +191,15 @@ z_{ij} = \frac{x_{ij}-\mu_j}{\sigma_j}\, .
     \item \textbf{Prediction head：}上述模型於編碼器輸出後接續 pooling 與 MLP prediction head。Pooling 用以彙整三維空間特徵，將體積影像表示轉換為病人層級特徵向量；其後之 prediction head 則依任務設定輸出連續塌陷角度預測值，或輸出對應分類任務之預測分數。
 \end{itemize}
 
+Hybrid Mamba-Attention 影像編碼器之細部架構如圖~\ref{fig:hybrid_mamba_attention_architecture} 所示。模型先以三維卷積建立局部低階特徵，再依序通過三個 Mamba stage 擷取不同解析度下之空間表徵；各階段輸出經 adaptive average pooling 轉換為病人層級特徵後進行逐層融合，最後結合 attention block 輸出之深層特徵形成 352 維三維影像表示。此設計使模型同時保留早期局部紋理、中階空間結構與深層全域關係，作為後續迴歸或分類 prediction head 之輸入。
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\textwidth]{figures/3DCT/Hybrid model architect.png}
+\caption{混合式 Mamba 注意力影像編碼器架構}
+\label{fig:hybrid_mamba_attention_architecture}
+\end{figure}
+
 三維影像模型之訓練目標依任務輸出型態設定。Normal/Abnormal 二元分類以單一 logit 表示異常傾向，訓練採用 binary cross entropy with logits loss；AC 三分類、排除中間灰區後之二分類與 GOLD 相關候選分級則輸出各類別之預測分數，並採用 cross entropy loss 進行分類訓練。
 
 \section{塌陷角迴歸任務}
@@ -228,6 +246,23 @@ TAP-CT 特徵主要用於 COPD 相關塌陷角（AC）分類與 GOLD 相關候�
     \end{itemize}
 \end{itemize}
 
+\section{多數決決策彙整}
+
+針對排除中間灰區後之 AC 二分類任務，本研究另設計 hard voting 後處理，用以觀察多個候選分類輸出彙整後對病人層級判讀結果之影響。此設定不改變模型訓練資料與交叉驗證切分，而是在每一個 validation fold 內，將同一病人可取得之多個候選預測標籤進行多數決，並以未投票之 TAP-CT late fusion 作為原始二分類基準。由於投票數設定為 3、5 與 7，皆為奇數，因此最終類別不會產生平手。
+
+設第 \(i\) 位病人共有 \(M\) 個候選預測標籤，分別為 \(\hat{y}_{i,1}, \hat{y}_{i,2}, \ldots, \hat{y}_{i,M}\)，其中 1 表示低角度異常傾向，0 表示高角度正常傾向。Hard voting 之病人層級預測定義如方程式~\eqref{eq:hard_voting}：
+
+\begin{equation}
+\label{eq:hard_voting}
+\hat{y}^{\mathrm{vote}}_i =
+\begin{cases}
+1, & \sum_{m=1}^{M}\hat{y}_{i,m} \geq \left\lceil \frac{M}{2} \right\rceil,\\
+0, & \sum_{m=1}^{M}\hat{y}_{i,m} < \left\lceil \frac{M}{2} \right\rceil.
+\end{cases}
+\end{equation}
+
+本研究比較 \(M=3\)、\(M=5\) 與 \(M=7\) 三種 vote size，並以 accuracy、sensitivity 與 specificity 作為主要評估指標。Accuracy 用於觀察整體正確率，sensitivity 用於衡量低角度異常傾向樣本之召回能力，specificity 則用於衡量高角度正常傾向樣本之辨識能力。此實驗定位為分類輸出彙整分析，主要用於檢視 hard voting 是否能在既有 AC 二分類模型之外提供額外改善，而非重新建立不同資料範圍或不同標籤定義的任務。
+
 \section{評估指標}
 
 本研究依任務輸出型態選擇評估指標。Normal/Abnormal 二元分類以 confusion matrix、accuracy、sensitivity、specificity、precision、F1-score 與 ROC-AUC 描述模型區辨能力及錯誤分類型態。二元分類中，true positive（TP）表示異常個案被正確判定為異常，true negative（TN）表示正常個案被正確判定為正常，false positive（FP）表示正常個案被誤判為異常，false negative（FN）表示異常個案被誤判為正常。由 TP、TN、FP 與 FN 可依方程式~\eqref{eq:binary_metrics} 定義 accuracy、sensitivity、specificity、precision 與 F1-score 等指標\cite{he2009imbalanced}。
@@ -245,7 +280,7 @@ TAP-CT 特徵主要用於 COPD 相關塌陷角（AC）分類與 GOLD 相關候�
 
 Receiver operating characteristic curve（ROC curve）呈現不同 decision threshold 下 true positive rate 與 false positive rate 的變化關係。Area under the curve（AUC）為 ROC curve 下方面積，用於描述模型整體區辨能力\cite{fawcett2006roc}。
 
-AC 三分類、AC 二分類與 GOLD 相關候選分級亦需考量類別數量不均，因此本文除整體 accuracy 外，同時報告 macro-F1、balanced accuracy 與 confusion matrix。若類別數為 \(K\)，第 \(k\) 類之 true positive、false positive 與 false negative 分別為 \(\mathrm{TP}_k\)、\(\mathrm{FP}_k\) 與 \(\mathrm{FN}_k\)，則各類別之 precision、recall 與 F1-score 定義如方程式~\eqref{eq:classwise_metrics}：
+AC 三分類、AC 二分類與 GOLD 相關候選分級亦需考量類別數量不均，因此本文除整體 accuracy 外，同時報告 macro precision、macro recall、macro-F1、balanced accuracy 與 confusion matrix。AC 二分類 hard voting 分析則聚焦於 accuracy、sensitivity 與 specificity，以避免表格過度分散於重複性較高的指標。若類別數為 \(K\)，第 \(k\) 類之 true positive、false positive 與 false negative 分別為 \(\mathrm{TP}_k\)、\(\mathrm{FP}_k\) 與 \(\mathrm{FN}_k\)，則各類別之 precision、recall 與 F1-score 定義如方程式~\eqref{eq:classwise_metrics}：
 
 \begin{equation}
 \label{eq:classwise_metrics}
@@ -256,13 +291,15 @@ AC 三分類、AC 二分類與 GOLD 相關候選分級亦需考量類別數量�
 \end{alignedat}
 \end{equation}
 
-Macro-F1 與 balanced accuracy 定義如方程式~\eqref{eq:macro_metrics}：
+Macro precision、macro recall、Macro-F1 與 balanced accuracy 定義如方程式~\eqref{eq:macro_metrics}：
 
 \begin{equation}
 \label{eq:macro_metrics}
 \begin{alignedat}{2}
+&\mathrm{MacroPrecision}\quad &&= \frac{1}{K}\sum_{k=1}^{K}\mathrm{Precision}_k \\
+&\mathrm{MacroRecall}\quad &&= \frac{1}{K}\sum_{k=1}^{K}\mathrm{Recall}_k \\
 &\mathrm{MacroF1}\quad &&= \frac{1}{K}\sum_{k=1}^{K}\mathrm{F1}_k \\
-&\mathrm{BalancedAccuracy}\quad &&= \frac{1}{K}\sum_{k=1}^{K}\mathrm{Recall}_k
+&\mathrm{BalancedAccuracy}\quad &&= \mathrm{MacroRecall}
 \end{alignedat}
 \end{equation}
 

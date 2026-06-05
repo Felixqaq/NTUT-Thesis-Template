@@ -4,7 +4,7 @@
 
 \section{研究問題}
 
-本章依研究流程彙整五項研究問題（Research Questions, RQs），分別評估 CT 量化特徵、三維影像模型與肺功能衍生標籤於 COPD 輔助判讀之表現。結果分析著重於模型效能、類別辨識均衡性及其臨床判讀意義。
+本章依研究流程彙整六項研究問題（Research Questions, RQs），分別評估 CT 量化特徵、三維影像模型、肺功能衍生標籤與 hard voting 決策彙整於 COPD 輔助判讀之表現。結果分析著重於模型效能、類別辨識均衡性及其臨床判讀意義。
 
 \begin{list}{}{\setlength{\leftmargin}{4.2em}\setlength{\labelwidth}{3.4em}\setlength{\labelsep}{0.8em}\setlength{\itemsep}{0.35em}}
     \item[\textbf{RQ1：}]胸部 CT 影像擷取之量化生物標記，能否區分 COPD 正常與異常？
@@ -12,11 +12,12 @@
     \item[\textbf{RQ3：}]三維 CT 影像模型是否能預測肺功能塌陷角度？
     \item[\textbf{RQ4：}]塌陷角度衍生之二分類與三分類標籤，是否有助於肺功能相關影像判讀？
     \item[\textbf{RQ5：}]三維 CT 影像模型能否辨識 GOLD 相關候選分級？
+    \item[\textbf{RQ6：}]Hard voting 決策彙整對塌陷角二分類準確率、敏感度與特異度有何影響？
 \end{list}
 
 \section{實驗環境設定}
 
-本研究實驗於本機工作站完成，硬體設備如表~\ref{tab:experiment_hardware} 所示。CT 量化生物標記分支於 Windows 環境執行，三維 CT 深度學習、塌陷角預測、GOLD 相關候選分級與 TAP-CT 相關實驗則於 Ubuntu 環境執行。兩分支之軟體環境整理如表~\ref{tab:quant_software} 與表~\ref{tab:deep_software}。
+本研究實驗於本機工作站完成，硬體設備如表~\ref{tab:experiment_hardware} 所示。CT 量化生物標記分支於 Windows 環境執行，三維 CT 深度學習、塌陷角預測、hard voting、GOLD 相關候選分級與 TAP-CT 相關實驗則於 Ubuntu 環境執行。兩分支之軟體環境整理如表~\ref{tab:quant_software} 與表~\ref{tab:deep_software}。
 
 \begin{table}[htbp]
 \centering
@@ -201,7 +202,7 @@ Hybrid Mamba-Attention & baseline & \(0.7705 \pm 0.0323\) & \(0.4350 \pm 0.0101\
 \endgroup
 \end{table}
 
-排除中間灰區後，AC 二分類表現明顯提升。TAP-CT late fusion 搭配 aug100 取得最高 Accuracy（\(0.9192 \pm 0.0718\)）、Macro-F1（\(0.8763 \pm 0.1186\)）與 Balanced accuracy（\(0.8778 \pm 0.1333\)），相較 Hybrid Mamba-Attention baseline 之 Macro-F1 0.4350 有大幅改善。Balanced accuracy 的提升亦表示模型對兩類樣本的辨識較為均衡。此結果指出，低角度異常傾向與高角度正常傾向兩端樣本具有較明確的影像差異。
+排除中間灰區後，AC 二分類表現明顯提升。TAP-CT late fusion 搭配 aug100 取得最高 Accuracy（\(0.9192 \pm 0.0718\)）、Macro-F1（\(0.8763 \pm 0.1186\)）與 Balanced accuracy（\(0.8778 \pm 0.1333\)），相較 Hybrid Mamba-Attention baseline 之 Macro-F1 0.4350 有大幅改善。Balanced accuracy 的提升亦表示模型對兩類樣本的辨識較為均衡。此結果指出，低角度異常傾向與高角度正常傾向兩端樣本具有較明確的影像差異；後續 RQ6 進一步檢視 hard voting 是否能在此二分類任務之外帶來額外準確率或敏感度改善。
 
 AC 三分類結果如表~\ref{tab:rq4_ac_3class} 所示。
 
@@ -295,5 +296,34 @@ TAP-CT late fusion 搭配 aug36 取得最高 Accuracy（\(0.6061 \pm 0.0567\)）
 \caption{GOLD 候選分級分類效能比較}
 \label{fig:rq5_gold_result}
 \end{figure}
+
+\FloatBarrier
+\subsection{RQ6 塌陷角二分類多數決結果}
+
+RQ6 針對排除中間灰區後之 AC 二分類任務，評估 hard voting 決策彙整對病人層級分類結果之影響。此實驗先以未投票之 TAP-CT late fusion 作為原始二分類基準，再以 vote size 3、5 與 7 比較不同投票數下的分類表現，結果如表~\ref{tab:rq6_ac_binary_voting} 所示。表中投票模型數量為 1 時，代表未投票之原始二分類基準；投票模型數量為 3、5 與 7 時，則代表 hard voting 使用之候選分類輸出數量。為使結果聚焦於臨床判讀中較直接的錯誤型態，本文僅呈現 Accuracy、Sensitivity 與 Specificity，分別對應整體正確率、低角度異常傾向樣本召回能力與高角度正常傾向樣本辨識能力。
+
+\begin{table}[htbp]
+\centering
+\caption{RQ6 塌陷角二分類多數決結果}
+\label{tab:rq6_ac_binary_voting}
+\begingroup
+\small
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{c c c c}
+\hline
+投票模型數量 & Accuracy & Sensitivity & Specificity \\
+\hline
+1 & \(0.919 \pm 0.072\) & \(0.800 \pm 0.267\) & \(0.956 \pm 0.054\) \\
+3 & \(0.903 \pm 0.060\) & \(0.800 \pm 0.267\) & \(0.933 \pm 0.089\) \\
+5 & \(0.919 \pm 0.072\) & \(0.800 \pm 0.267\) & \(0.956 \pm 0.089\) \\
+7 & \(0.903 \pm 0.080\) & \(0.800 \pm 0.267\) & \(0.933 \pm 0.089\) \\
+\hline
+\end{tabular}
+\endgroup
+\end{table}
+
+由表~\ref{tab:rq6_ac_binary_voting} 可見，未投票之 TAP-CT late fusion 已取得 \(0.919 \pm 0.072\) 的 Accuracy；hard voting 中表現最佳的 vote size 5 亦為 \(0.919 \pm 0.072\)，僅與原始二分類基準相同。Specificity 方面，未投票基準為 \(0.956 \pm 0.054\)，vote size 5 為 \(0.956 \pm 0.089\)，平均值相近但投票後變異較大。因此，hard voting 並未在本資料中帶來明顯準確率提升，也未比原始二分類結果形成更穩定的特異度表現。
+
+未投票基準與三種 vote size 的 Sensitivity 皆為 \(0.800 \pm 0.267\)，且標準差偏高，代表 hard voting 並未改善低角度異常傾向樣本之召回能力。Vote size 3 與 7 的 Accuracy 皆為 \(0.903\)，低於未投票基準與 vote size 5；其 Specificity 亦降至 \(0.933\)。整體而言，hard voting 在本研究中較適合作為結果穩定性檢查，而非主要效能提升策略；其對 accuracy 的增益有限，對 sensitivity 則沒有觀察到改善。
 
 \end{ZhChapter}
