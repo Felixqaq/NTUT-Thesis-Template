@@ -7,8 +7,8 @@
 本章依研究流程彙整六項研究問題（Research Questions, RQs），分別評估 CT 量化特徵、三維影像模型、肺功能衍生標籤與 hard voting 決策彙整於 COPD 輔助判讀之表現。結果分析著重於模型效能、類別辨識均衡性及其臨床判讀意義。
 
 \begin{list}{}{\setlength{\leftmargin}{4.2em}\setlength{\labelwidth}{3.4em}\setlength{\labelsep}{0.8em}\setlength{\itemsep}{0.35em}}
-    \item[\textbf{RQ1：}]胸部 CT 影像擷取之量化生物標記，能否區分 COPD 正常與異常？
-    \item[\textbf{RQ2：}]輸入三維 CT 之影像模型，是否能進行正常與異常分類？
+    \item[\textbf{RQ1：}]胸部 CT 影像擷取之量化生物標記，能否區分 Normal 與 Abnormal 個案？
+    \item[\textbf{RQ2：}]輸入三維 CT 之 Mamba 模型，是否能於 54 例資料進行 Normal/Abnormal 二分類？
     \item[\textbf{RQ3：}]三維 CT 影像模型是否能預測肺功能塌陷角度？
     \item[\textbf{RQ4：}]塌陷角度衍生之二分類與三分類標籤，是否有助於肺功能相關影像判讀？
     \item[\textbf{RQ5：}]三維 CT 影像模型能否辨識 GOLD 相關候選分級？
@@ -86,7 +86,7 @@ TAP-CT 相關套件 & transformers、timm、einops \\
 \section{實驗結果分析}
 \subsection{RQ1 量化特徵二分類結果}
 
-RQ1 以 12 項 CT 衍生量化生物標記作為輸入，採五折交叉驗證評估 Normal 與 Abnormal 個案之辨識能力，結果如表~\ref{tab:rq1_quant_result} 與圖~\ref{fig:rq1_quant_cm} 所示。整體 Accuracy 為 0.9259，AUC 為 0.9784，顯示量化特徵已能有效區分兩類個案。Precision 與 Specificity 皆為 1.0000，代表本實驗未將 Normal 個案誤判為 Abnormal；Sensitivity 為 0.8788，仍有 4 筆 Abnormal 個案被判為 Normal。F1-score 為 0.9355，顯示模型在 precision 與 sensitivity 之間維持良好的綜合表現。此結果說明肺氣腫比例、肺容積、血管與氣道等特徵具有輔助判讀價值，但異常個案漏判仍是後續模型優化的主要問題。
+RQ1 以 12 項 CT 衍生量化生物標記作為輸入，採五折交叉驗證評估 Normal 與 Abnormal 個案之辨識能力，結果如表~\ref{tab:rq1_quant_result} 與圖~\ref{fig:rq1_quant_cm} 所示。本文之 Abnormal 組對應合作醫師判定之 COPD 個案。整體 Accuracy 為 0.9259，AUC 為 0.9784，顯示量化特徵已能有效區分兩類個案。Precision 與 Specificity 皆為 1.0000，代表本實驗未將 Normal 個案誤判為 Abnormal；Sensitivity 為 0.8788，仍有 4 筆 Abnormal 個案被判為 Normal。F1-score 為 0.9355，顯示模型在 precision 與 sensitivity 之間維持良好的綜合表現。此結果說明肺氣腫比例、肺容積、血管與氣道等特徵具有輔助判讀價值，但 Abnormal 個案漏判仍是後續模型優化的主要問題。
 
 \begin{table}[htbp]
 \centering
@@ -117,13 +117,13 @@ AUC & 0.9784 & \(0.9657 \pm 0.0430\) \\
 \end{figure}
 \FloatBarrier
 
-\subsection{RQ2 三維影像模型二分類結果}
+\subsection{RQ2 三維 Mamba 二分類結果}
 
-RQ2 評估三維 CT 影像模型於 Normal/Abnormal 分類之表現。本研究採用五折平均 AUC 最高之執行設定 \texttt{nnMamba\_2026-02-12\_15:32:33\_e5} 作為代表結果，以下簡稱 nnMamba e5。各指標均以平均值與標準差呈現，如表~\ref{tab:rq2_3d_binary} 所示。
+RQ2 評估三維 CT Mamba 模型於 54 例 Normal/Abnormal 二分類之表現。此任務沿用 RQ1 之二元標籤與五折交叉驗證設定，使三維影像模型可與 CT 量化生物標記分支在相同樣本範圍下比較；其中 Abnormal 組同樣對應 COPD 個案。各指標均以平均值與標準差呈現，如表~\ref{tab:rq2_3d_binary} 所示。
 
 \begin{table}[htbp]
 \centering
-\caption{RQ2 最佳三維影像二分類結果}
+\caption{RQ2 Mamba Normal/Abnormal 二分類結果}
 \label{tab:rq2_3d_binary}
 \begingroup
 \renewcommand{\arraystretch}{1.25}
@@ -140,7 +140,7 @@ Specificity & \(1.0000 \pm 0.0000\) \\
 \endgroup
 \end{table}
 
-最佳三維影像模型之 AUC 為 \(1.0000 \pm 0.0000\)，Accuracy 為 \(0.9409 \pm 0.0422\)，Specificity 亦達 \(1.0000 \pm 0.0000\)。Sensitivity 為 \(0.9019 \pm 0.0718\)，顯示模型仍可能漏判部分異常個案。與 RQ1 相比，三維影像模型可直接學習三維 CT 體積資料之空間表徵，整體 Accuracy 與 AUC 略高；但其臨床應用仍需處理異常個案漏判及模型可解釋性不足的問題。
+Mamba Normal/Abnormal 二分類模型之 AUC 為 \(1.0000 \pm 0.0000\)，Accuracy 為 \(0.9409 \pm 0.0422\)，Specificity 亦達 \(1.0000 \pm 0.0000\)。Sensitivity 為 \(0.9019 \pm 0.0718\)，顯示模型仍可能漏判部分 Abnormal 個案。與 RQ1 相比，三維影像模型可直接學習三維 CT 體積資料之空間表徵，整體 Accuracy 與 AUC 略高；但其臨床應用仍需處理 Abnormal 個案漏判及模型可解釋性不足的問題。
 \FloatBarrier
 
 \subsection{RQ3 三維影像角度預測結果}
@@ -178,7 +178,7 @@ Hybrid Mamba-Attention 取得最低 MAE，平均誤差為 \(15.8512 \pm 4.7756\)
 
 \subsection{RQ4 塌陷角衍生分類結果}
 
-RQ4 比較塌陷角衍生標籤於二分類與三分類任務中的可辨識性。以下先呈現排除 \(132^{\circ}\)--\(151^{\circ}\) 中間灰區後之 AC 二分類，再呈現保留 intermediate 類別之 AC 三分類。\texttt{baseline} 代表各模型未使用虛擬補強之原始設定；\texttt{aug100} 與 \texttt{aug300} 則代表每類虛擬補強至 100 或 300 筆。
+RQ4 比較塌陷角衍生標籤於二分類與三分類任務中的可辨識性。以下先呈現排除 \(132^{\circ}\)--\(151^{\circ}\) AC 中間組後之 AC 二分類，再呈現保留 AC 中間組之 AC 三分類。\texttt{baseline} 代表各模型未使用虛擬補強之原始設定；\texttt{aug100} 與 \texttt{aug300} 則代表每類虛擬補強至 100 或 300 筆。
 
 AC 二分類結果如表~\ref{tab:rq4_ac_binary} 所示。
 
@@ -202,7 +202,7 @@ Hybrid Mamba-Attention & baseline & \(0.7705 \pm 0.0323\) & \(0.4350 \pm 0.0101\
 \endgroup
 \end{table}
 
-排除中間灰區後，AC 二分類表現明顯提升。TAP-CT late fusion 搭配 aug100 取得最高 Accuracy（\(0.9192 \pm 0.0718\)）、Macro-F1（\(0.8763 \pm 0.1186\)）與 Balanced accuracy（\(0.8778 \pm 0.1333\)），相較 Hybrid Mamba-Attention baseline 之 Macro-F1 0.4350 有大幅改善。Balanced accuracy 的提升亦表示模型對兩類樣本的辨識較為均衡。此結果指出，低角度異常傾向與高角度正常傾向兩端樣本具有較明確的影像差異；後續 RQ6 進一步檢視 hard voting 是否能在此二分類任務之外帶來額外準確率或敏感度改善。
+排除 AC 中間組後，AC 二分類表現明顯提升。TAP-CT late fusion 搭配 aug100 取得最高 Accuracy（\(0.9192 \pm 0.0718\)）、Macro-F1（\(0.8763 \pm 0.1186\)）與 Balanced accuracy（\(0.8778 \pm 0.1333\)），相較 Hybrid Mamba-Attention baseline 之 Macro-F1 0.4350 有大幅改善。Balanced accuracy 的提升亦表示模型對兩類樣本的辨識較為均衡。此結果指出，AC 低值組與 AC 高值組兩端樣本具有較明確的影像差異；後續 RQ6 進一步檢視 hard voting 是否能在此二分類任務之外帶來額外準確率或敏感度改善。
 
 AC 三分類結果如表~\ref{tab:rq4_ac_3class} 所示。
 
@@ -228,7 +228,7 @@ Hybrid Mamba-Attention & aug300 & \(0.7593 \pm 0.1173\) & \(0.5713 \pm 0.0748\) 
 \endgroup
 \end{table}
 
-AC 三分類中，TAP-CT late fusion 搭配 aug100 取得最高 Macro-F1（\(0.6141 \pm 0.1403\)），Accuracy 為 \(0.8209 \pm 0.0939\)。TAP-CT-S-2.5D late fusion 雖有最高 Accuracy（\(0.8352 \pm 0.0831\)），但 Macro-F1 較低，表示類別間辨識較不均衡。若以 Balanced accuracy 觀察，TAP-CT ABMIL S-3D baseline 為 \(0.6400 \pm 0.2036\)，數值最高但跨折變異亦較大，顯示三分類模型仍需同時考量整體正確率、各類別均衡性與結果穩定性。為呈現整體 Accuracy 最高設定之錯誤分布，圖~\ref{fig:rq4_ac_3class} 採用 TAP-CT-S-2.5D late fusion 繪製混淆矩陣；該模型對 Normal 與 Abnormal 類別具有較穩定的判別能力，五折測試樣本中分別正確分類 43 例與 12 例。然而，intermediate 類別 5 例皆被判為 Normal，顯示模型傾向將中間灰區樣本歸入正常端。相較於二分類，三分類需額外辨識樣本數較少且界線較模糊的 intermediate 類別，因此 Macro-F1 明顯下降，顯示中間灰區會增加肺功能相關影像判讀難度。
+AC 三分類中，TAP-CT late fusion 搭配 aug100 取得最高 Macro-F1（\(0.6141 \pm 0.1403\)），Accuracy 為 \(0.8209 \pm 0.0939\)。TAP-CT-S-2.5D late fusion 雖有最高 Accuracy（\(0.8352 \pm 0.0831\)），但 Macro-F1 較低，表示類別間辨識較不均衡。若以 Balanced accuracy 觀察，TAP-CT ABMIL S-3D baseline 為 \(0.6400 \pm 0.2036\)，數值最高但跨折變異亦較大，顯示三分類模型仍需同時考量整體正確率、各類別均衡性與結果穩定性。為呈現整體 Accuracy 最高設定之錯誤分布，圖~\ref{fig:rq4_ac_3class} 採用 TAP-CT-S-2.5D late fusion 繪製混淆矩陣；該模型對 AC 高值組與 AC 低值組具有較穩定的判別能力，五折測試樣本中分別正確分類 43 例與 12 例。然而，AC 中間組 5 例皆被判為 AC 高值組，顯示模型傾向將中間灰區樣本歸入高角度端。相較於二分類，三分類需額外辨識樣本數較少且界線較模糊的 AC 中間組，因此 Macro-F1 明顯下降，顯示中間灰區會增加肺功能相關影像判讀難度。
 
 \begin{figure}[htbp]
 \centering
@@ -300,7 +300,7 @@ TAP-CT late fusion 搭配 aug36 取得最高 Accuracy（\(0.6061 \pm 0.0567\)）
 \FloatBarrier
 \subsection{RQ6 塌陷角二分類多數決結果}
 
-RQ6 針對排除中間灰區後之 AC 二分類任務，評估 hard voting 決策彙整對病人層級分類結果之影響。此實驗先以未投票之 TAP-CT late fusion 作為原始二分類基準，再以 vote size 3、5 與 7 比較不同投票數下的分類表現，結果如表~\ref{tab:rq6_ac_binary_voting} 所示。表中投票模型數量為 1 時，代表未投票之原始二分類基準；投票模型數量為 3、5 與 7 時，則代表 hard voting 使用之候選分類輸出數量。為使結果聚焦於臨床判讀中較直接的錯誤型態，本文僅呈現 Accuracy、Sensitivity 與 Specificity，分別對應整體正確率、低角度異常傾向樣本召回能力與高角度正常傾向樣本辨識能力。
+RQ6 針對排除 AC 中間組後之 AC 二分類任務，評估 hard voting 決策彙整對病人層級分類結果之影響。此實驗之候選預測來源與 RQ4 的 AC 二分類任務相同，皆為 TAP-CT late fusion 於相同資料範圍、相同五折切分與相同 AC 低值組/高值組標籤下產生之 validation fold 候選分類輸出。Hard voting 僅將這些既有 AC 二分類候選輸出進行多數決，不加入臨床 Normal/Abnormal 或 GOLD 相關候選分級標籤。表中候選輸出數量為 1 時，代表未投票之原始二分類基準；候選輸出數量為 3、5 與 7 時，則代表 hard voting 使用之 AC 二分類候選分類輸出數量。為使結果聚焦於較直接的錯誤型態，本文僅呈現 Accuracy、Sensitivity 與 Specificity，分別對應整體正確率、AC 低值組召回能力與 AC 高值組辨識能力。
 
 \begin{table}[htbp]
 \centering
@@ -311,7 +311,7 @@ RQ6 針對排除中間灰區後之 AC 二分類任務，評估 hard voting 決�
 \renewcommand{\arraystretch}{1.25}
 \begin{tabular}{c c c c}
 \hline
-投票模型數量 & Accuracy & Sensitivity & Specificity \\
+候選輸出數量 & Accuracy & Sensitivity & Specificity \\
 \hline
 1 & \(0.919 \pm 0.072\) & \(0.800 \pm 0.267\) & \(0.956 \pm 0.054\) \\
 3 & \(0.903 \pm 0.060\) & \(0.800 \pm 0.267\) & \(0.933 \pm 0.089\) \\
@@ -322,8 +322,8 @@ RQ6 針對排除中間灰區後之 AC 二分類任務，評估 hard voting 決�
 \endgroup
 \end{table}
 
-由表~\ref{tab:rq6_ac_binary_voting} 可見，未投票之 TAP-CT late fusion 已取得 \(0.919 \pm 0.072\) 的 Accuracy；hard voting 中表現最佳的 vote size 5 亦為 \(0.919 \pm 0.072\)，僅與原始二分類基準相同。Specificity 方面，未投票基準為 \(0.956 \pm 0.054\)，vote size 5 為 \(0.956 \pm 0.089\)，平均值相近但投票後變異較大。因此，hard voting 並未在本資料中帶來明顯準確率提升，也未比原始二分類結果形成更穩定的特異度表現。
+由表~\ref{tab:rq6_ac_binary_voting} 可見，未投票之 TAP-CT late fusion 已取得 \(0.919 \pm 0.072\) 的 Accuracy；hard voting 中表現最佳的候選輸出數量 5 亦為 \(0.919 \pm 0.072\)，僅與原始二分類基準相同。Specificity 方面，未投票基準為 \(0.956 \pm 0.054\)，候選輸出數量 5 為 \(0.956 \pm 0.089\)，平均值相近但投票後變異較大。因此，hard voting 並未在本資料中帶來明顯準確率提升，也未比原始二分類結果形成更穩定的特異度表現。
 
-未投票基準與三種 vote size 的 Sensitivity 皆為 \(0.800 \pm 0.267\)，且標準差偏高，代表 hard voting 並未改善低角度異常傾向樣本之召回能力。Vote size 3 與 7 的 Accuracy 皆為 \(0.903\)，低於未投票基準與 vote size 5；其 Specificity 亦降至 \(0.933\)。整體而言，hard voting 在本研究中較適合作為結果穩定性檢查，而非主要效能提升策略；其對 accuracy 的增益有限，對 sensitivity 則沒有觀察到改善。
+未投票基準與三種候選輸出數量的 Sensitivity 皆為 \(0.800 \pm 0.267\)，且標準差偏高，代表 hard voting 並未改善 AC 低值組樣本之召回能力。候選輸出數量 3 與 7 的 Accuracy 皆為 \(0.903\)，低於未投票基準與候選輸出數量 5；其 Specificity 亦降至 \(0.933\)。整體而言，hard voting 在本研究中較適合作為結果穩定性檢查，而非主要效能提升策略；其對 accuracy 的增益有限，對 sensitivity 則沒有觀察到改善。
 
 \end{ZhChapter}
