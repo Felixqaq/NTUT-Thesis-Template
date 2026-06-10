@@ -11,13 +11,13 @@
     \item[\textbf{RQ2：}]輸入三維 CT 之 Mamba 模型，是否能於 54 例資料進行 Normal/Abnormal 二分類？
     \item[\textbf{RQ3：}]三維 CT 影像模型是否能預測肺功能塌陷角度？
     \item[\textbf{RQ4：}]塌陷角度衍生之二分類與三分類標籤，是否有助於肺功能相關影像判讀？
-    \item[\textbf{RQ5：}]三維 CT 影像模型能否辨識 GOLD 相關候選分級？
+    \item[\textbf{RQ5：}]三維 CT 影像模型能否辨識 GOLD 分級？
     \item[\textbf{RQ6：}]Hard voting 決策彙整對塌陷角二分類準確率、敏感度與特異度有何影響？
 \end{list}
 
 \section{實驗環境設定}
 
-本研究實驗於本機工作站完成，硬體設備如表~\ref{tab:experiment_hardware} 所示。CT 量化生物標記分支於 Windows 環境執行，三維 CT 深度學習、塌陷角預測、hard voting、GOLD 相關候選分級與 TAP-CT 相關實驗則於 Ubuntu 環境執行。兩分支之軟體環境整理如表~\ref{tab:quant_software} 與表~\ref{tab:deep_software}。
+本研究實驗於本機工作站完成，硬體設備如表~\ref{tab:experiment_hardware} 所示。CT 量化生物標記分支於 Windows 環境執行，三維 CT 深度學習、塌陷角預測、hard voting、GOLD 分級與 TAP-CT 相關實驗則於 Ubuntu 環境執行。兩分支之軟體環境整理如表~\ref{tab:quant_software} 與表~\ref{tab:deep_software}。
 
 \begin{table}[htbp]
 \centering
@@ -238,73 +238,13 @@ AC 三分類中，TAP-CT late fusion 搭配 aug100 取得最高 Macro-F1（\(0.6
 \end{figure}
 \FloatBarrier
 
-\subsection{RQ5 三維影像 GOLD 相關候選分級結果}
+\subsection{RQ5 塌陷角二分類多數決結果}
 
-RQ5 評估三維影像模型對 GOLD 相關候選分級之辨識能力，結果如表~\ref{tab:rq5_gold_result} 所示。表中結果皆以三折交叉驗證評估。由於四類樣本數不均且 GOLD 4 樣本數最少，本研究以 Macro-F1 作為主要比較指標，以降低多數類別對 Accuracy 的影響。\texttt{baseline} 代表未使用虛擬補強之原始訓練設定；\texttt{aug36} 與 \texttt{aug200} 則分別代表於各訓練折中將類別虛擬補強至每類 36 或 200 筆，並搭配平衡取樣訓練。其中 TAP-CT late fusion 為串接 Hybrid Mamba-Attention CT 特徵與 TAP-CT-B-3D 病人層級 frozen embedding 之融合設定。
-
-\begin{table}[htbp]
-\centering
-\caption{RQ5 GOLD 相關候選分級結果}
-\label{tab:rq5_gold_result}
-\begingroup
-\footnotesize
-\renewcommand{\arraystretch}{1.25}
-\setlength{\tabcolsep}{3pt}
-\begin{tabular}{p{0.32\textwidth} p{0.14\textwidth} c c c}
-\hline
-模型 & 資料設定 & Accuracy & Macro-F1 & Bal. acc. \\
-\hline
-Hybrid Mamba-Attention & aug36 & \(0.5606 \pm 0.1134\) & \(0.5323 \pm 0.0479\) & \(0.5222 \pm 0.0463\) \\
-Hybrid Mamba-Attention & baseline & \(0.5152 \pm 0.1868\) & \(0.4639 \pm 0.1645\) & \(0.5194 \pm 0.0834\) \\
-Hybrid Mamba-Attention & aug200 & \(0.5606 \pm 0.0773\) & \(0.4436 \pm 0.0674\) & \(0.4611 \pm 0.0307\) \\
-TAP-CT late fusion & aug36 & \(0.6061 \pm 0.0567\) & \(0.4063 \pm 0.0479\) & \(0.4250 \pm 0.0368\) \\
-SwinUNETR & baseline & \(0.4444 \pm 0.1361\) & \(0.3144 \pm 0.1559\) & \(0.3472 \pm 0.1084\) \\
-Mamba & baseline & \(0.4259 \pm 0.1458\) & \(0.3107 \pm 0.0392\) & \(0.3674 \pm 0.0606\) \\
-\hline
-\end{tabular}
-\endgroup
-\end{table}
-
-Hybrid Mamba-Attention 搭配 aug36 取得最高 Macro-F1（\(0.5323 \pm 0.0479\)），Accuracy 為 \(0.5606 \pm 0.1134\)，Balanced accuracy 為 \(0.5222 \pm 0.0463\)。相較於 baseline，aug36 將 Macro-F1 由 0.4639 提升至 0.5323，表示適度補強可改善各類別平均辨識能力。aug200 的 Accuracy 與 aug36 相同，但 Macro-F1 降至 0.4436，顯示過量補強未能改善類別平均表現。
-
-TAP-CT late fusion 搭配 aug36 取得最高 Accuracy（\(0.6061 \pm 0.0567\)），但 Macro-F1 僅為 \(0.4063 \pm 0.0479\)，低於 Hybrid Mamba-Attention 的 aug36 與 baseline 設定。合併三折混淆矩陣後，TAP-CT late fusion 對 GOLD 1 具有較高辨識率，GOLD 3 亦有部分正確分類；然而 GOLD 4 未被正確辨識，且 GOLD 2、GOLD 3 與 GOLD 4 之間仍有混淆。此結果顯示 TAP-CT 表徵融合可提高整體正確率，但仍未改善少數嚴重度類別之平均辨識能力。SwinUNETR 與 Mamba baseline 之 Macro-F1 約為 0.31，顯示單純三維影像模型在 GOLD 候選分級上仍受限。
-
-\begin{figure}[htbp]
-\centering
-\begin{tikzpicture}
-\begin{axis}[
-    ybar,
-    width=0.95\textwidth,
-    height=6.2cm,
-    ymin=0,
-    ymax=0.7,
-    ylabel={Score},
-    symbolic x coords={Hybrid aug36,Hybrid base,Hybrid aug200,TAP-CT aug36,SwinUNETR,Mamba},
-    xtick=data,
-    x tick label style={rotate=24, anchor=east},
-    bar width=8pt,
-    enlarge x limits=0.14,
-    legend style={at={(0.5,-0.28)}, anchor=north, legend columns=2},
-    ymajorgrids=true,
-    grid style={gray!25}
-]
-\addplot coordinates {(Hybrid aug36,0.5606) (Hybrid base,0.5152) (Hybrid aug200,0.5606) (TAP-CT aug36,0.6061) (SwinUNETR,0.4444) (Mamba,0.4259)};
-\addplot coordinates {(Hybrid aug36,0.5323) (Hybrid base,0.4639) (Hybrid aug200,0.4436) (TAP-CT aug36,0.4063) (SwinUNETR,0.3144) (Mamba,0.3107)};
-\legend{Accuracy, Macro-F1}
-\end{axis}
-\end{tikzpicture}
-\caption{GOLD 候選分級分類效能比較}
-\label{fig:rq5_gold_result}
-\end{figure}
-
-\FloatBarrier
-\subsection{RQ6 塌陷角二分類多數決結果}
-
-RQ6 針對排除 AC 中間組後之 AC 二分類任務，評估 hard voting 決策彙整對病人層級分類結果之影響。此實驗之候選預測來源與 RQ4 的 AC 二分類任務相同，皆為 TAP-CT late fusion 於相同資料範圍、相同五折切分與相同 AC 低值組/高值組標籤下產生之 validation fold 候選分類輸出。Hard voting 僅將這些既有 AC 二分類候選輸出進行多數決，不加入臨床 Normal/Abnormal 或 GOLD 相關候選分級標籤。表中候選輸出數量為 1 時，代表未投票之原始二分類基準；候選輸出數量為 3、5 與 7 時，則代表 hard voting 使用之 AC 二分類候選分類輸出數量。為使結果聚焦於較直接的錯誤型態，本文僅呈現 Accuracy、Sensitivity 與 Specificity，分別對應整體正確率、AC 低值組召回能力與 AC 高值組辨識能力。
+RQ5 針對排除 AC 中間組後之 AC 二分類任務，評估 hard voting 決策彙整對病人層級分類結果之影響。此實驗之候選預測來源與 RQ4 的 AC 二分類任務相同，皆為 TAP-CT late fusion 於相同資料範圍、相同五折切分與相同 AC 低值組/高值組標籤下產生之 validation fold 候選分類輸出。Hard voting 僅將這些既有 AC 二分類候選輸出進行多數決，不加入臨床 Normal/Abnormal 或 GOLD 分級標籤。表中候選輸出數量為 1 時，代表未投票之原始二分類基準；候選輸出數量為 3、5 與 7 時，則代表 hard voting 使用之 AC 二分類候選分類輸出數量。為使結果聚焦於較直接的錯誤型態，本文僅呈現 Accuracy、Sensitivity 與 Specificity，分別對應整體正確率、AC 低值組召回能力與 AC 高值組辨識能力。
 
 \begin{table}[htbp]
 \centering
-\caption{RQ6 塌陷角二分類多數決結果}
+\caption{RQ5 塌陷角二分類多數決結果}
 \label{tab:rq6_ac_binary_voting}
 \begingroup
 \small
