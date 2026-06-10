@@ -238,13 +238,47 @@ AC 三分類中，TAP-CT late fusion 搭配 aug100 取得最高 Macro-F1（\(0.6
 \end{figure}
 \FloatBarrier
 
-\subsection{RQ5 塌陷角二分類多數決結果}
+\subsection{RQ5 GOLD 分級分類結果}
 
-RQ5 針對排除 AC 中間組後之 AC 二分類任務，評估 hard voting 決策彙整對病人層級分類結果之影響。此實驗之候選預測來源與 RQ4 的 AC 二分類任務相同，皆為 TAP-CT late fusion 於相同資料範圍、相同五折切分與相同 AC 低值組/高值組標籤下產生之 validation fold 候選分類輸出。Hard voting 僅將這些既有 AC 二分類候選輸出進行多數決，不加入臨床 Normal/Abnormal 或 GOLD 分級標籤。表中候選輸出數量為 1 時，代表未投票之原始二分類基準；候選輸出數量為 3、5 與 7 時，則代表 hard voting 使用之 AC 二分類候選分類輸出數量。為使結果聚焦於較直接的錯誤型態，本文僅呈現 Accuracy、Sensitivity 與 Specificity，分別對應整體正確率、AC 低值組召回能力與 AC 高值組辨識能力。
+RQ5 評估三維 CT 影像模型於 GOLD 四分級任務之辨識能力。本任務依第三章 GOLD 2026 標籤設定，排除 Class 0（FEV1/FVC $\geq 70\%$，34 例），以 GOLD 1 至 GOLD 4 共 32 例進行四分類實驗（各類分別為 2、11、13、6 例）。模型採 Hybrid Mamba-Attention 搭配 TAP-CT late fusion，以 5 折交叉驗證搭配每類別補至 13 筆之虛擬增強（aug13）訓練；因 GOLD 1 僅有 2 例，允許其驗證樣本跨折重複使用。實驗結果如表~\ref{tab:rq5_gold_result} 所示，合併五折測試預測之混淆矩陣如圖~\ref{fig:rq5_gold_cm} 所示。
 
 \begin{table}[htbp]
 \centering
-\caption{RQ5 塌陷角二分類多數決結果}
+\caption{RQ5 GOLD 四分級分類結果（Hybrid Mamba-Attention + TAP-CT Late Fusion）}
+\label{tab:rq5_gold_result}
+\begingroup
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{l c}
+\hline
+指標 & 五折平均結果 \\
+\hline
+Accuracy & $0.5143 \pm 0.1714$ \\
+Macro-F1 & $0.3333 \pm 0.0883$ \\
+Macro-Precision & $0.3100 \pm 0.0735$ \\
+Macro-Recall & $0.3750 \pm 0.1149$ \\
+Balanced Accuracy & $0.3750 \pm 0.1149$ \\
+\hline
+\end{tabular}
+\endgroup
+\end{table}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.82\textwidth]{figures/total_confusion_matrix.png}
+\caption{RQ5 GOLD 四分級分類混淆矩陣（合併五折）}
+\label{fig:rq5_gold_cm}
+\end{figure}
+
+由表~\ref{tab:rq5_gold_result} 可見，模型五折平均 Accuracy 為 $0.5143 \pm 0.1714$，Macro-F1 為 $0.3333 \pm 0.0883$，Balanced Accuracy 為 $0.3750 \pm 0.1149$，各指標跨折標準差均偏高，反映小樣本四分類任務結果之不穩定性。由圖~\ref{fig:rq5_gold_cm} 可見，GOLD 3（13 例）與 GOLD 2（11 例）辨識能力相對較佳，五折測試預測中分別正確分類 9 例與 7 例；GOLD 4（6 例，2 例正確）多被誤判為 GOLD 2 或 GOLD 3。值得注意的是，由於 GOLD 1 驗證樣本跨折重複使用，五折合計共產生 5 筆 GOLD 1 測試預測，但均未獲正確分類，且模型從未預測任何樣本屬於 GOLD 1，顯示 2 例之極少樣本數導致該分級幾乎無法有效學習。整體而言，GOLD 2 至 4 的辨識呈現隨嚴重程度遞增之梯度差異，中間分級邊界模糊為主要混淆來源；在 GOLD 1 樣本量極度不足的前提下，Balanced Accuracy 低於 0.40，顯示資料不平衡是四分類可行性的主要限制因素。
+\FloatBarrier
+
+\subsection{RQ6 塌陷角二分類多數決結果}
+
+RQ6 針對排除 AC 中間組後之 AC 二分類任務，評估 hard voting 決策彙整對病人層級分類結果之影響。此實驗之候選預測來源與 RQ4 的 AC 二分類任務相同，皆為 TAP-CT late fusion 於相同資料範圍、相同五折切分與相同 AC 低值組/高值組標籤下產生之 validation fold 候選分類輸出。Hard voting 僅將這些既有 AC 二分類候選輸出進行多數決，不加入臨床 Normal/Abnormal 或 GOLD 分級標籤。表中候選輸出數量為 1 時，代表未投票之原始二分類基準；候選輸出數量為 3、5 與 7 時，則代表 hard voting 使用之 AC 二分類候選分類輸出數量。為使結果聚焦於較直接的錯誤型態，本文僅呈現 Accuracy、Sensitivity 與 Specificity，分別對應整體正確率、AC 低值組召回能力與 AC 高值組辨識能力。
+
+\begin{table}[htbp]
+\centering
+\caption{RQ6 塌陷角二分類多數決結果}
 \label{tab:rq6_ac_binary_voting}
 \begingroup
 \small

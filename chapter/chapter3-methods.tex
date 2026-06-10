@@ -8,7 +8,7 @@
 
 \begin{enumerate}
     \item \textbf{CT 量化生物標記分析分支：}強調影像特徵之可解釋性。轉換後之 CT 影像先經肺部、肺葉、血管與氣道相關分割流程產生 label map，再依各結構遮罩計算肺氣腫比例、肺容積、血管密度、小血管體積比例、氣道相關比例與肺動脈直徑等數值特徵。上述特徵可對應肺實質、血管與氣道結構變化，故本研究將其視為 CT 量化生物標記，並以全連接神經網路進行 Normal/Abnormal 二元分類。如圖~\ref{fig:ct_quantification_pipeline} 所示。
-    \item \textbf{三維 CT 深度學習模型分析分支：}保留完整三維影像輸入，不先將 CT volume 壓縮為人工定義特徵。NIfTI 影像經尺寸統一、強度正規化與必要之資料增強後輸入三維模型，模型設定包含 Mamba、SwinUNETR、Hybrid Mamba-Attention 與 TAP-CT 影像嵌入融合。此分支之任務包含 Normal/Abnormal 二分類、塌陷角連續值預測、塌陷角三分類、排除中間灰區後之二分類，以及 GOLD 分級分類。如圖~\ref{fig:tapct_late_fusion_pipeline} 所示
+    \item \textbf{三維 CT 深度學習模型分析分支：}保留完整三維影像輸入，不先將 CT volume 壓縮為人工定義特徵。NIfTI 影像經尺寸統一、強度正規化與必要之資料增強後輸入三維模型，三維模型架構包含 Mamba（用於 Normal/Abnormal 二分類與 AC 迴歸之比較基準）、SwinUNETR（用於 AC 迴歸之比較基準）、Hybrid Mamba-Attention，以及結合預訓練胸部 CT 嵌入之 TAP-CT 融合模型。此分支之任務包含 Normal/Abnormal 二分類、塌陷角連續值迴歸、塌陷角三分類、排除中間灰區後之二分類，以及 GOLD 分級分類。如圖~\ref{fig:tapct_late_fusion_pipeline} 所示
 \end{enumerate}
 
 \begin{figure}[H]
@@ -34,7 +34,7 @@
 本研究資料由北投振興醫院提供，包含病人胸部 CT 的 DICOM 影像及肺功能檢查（pulmonary function test, PFT）。
 量化生物標記分支使用 54 例胸部 CT，其中 Normal 21 例、Abnormal 33 例；其 Normal/Abnormal 二元標籤由合作醫師依 ATS/ERS 肺功能判讀標準\cite{stanojevic2022ersats}。
 
-三維 CT 分支依任務使用兩種資料範圍。Normal/Abnormal 二分類任務沿用上述 54 例資料，以便與量化生物標記分支比較同一臨床二分類標籤下之表現；肺功能相關任務則使用擴充後之 66 例資料，包含前述 54 例與新增之 12 例 CT，且各例皆可與 PFT 資料對應。PFT 資料用於整理塌陷角度與 GOLD 相關候選標籤，並作為 Mamba、SwinUNETR、Hybrid Mamba-Attention 與 TAP-CT 融合模型訓練與驗證資料。塌陷角度（Angle of Collapse, AC）係由肺功能檢查之呼氣流量容積曲線萃取的幾何指標。參考 Topalovic 等人提出之 AC 與肺氣腫關係，本研究採用 $131^{\circ}$ 與 $152^{\circ}$ 作為角度分級門檻\cite{topalovic2013anglecollapse}。各資料範圍與用途如表~\ref{tab:dataset_composition} 所示。
+三維 CT 分支依任務使用兩種資料範圍。Normal/Abnormal 二分類任務沿用上述 54 例資料，以便與量化生物標記分支比較同一臨床二分類標籤下之表現；肺功能相關任務則使用擴充後之 66 例資料，包含前述 54 例與新增之 12 例 CT，且各例皆可與 PFT 資料對應。PFT 資料用於整理塌陷角度與 GOLD 標籤，作為 Mamba 與 SwinUNETR（AC 迴歸）、Hybrid Mamba-Attention 與 TAP-CT 融合模型（AC 分類及 GOLD 分級）之訓練與驗證資料。塌陷角度（Angle of Collapse, AC）係由肺功能檢查之呼氣流量容積曲線萃取的幾何指標。參考 Topalovic 等人提出之 AC 與肺氣腫關係，本研究採用 $131^{\circ}$ 與 $152^{\circ}$ 作為角度分級門檻\cite{topalovic2013anglecollapse}。各資料範圍與用途如表~\ref{tab:dataset_composition} 所示。
 
 \begin{table}[htbp]
 \centering
@@ -53,7 +53,7 @@
 
 AC 三分類任務將影像依肺功能曲線衍生角度分為三類：$AC \leq 131^{\circ}$ 為 AC 低值組，$132^{\circ} \leq AC \leq 151^{\circ}$ 為 AC 中間組，$AC \geq 152^{\circ}$ 為 AC 高值組。原始 66 例資料中，三類樣本數分別為 14、5 與 47 例。上述 AC 類別為肺功能曲線衍生標籤，不等同於臨床 Normal/Abnormal 二元標籤。由於 AC 中間組樣本數較少且可能代表肺功能曲線表徵之灰區，本研究另設計 AC 二分類任務，排除 $132^{\circ}$ 至 $151^{\circ}$ 之 5 例，只保留 $AC \leq 131^{\circ}$ 與 $AC \geq 152^{\circ}$ 兩端較明確之 61 例資料。
 
-GOLD 相關候選標籤則依肺功能檢查中 FEV1 佔預測值百分比進行整理，分為 GOLD 1、GOLD 2、GOLD 3 與 GOLD 4。於 66 例三維影像資料中，四類樣本數分別為 2、11、13 與 6 例。
+GOLD 標籤依據 GOLD 2026 固定比值準則整理：以 FEV1/FVC 實測比值低於 70\% 作為 COPD 判定條件，再依支氣管擴張後 FEV1\% 預測值分為 GOLD 1（輕度，$\geq 80\%$）、GOLD 2（中度，50\%--79\%）、GOLD 3（重度，30\%--49\%）與 GOLD 4（極重度，$< 30\%$）。66 例資料中，FEV1/FVC $\geq 70\%$ 者歸為 Class 0（沒有 COPD，34 例），GOLD 1 至 4 各有 2、11、13 與 6 例，合計 32 例。GOLD 分級分類任務排除 Class 0，僅以此 32 例進行四分類訓練與評估。
 
 \section{資料前處理}
 
@@ -170,10 +170,10 @@ TAP-CT 特徵用於 AC 分類與 GOLD 分級，比較以下兩種方式：
 所有實驗以病人為資料切分單位，同一病人的 CT、TAP-CT 特徵與增強樣本只能出現在同一 fold，避免資料洩漏。
 
 \begin{itemize}
-    \item \textbf{交叉驗證：}量化特徵分類採 stratified five-fold，以 training fold 估計標準化參數。三維 CT 模型的 Normal/Abnormal、AC 三分類與 AC 二分類同樣採五折；AC 迴歸依角度分布建立 quantile bins 後分層切分，降低各折角度分布差異。GOLD 分級因少數類別樣本不足，改採三折。
+    \item \textbf{交叉驗證：}量化特徵分類採 stratified five-fold，以 training fold 估計標準化參數。三維 CT 模型的 Normal/Abnormal、AC 三分類與 AC 二分類同樣採五折；AC 迴歸依角度分布建立 quantile bins 後分層切分，降低各折角度分布差異。GOLD 分級亦採五折，但因 GOLD 1 僅有 2 例，允許其驗證樣本跨折重複使用，以確保各折均能涵蓋所有分級類別。
     \item \textbf{三維影像輸入：}統一為 \(1 \times 112 \times 136 \times 112\) 的 channel-first volume，並依任務進行 HU clipping 與強度正規化。
     \item \textbf{資料增強：}僅套用於 training fold。AC 三分類、AC 二分類與 TAP-CT late fusion 採較小幅度：旋轉 \(\pm 5^{\circ}\)、平移 0.03、縮放 0.97--1.03、強度縮放 0.98--1.02、強度平移 \(\pm 0.05\)、高斯雜訊標準差 0.02。GOLD 分級因類別更不平衡，幅度加大：旋轉 \(\pm 7^{\circ}\)、平移 0.05、縮放 0.95--1.05、強度縮放 0.95--1.05、強度平移 \(\pm 0.1\)、高斯雜訊標準差 0.03。
-    \item \textbf{平衡取樣：}對類別不平衡任務，於 training fold 內對各類別產生虛擬增強樣本，每個 epoch 再以少數類別數量為基準隨機平衡取樣。測試的補樣本數如下：AC 三分類補至每類 50、75、100、200、300 筆，另測試每筆產生 12 個視圖的先平衡後增強設定；AC 二分類補至每類 100 筆；TAP-CT late fusion 的 AC 任務補至每類 100 筆、GOLD 分級補至每類 36 筆。
+    \item \textbf{平衡取樣：}對類別不平衡任務，於 training fold 內對各類別產生虛擬增強樣本，每個 epoch 再以少數類別數量為基準隨機平衡取樣。測試的補樣本數如下：AC 三分類補至每類 50、75、100、200、300 筆，另測試每筆產生 12 個視圖的先平衡後增強設定；AC 二分類補至每類 100 筆；TAP-CT late fusion 的 AC 任務補至每類 100 筆、GOLD 分級補至每類 13 筆。
 \end{itemize}
 
 \section{Voting}

@@ -1,0 +1,268 @@
+{
+  "meta": {
+    "uuid": "hybrid_mamba_tapct_fusion_gold_severity4_tap_ct_late_fusion_aug13_class_2026-06-10_12:30:02",
+    "model": "hybrid_mamba_tapct_fusion",
+    "experiment": {
+      "name": "GOLD severity4 TAP-CT late fusion + aug13/class",
+      "description": "Excludes Class 0 No COPD, remaps GOLD 1-4 to a four-class head, and augments each train fold to 13 samples/class while reusing underrepresented GOLD 1 validation patients across 5 folds without same-fold train/val leakage."
+    },
+    "task": "GOLD_severity4_classification",
+    "task_type": "gold",
+    "timestamp": "2026-06-10T12:37:06.682717",
+    "training_started_at": "2026-06-10T12:30:02.587491",
+    "training_finished_at": "2026-06-10T12:37:06.113638",
+    "training_duration_seconds": 423.526,
+    "training_duration_hours": 0.1176,
+    "class_names": [
+      "GOLD 1 (Mild)",
+      "GOLD 2 (Moderate)",
+      "GOLD 3 (Severe)",
+      "GOLD 4 (Very Severe)"
+    ],
+    "config": {
+      "epochs": 160,
+      "batch_size": 12,
+      "learning_rate": 0.0001,
+      "weight_decay": 0.001,
+      "k_folds": 5,
+      "seed": 42,
+      "loss": "auto",
+      "num_classes": 4,
+      "model_output_dim": 4,
+      "classification_mode": "multiclass",
+      "target_mode": "gold",
+      "tapct_features": "embeddings/tapct_b_3d/features.npz",
+      "tapct_embedding_dim": 2304,
+      "fusion_projection_dim": 128
+    }
+  },
+  "folds": [
+    {
+      "fold": 1,
+      "best_epoch": 25,
+      "accuracy": 0.42857,
+      "macro_f1": 0.3,
+      "macro_precision": 0.25,
+      "macro_recall": 0.375,
+      "balanced_accuracy": 0.375,
+      "sensitivity": 0.375,
+      "specificity": 0.8,
+      "confusion_matrix": [
+        [
+          0,
+          1,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          2,
+          0
+        ],
+        [
+          0,
+          0,
+          1,
+          1
+        ],
+        [
+          0,
+          0,
+          0,
+          2
+        ]
+      ]
+    },
+    {
+      "fold": 2,
+      "best_epoch": 75,
+      "accuracy": 0.71429,
+      "macro_f1": 0.4375,
+      "macro_precision": 0.4,
+      "macro_recall": 0.5,
+      "balanced_accuracy": 0.5,
+      "sensitivity": 0.5,
+      "specificity": 0.875,
+      "confusion_matrix": [
+        [
+          0,
+          0,
+          1,
+          0
+        ],
+        [
+          0,
+          2,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          3,
+          0
+        ],
+        [
+          0,
+          0,
+          1,
+          0
+        ]
+      ]
+    },
+    {
+      "fold": 3,
+      "best_epoch": 20,
+      "accuracy": 0.28571,
+      "macro_f1": 0.225,
+      "macro_precision": 0.25,
+      "macro_recall": 0.20833,
+      "balanced_accuracy": 0.20833,
+      "sensitivity": 0.20833,
+      "specificity": 0.7625,
+      "confusion_matrix": [
+        [
+          0,
+          0,
+          0,
+          1
+        ],
+        [
+          0,
+          1,
+          0,
+          1
+        ],
+        [
+          0,
+          1,
+          1,
+          1
+        ],
+        [
+          0,
+          0,
+          1,
+          0
+        ]
+      ]
+    },
+    {
+      "fold": 4,
+      "best_epoch": 40,
+      "accuracy": 0.42857,
+      "macro_f1": 0.26667,
+      "macro_precision": 0.25,
+      "macro_recall": 0.29167,
+      "balanced_accuracy": 0.29167,
+      "sensitivity": 0.29167,
+      "specificity": 0.79583,
+      "confusion_matrix": [
+        [
+          0,
+          0,
+          1,
+          0
+        ],
+        [
+          0,
+          1,
+          0,
+          1
+        ],
+        [
+          0,
+          1,
+          2,
+          0
+        ],
+        [
+          0,
+          1,
+          0,
+          0
+        ]
+      ]
+    },
+    {
+      "fold": 5,
+      "best_epoch": 60,
+      "accuracy": 0.71429,
+      "macro_f1": 0.4375,
+      "macro_precision": 0.4,
+      "macro_recall": 0.5,
+      "balanced_accuracy": 0.5,
+      "sensitivity": 0.5,
+      "specificity": 0.875,
+      "confusion_matrix": [
+        [
+          0,
+          1,
+          0,
+          0
+        ],
+        [
+          0,
+          3,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          2,
+          0
+        ],
+        [
+          0,
+          1,
+          0,
+          0
+        ]
+      ]
+    }
+  ],
+  "summary": {
+    "mean_accuracy": 0.51429,
+    "std_accuracy": 0.17143,
+    "mean_macro_f1": 0.33333,
+    "std_macro_f1": 0.08831,
+    "mean_macro_precision": 0.31,
+    "std_macro_precision": 0.07348,
+    "mean_macro_recall": 0.375,
+    "std_macro_recall": 0.11487,
+    "mean_balanced_accuracy": 0.375,
+    "std_balanced_accuracy": 0.11487,
+    "mean_sensitivity": 0.375,
+    "std_sensitivity": 0.11487,
+    "mean_specificity": 0.82167,
+    "std_specificity": 0.04545
+  },
+  "total_confusion_matrix": [
+    [
+      0,
+      2,
+      2,
+      1
+    ],
+    [
+      0,
+      7,
+      2,
+      2
+    ],
+    [
+      0,
+      2,
+      9,
+      2
+    ],
+    [
+      0,
+      2,
+      2,
+      2
+    ]
+  ]
+}
