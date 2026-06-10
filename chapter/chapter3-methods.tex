@@ -8,7 +8,7 @@
 
 \begin{enumerate}
     \item \textbf{CT 量化生物標記分析分支：}強調影像特徵之可解釋性。轉換後之 CT 影像先經肺部、肺葉、血管與氣道相關分割流程產生 label map，再依各結構遮罩計算肺氣腫比例、肺容積、血管密度、小血管體積比例、氣道相關比例與肺動脈直徑等數值特徵。上述特徵可對應肺實質、血管與氣道結構變化，故本研究將其視為 CT 量化生物標記，並以全連接神經網路進行 Normal/Abnormal 二元分類。如圖~\ref{fig:ct_quantification_pipeline} 所示。
-    \item \textbf{三維 CT 深度學習模型分析分支：}保留完整三維影像輸入，不先將 CT volume 壓縮為人工定義特徵。NIfTI 影像經尺寸統一、強度正規化與必要之資料增強後輸入三維模型，三維模型架構包含 Mamba（用於 Normal/Abnormal 二分類與 AC 迴歸之比較基準）、SwinUNETR（用於 AC 迴歸之比較基準）、Hybrid Mamba-Attention，以及結合預訓練胸部 CT 嵌入之 TAP-CT 融合模型。此分支之任務包含 Normal/Abnormal 二分類、塌陷角連續值迴歸、塌陷角三分類、排除中間灰區後之二分類，以及 GOLD 分級分類。如圖~\ref{fig:tapct_late_fusion_pipeline} 所示
+    \item \textbf{三維 CT 深度學習模型分析分支：}保留完整三維影像輸入，不先將 CT volume 壓縮為人工定義特徵。NIfTI 影像經尺寸統一、強度正規化與必要之資料增強後輸入三維模型，三維模型架構包含 Mamba（用於 Normal/Abnormal 二分類與 AC 迴歸之比較基準）、SwinUNETR（用於 AC 迴歸之比較基準）、Hybrid Mamba-Attention，以及結合預訓練胸部 CT 嵌入之 TAP-CT 融合模型。此分支之任務包含 Normal/Abnormal 二分類、塌陷角連續值迴歸、塌陷角三分類、排除中間灰區後之二分類，以及 GOLD 分級分類。如圖~\ref{fig:tapct_late_fusion_pipeline} 所示。
 \end{enumerate}
 
 \begin{figure}[H]
@@ -31,10 +31,10 @@
 
 \section{資料集}
 
-本研究資料由北投振興醫院提供，包含病人胸部 CT 的 DICOM 影像及肺功能檢查（pulmonary function test, PFT）。
-量化生物標記分支使用 54 例胸部 CT，其中 Normal 21 例、Abnormal 33 例；其 Normal/Abnormal 二元標籤由合作醫師依 ATS/ERS 肺功能判讀標準\cite{stanojevic2022ersats}。
+本研究資料由北投振興醫院提供，包含病人胸部 CT 的 DICOM 影像及肺功能檢查（PFT）。
+量化生物標記分支使用 54 例胸部 CT，其中 Normal 21 例、Abnormal 33 例；其 Normal/Abnormal 二元標籤由合作醫師依 ATS/ERS 肺功能判讀標準判定\cite{stanojevic2022ersats}。
 
-三維 CT 分支依任務使用兩種資料範圍。Normal/Abnormal 二分類任務沿用上述 54 例資料，以便與量化生物標記分支比較同一臨床二分類標籤下之表現；肺功能相關任務則使用擴充後之 66 例資料，包含前述 54 例與新增之 12 例 CT，且各例皆可與 PFT 資料對應。PFT 資料用於整理塌陷角度與 GOLD 標籤，作為 Mamba 與 SwinUNETR（AC 迴歸）、Hybrid Mamba-Attention 與 TAP-CT 融合模型（AC 分類及 GOLD 分級）之訓練與驗證資料。塌陷角度（Angle of Collapse, AC）係由肺功能檢查之呼氣流量容積曲線萃取的幾何指標。參考 Topalovic 等人提出之 AC 與肺氣腫關係，本研究採用 $131^{\circ}$ 與 $152^{\circ}$ 作為角度分級門檻\cite{topalovic2013anglecollapse}。各資料範圍與用途如表~\ref{tab:dataset_composition} 所示。
+三維 CT 分支依任務使用兩種資料範圍。Normal/Abnormal 二分類任務沿用上述 54 例資料，以便與量化生物標記分支比較同一臨床二分類標籤下之表現；肺功能相關任務則使用擴充後之 66 例資料，包含前述 54 例與新增之 12 例 CT，且各例皆可與 PFT 資料對應。PFT 資料用於整理塌陷角度與 GOLD 標籤，作為 Mamba 與 SwinUNETR（AC 迴歸）、Hybrid Mamba-Attention 與 TAP-CT 融合模型（AC 分類及 GOLD 分級）之訓練與驗證資料。塌陷角度（AC）係由肺功能檢查之呼氣流量容積曲線萃取的幾何指標。參考 Topalovic 等人提出之 AC 與肺氣腫關係，本研究採用 $131^{\circ}$ 與 $152^{\circ}$ 作為角度分級門檻\cite{topalovic2013anglecollapse}。各資料範圍與用途如表~\ref{tab:dataset_composition} 所示。
 
 \begin{table}[htbp]
 \centering
@@ -53,7 +53,7 @@
 
 AC 三分類任務將影像依肺功能曲線衍生角度分為三類：$AC \leq 131^{\circ}$ 為 AC 低值組，$132^{\circ} \leq AC \leq 151^{\circ}$ 為 AC 中間組，$AC \geq 152^{\circ}$ 為 AC 高值組。原始 66 例資料中，三類樣本數分別為 14、5 與 47 例。上述 AC 類別為肺功能曲線衍生標籤，不等同於臨床 Normal/Abnormal 二元標籤。由於 AC 中間組樣本數較少且可能代表肺功能曲線表徵之灰區，本研究另設計 AC 二分類任務，排除 $132^{\circ}$ 至 $151^{\circ}$ 之 5 例，只保留 $AC \leq 131^{\circ}$ 與 $AC \geq 152^{\circ}$ 兩端較明確之 61 例資料。
 
-GOLD 標籤依據 GOLD 2026 固定比值準則整理：以 FEV1/FVC 實測比值低於 70\% 作為 COPD 判定條件，再依支氣管擴張後 FEV1\% 預測值分為 GOLD 1（輕度，$\geq 80\%$）、GOLD 2（中度，50\%--79\%）、GOLD 3（重度，30\%--49\%）與 GOLD 4（極重度，$< 30\%$）。66 例資料中，FEV1/FVC $\geq 70\%$ 者歸為 Class 0（沒有 COPD，34 例），GOLD 1 至 4 各有 2、11、13 與 6 例，合計 32 例。GOLD 分級分類任務排除 Class 0，僅以此 32 例進行四分類訓練與評估。
+GOLD 標籤依據 GOLD 2026 固定比值準則整理：以 FEV1/FVC 實測比值低於 70\% 作為 COPD 判定條件，再依支氣管擴張劑後 FEV1\% 預測值分為 GOLD 1（輕度，$\geq 80\%$）、GOLD 2（中度，50\%--79\%）、GOLD 3（重度，30\%--49\%）與 GOLD 4（極重度，$< 30\%$）。66 例資料中，FEV1/FVC $\geq 70\%$ 者歸為 Class 0（沒有 COPD，34 例），GOLD 1 至 4 各有 2、11、13 與 6 例，合計 32 例。GOLD 分級分類任務排除 Class 0，僅以此 32 例進行四分類訓練與評估。
 
 \section{資料前處理}
 
@@ -63,9 +63,9 @@ GOLD 標籤依據 GOLD 2026 固定比值準則整理：以 FEV1/FVC 實測比值
 
 CT 強度值轉換依據 DICOM 中之 RescaleSlope 與 RescaleIntercept 進行。實際處理時，先將原始 pixel value 轉換為對應之 HU 值，使影像強度與原始掃描條件保持一致。此步驟對本研究特別重要，因為後續量化分析高度依賴影像強度的正確性；若未正確轉換 HU，相關影像表徵與量化結果皆可能產生系統性偏差。轉換後之影像以 NIfTI 格式儲存，並保留必要之空間與強度資訊，以支援後續分析流程。
 
-PFT 資料則以病人為單位與 CT volume 對應，用於建立正常/異常二元標籤、FEV1 預測值百分比相關分級，以及塌陷角度（AC）等肺功能導向標籤。
+PFT 資料則以病人為單位與 CT volume 對應，用於建立 Normal/Abnormal 二元標籤、FEV1 預測值百分比相關分級，以及塌陷角度（AC）等肺功能導向標籤。
 
-\section{肺部結構分割與量化參數擷取}
+\section{肺部結構分割與量化參數擷取}\label{sec:seg_quant}
 
 本研究以 NIfTI volume 為輸入，透過 3D Slicer 結合 MONAI Auto3DSeg 產生多類別 label map\cite{fedorov2012slicer,cardoso2022monai}。Label 1 至 5 對應五個肺葉並合併為總肺遮罩，label 6 至 9 對應血管、氣管、肺靜脈系統與肺動脈。氣道結構另以 AeroPath 分割結果補充\cite{stoverud2024aeropath}，若 airway mask 可取得則優先採用，否則以 label map 中之氣管標籤近似。分割後確認各主要結構 label 非空且 voxel 數合理，再進行特徵計算。
 
@@ -101,7 +101,7 @@ d_{\mathrm{PA}} = 2\left(\frac{3V_{\mathrm{PA}}}{4\pi}\right)^{1/3}
 肺氣腫比例、血管與氣道比例以百分比表示，肺體積與肺動脈直徑保留物理單位，供後續模型標準化與分類使用。
 
 \clearpage
-\section{量化CT分類模型}
+\section{量化 CT 分類模型}
 
 \begin{figure}[htbp]
 \centering
@@ -110,7 +110,7 @@ d_{\mathrm{PA}} = 2\left(\frac{3V_{\mathrm{PA}}}{4\pi}\right)^{1/3}
 \label{fig:fc_classification_architecture}
 \end{figure}
 
-量化生物標記分類模型以第 3.4 節所述之 12 項 CT 量化特徵作為輸入，進行 Normal/Abnormal 二元分類。相較於三維 CT 模型，此分支輸入維度低，且各特徵對應明確的肺部結構變化，在本研究 54 例小樣本條件下具有較好的可解釋性。
+量化生物標記分類模型以第~\ref{sec:seg_quant}~節所述之 12 項 CT 量化特徵作為輸入，進行 Normal/Abnormal 二元分類。相較於三維 CT 模型，此分支輸入維度低，且各特徵對應明確的肺部結構變化，在本研究 54 例小樣本條件下具有較好的可解釋性。
 
 標籤以 0 表示 Normal、1 表示 Abnormal。由於各特徵單位與尺度不同，模型訓練前僅以 training fold 資料計算各特徵的均值與標準差進行 z-score 標準化，避免驗證資料洩漏至標準化參數估計。
 
@@ -119,7 +119,7 @@ d_{\mathrm{PA}} = 2\left(\frac{3V_{\mathrm{PA}}}{4\pi}\right)^{1/3}
 模型訓練設定與驗證方式如下：
 
 \begin{itemize}
-    \item \textbf{輸入與標籤：}模型輸入為第 3.4 節所列 12 項量化特徵（已 z-score 標準化），標籤 0 為 Normal、1 為 Abnormal。
+    \item \textbf{輸入與標籤：}模型輸入為第~\ref{sec:seg_quant}~節所列 12 項量化特徵（已 z-score 標準化），標籤 0 為 Normal、1 為 Abnormal。
     \item \textbf{模型架構：}網路維度為 $12 \rightarrow 64 \rightarrow 32 \rightarrow 16 \rightarrow 2$。各 hidden layer 後接 batch normalization、ReLU activation 與 dropout，以增加非線性表示能力並降低小樣本訓練時之過擬合風險。
     \item \textbf{輸出與訓練目標：}輸出層包含 2 個 logits，分別對應 Normal 與 Abnormal 類別，並以 softmax 轉換為類別機率。模型訓練使用 CrossEntropyLoss。
     \item \textbf{最佳化與訓練設定：}Optimizer 採用 Adam，初始 learning rate 為 0.001，weight decay 為 $1\times10^{-5}$；batch size 設為 16，最多訓練 100 epochs。
@@ -156,7 +156,7 @@ Hybrid Mamba-Attention 影像編碼器之細部架構如圖~\ref{fig:hybrid_mamb
 
 \section{TAP-CT 影像嵌入與融合策略}
 
-TAP-CT 為針對三維 CT 預訓練的影像編碼模型，可將 CT volume 轉換為固定維度的特徵向量\cite{veenboer2025tapct}。由於本研究樣本數有限，不重新訓練 TAP-CT 權重，而是固定參數直接擷取特徵。本文依實驗設定使用 TAP-CT-B-3D、TAP-CT-S-3D 與 TAP-CT-S-2.5D，分別產生 2304 維與 1152 維向量；若 CT 被切成多個區段處理，則先整合同一病人的多段特徵再進入後續模型。
+TAP-CT 為針對三維 CT 預訓練的影像編碼模型，可將 CT volume 轉換為固定維度的特徵向量\cite{veenboer2025tapct}。由於本研究樣本數有限，不重新訓練 TAP-CT 權重，而是固定參數直接擷取特徵。本文依實驗設定使用 TAP-CT-B-3D、TAP-CT-S-3D 與 TAP-CT-S-2.5D，其中 B-3D 產生 2304 維特徵向量，S-3D 與 S-2.5D 產生 1152 維特徵向量；若 CT 被切成多個區段處理，則先整合同一病人的多段特徵再進入後續模型。
 
 TAP-CT 特徵用於 AC 分類與 GOLD 分級，比較以下兩種方式：
 
@@ -176,7 +176,7 @@ TAP-CT 特徵用於 AC 分類與 GOLD 分級，比較以下兩種方式：
     \item \textbf{平衡取樣：}對類別不平衡任務，於 training fold 內對各類別產生虛擬增強樣本，每個 epoch 再以少數類別數量為基準隨機平衡取樣。測試的補樣本數如下：AC 三分類補至每類 50、75、100、200、300 筆，另測試每筆產生 12 個視圖的先平衡後增強設定；AC 二分類補至每類 100 筆；TAP-CT late fusion 的 AC 任務補至每類 100 筆、GOLD 分級補至每類 13 筆。
 \end{itemize}
 
-\section{Voting}
+\section{多數決彙整}
 
 深度學習模型的預測結果會因 random seed 不同而產生變異，hard voting 透過彙整多個模型的輸出來降低此不確定性。本節針對 AC 二分類任務，以不同 random seed 訓練 7 個 TAP-CT late fusion 模型，對每位病人各產生一個預測後以多數決決定最終類別。候選數分別取 3、5、7（皆為奇數，不會平手），並以單一模型預測（未投票）作為 baseline。
 

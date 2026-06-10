@@ -14,6 +14,7 @@
 \usepackage{zhnumber}
 \usepackage{titlesec}
 \usepackage{amsmath}
+\usepackage{mathspec}
 \usepackage[backend=biber,sorting=none]{biblatex}
 \usepackage{tabularx}
 \usepackage{csquotes}
@@ -33,6 +34,7 @@
 \xeCJKsetup{AutoFakeBold=true, AutoFakeSlant=true}
 \setCJKmainfont{DFKai-SB.ttf} % 中文字體
 \setmainfont{Times New Roman} % 英文字體
+\setmathsfont(Digits,Latin){Times New Roman} % 數學模式之阿拉伯數字與拉丁字母統一使用 Times New Roman（符合 J1 規範 §3.4、§3.11）
 \geometry{a4paper,total={297mm,210mm},top=4.5cm,bottom=0.75cm,left=2.5cm,right=2.5cm} % 頁面設定，不需修改
 \pagestyle{plain} % 頁碼
 \addbibresource{reference.bib}

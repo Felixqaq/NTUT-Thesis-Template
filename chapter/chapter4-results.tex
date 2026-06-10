@@ -86,7 +86,7 @@ TAP-CT 相關套件 & transformers、timm、einops \\
 \section{實驗結果分析}
 \subsection{RQ1 量化特徵二分類結果}
 
-RQ1 以 12 項 CT 衍生量化生物標記作為輸入，採五折交叉驗證評估 Normal 與 Abnormal 個案之辨識能力，結果如表~\ref{tab:rq1_quant_result} 與圖~\ref{fig:rq1_quant_cm} 所示。本文之 Abnormal 組對應合作醫師判定之 COPD 個案。整體 Accuracy 為 0.9259，AUC 為 0.9784，顯示量化特徵已能有效區分兩類個案。Precision 與 Specificity 皆為 1.0000，代表本實驗未將 Normal 個案誤判為 Abnormal；Sensitivity 為 0.8788，仍有 4 筆 Abnormal 個案被判為 Normal。F1-score 為 0.9355，顯示模型在 precision 與 sensitivity 之間維持良好的綜合表現。此結果說明肺氣腫比例、肺容積、血管與氣道等特徵具有輔助判讀價值，但 Abnormal 個案漏判仍是後續模型優化的主要問題。
+RQ1 以 12 項 CT 衍生量化生物標記作為輸入，採五折交叉驗證評估 Normal 與 Abnormal 個案之辨識能力，結果如表~\ref{tab:rq1_quant_result} 與圖~\ref{fig:rq1_quant_cm} 所示。本文之 Abnormal 組為合作醫師依 ATS/ERS 肺功能判讀標準判定之 COPD 個案\cite{stanojevic2022ersats}。整體 Accuracy 為 0.9259，AUC 為 0.9784，顯示量化特徵已能有效區分兩類個案。Precision 與 Specificity 皆為 1.0000，代表本實驗未將 Normal 個案誤判為 Abnormal；Sensitivity 為 0.8788，仍有 4 筆 Abnormal 個案被判為 Normal。F1-score 為 0.9355，顯示模型在 precision 與 sensitivity 之間維持良好的綜合表現。此結果說明肺氣腫比例、肺容積、血管與氣道等特徵具有輔助判讀價值，但 Abnormal 個案漏判仍是後續模型優化的主要問題。
 
 \begin{table}[htbp]
 \centering
