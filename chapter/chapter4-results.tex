@@ -27,7 +27,7 @@
 \renewcommand{\arraystretch}{1.6}
 \begin{tabularx}{0.95\textwidth}{|>{\centering\arraybackslash}p{0.28\textwidth}|>{\centering\arraybackslash}X|}
 \hline
-\textbf{項目} & \textbf{規格} \\
+\textbf{Item} & \textbf{Specification} \\
 \hline
 CPU & Intel Core i7-12700K 3.60GHz 12-Core Processor \\
 \hline
@@ -49,13 +49,13 @@ Storage & 1TB NVMe SSD + 2TB SATA HDD \\
 \renewcommand{\arraystretch}{1.45}
 \begin{tabularx}{0.95\textwidth}{|>{\centering\arraybackslash}p{0.28\textwidth}|>{\raggedright\arraybackslash}X|}
 \hline
-\textbf{項目} & \textbf{內容} \\
+\textbf{Item} & \textbf{Description} \\
 \hline
-作業系統 & Windows 11 Pro 64-bit \\
+Operating system & Windows 11 Pro 64-bit \\
 \hline
-分割與影像處理工具 & 3D Slicer、MONAI Auto3DSeg、AeroPath、SimpleITK \\
+Segmentation and image processing tools & 3D Slicer, MONAI Auto3DSeg, AeroPath, SimpleITK \\
 \hline
-模型訓練與資料處理套件 & PyTorch、scikit-learn、NumPy、pandas \\
+Model training and data processing libraries & PyTorch, scikit-learn, NumPy, pandas \\
 \hline
 \end{tabularx}
 \endgroup
@@ -69,15 +69,15 @@ Storage & 1TB NVMe SSD + 2TB SATA HDD \\
 \renewcommand{\arraystretch}{1.45}
 \begin{tabularx}{0.95\textwidth}{|>{\centering\arraybackslash}p{0.28\textwidth}|>{\raggedright\arraybackslash}X|}
 \hline
-\textbf{項目} & \textbf{內容} \\
+\textbf{Item} & \textbf{Description} \\
 \hline
-作業系統 & Ubuntu 24.04.4 LTS (Noble Numbat)，Linux kernel 6.17.0-29-generic，x86\_64 \\
+Operating system & Ubuntu 24.04.4 LTS (Noble Numbat), Linux kernel 6.17.0-29-generic, x86\_64 \\
 \hline
-深度學習環境 & Python 3.11、PyTorch 2.8.0、CUDA 12.8、MONAI \\
+Deep learning environment & Python 3.11, PyTorch 2.8.0, CUDA 12.8, MONAI \\
 \hline
-醫學影像與資料處理套件 & SimpleITK、nibabel、scikit-learn、pandas、matplotlib \\
+Medical imaging and data processing libraries & SimpleITK, nibabel, scikit-learn, pandas, matplotlib \\
 \hline
-TAP-CT 相關套件 & transformers、timm、einops \\
+TAP-CT related libraries & transformers, timm, einops \\
 \hline
 \end{tabularx}
 \endgroup
@@ -96,7 +96,7 @@ RQ1 以 12 項 CT 衍生量化生物標記作為輸入，採五折交叉驗證�
 \renewcommand{\arraystretch}{1.25}
 \begin{tabularx}{0.75\textwidth}{>{\raggedright\arraybackslash}X >{\centering\arraybackslash}X >{\centering\arraybackslash}X}
 \hline
-指標 & 整體結果 & 五折平均 \\
+Metric & Overall & 5-fold average \\
 \hline
 Accuracy & 0.9259 & \(0.9273 \pm 0.0680\) \\
 Precision & 1.0000 & \(1.0000 \pm 0.0000\) \\
@@ -129,7 +129,7 @@ RQ2 評估三維 CT Mamba 模型於 54 例 Normal/Abnormal 二分類之表現。
 \renewcommand{\arraystretch}{1.25}
 \begin{tabular}{l c}
 \hline
-指標 & 五折平均結果 \\
+Metric & 5-fold average \\
 \hline
 AUC & \(1.0000 \pm 0.0000\) \\
 Accuracy & \(0.9409 \pm 0.0422\) \\
@@ -156,7 +156,7 @@ RQ3 評估三維影像模型預測塌陷角連續值之能力，結果如表~\re
 \renewcommand{\arraystretch}{1.25}
 \begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}X c c c c}
 \hline
-模型 & MAE & RMSE & \(R^2\) & Pearson \\
+Model & MAE & RMSE & \(R^2\) & Pearson \\
 \hline
 Hybrid Mamba-Attention & \(15.8512 \pm 4.7756\) & 21.2647 & 0.1723 & 0.6699 \\
 Mamba & \(17.1180 \pm 2.5754\) & 23.9086 & 0.0314 & 0.3413 \\
@@ -192,7 +192,7 @@ AC 二分類結果如表~\ref{tab:rq4_ac_binary} 所示。
 \setlength{\tabcolsep}{3pt}
 \begin{tabular}{p{0.30\textwidth} p{0.14\textwidth} c c c}
 \hline
-模型 & 設定 & Accuracy & Macro-F1 & Bal. acc. \\
+Model & Setting & Accuracy & Macro-F1 & Bal. acc. \\
 \hline
 TAP-CT late fusion & aug100 & \(0.9192 \pm 0.0718\) & \(0.8763 \pm 0.1186\) & \(0.8778 \pm 0.1333\) \\
 Hybrid Mamba-Attention & aug100 & \(0.8692 \pm 0.0656\) & \(0.8177 \pm 0.0761\) & \(0.8289 \pm 0.0963\) \\
@@ -216,7 +216,7 @@ AC 三分類結果如表~\ref{tab:rq4_ac_3class} 所示。
 \setlength{\tabcolsep}{3pt}
 \begin{tabular}{p{0.30\textwidth} p{0.14\textwidth} c c c}
 \hline
-模型 & 設定 & Accuracy & Macro-F1 & Bal. acc. \\
+Model & Setting & Accuracy & Macro-F1 & Bal. acc. \\
 \hline
 TAP-CT late fusion & aug100 & \(0.8209 \pm 0.0939\) & \(0.6141 \pm 0.1403\) & \(0.6326 \pm 0.1803\) \\
 TAP-CT-S-2.5D late fusion & aug100 & \(0.8352 \pm 0.0831\) & \(0.5884 \pm 0.0756\) & \(0.5933 \pm 0.0952\) \\
@@ -250,7 +250,7 @@ RQ5 評估三維 CT 影像模型於 GOLD 四分級任務之辨識能力。本任
 \renewcommand{\arraystretch}{1.25}
 \begin{tabular}{l c}
 \hline
-指標 & 五折平均結果 \\
+Metric & 5-fold average \\
 \hline
 Accuracy & $0.5143 \pm 0.1714$ \\
 Macro-F1 & $0.3333 \pm 0.0883$ \\
@@ -285,7 +285,7 @@ RQ6 針對排除 AC 中間組後之 AC 二分類任務，評估 hard voting 決�
 \renewcommand{\arraystretch}{1.25}
 \begin{tabular}{c c c c}
 \hline
-候選輸出數量 & Accuracy & Sensitivity & Specificity \\
+Number of models & Accuracy & Sensitivity & Specificity \\
 \hline
 1 & \(0.919 \pm 0.072\) & \(0.800 \pm 0.267\) & \(0.956 \pm 0.054\) \\
 3 & \(0.903 \pm 0.060\) & \(0.800 \pm 0.267\) & \(0.933 \pm 0.089\) \\
