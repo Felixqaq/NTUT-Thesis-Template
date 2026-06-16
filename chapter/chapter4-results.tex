@@ -178,7 +178,7 @@ Hybrid Mamba-Attention 取得最低 MAE，平均誤差為 \(15.8512 \pm 4.7756\)
 
 \subsection{RQ4 塌陷角衍生分類結果}
 
-RQ4 比較塌陷角衍生標籤於二分類與三分類任務中的可辨識性。以下先呈現排除 \(132^{\circ}\)--\(151^{\circ}\) AC 中間組後之 AC 二分類，再呈現保留 AC 中間組之 AC 三分類。\texttt{baseline} 代表各模型未使用虛擬補強之原始設定；\texttt{aug100} 與 \texttt{aug300} 則代表每類虛擬補強至 100 或 300 筆。
+RQ4 比較塌陷角衍生標籤於二分類與三分類任務中的可辨識性。以下先呈現排除 \(132^{\circ}\)--\(151^{\circ}\) AC 中間組後之 AC 二分類，再呈現保留 AC 中間組之 AC 三分類；兩表之各模型皆採每類虛擬補強至 100 筆。
 
 AC 二分類結果如表~\ref{tab:rq4_ac_binary} 所示。
 
@@ -190,19 +190,18 @@ AC 二分類結果如表~\ref{tab:rq4_ac_binary} 所示。
 \footnotesize
 \renewcommand{\arraystretch}{1.25}
 \setlength{\tabcolsep}{3pt}
-\begin{tabular}{p{0.30\textwidth} p{0.14\textwidth} c c c}
+\begin{tabular}{p{0.42\textwidth} c c c}
 \hline
-Model & Setting & Accuracy & Macro-F1 & Bal. acc. \\
+Model & Accuracy & Macro-F1 & Bal. acc. \\
 \hline
-TAP-CT late fusion & aug100 & \(0.9192 \pm 0.0718\) & \(0.8763 \pm 0.1186\) & \(0.8778 \pm 0.1333\) \\
-Hybrid Mamba-Attention & aug100 & \(0.8692 \pm 0.0656\) & \(0.8177 \pm 0.0761\) & \(0.8289 \pm 0.0963\) \\
-Hybrid Mamba-Attention & baseline & \(0.7705 \pm 0.0323\) & \(0.4350 \pm 0.0101\) & \(0.5000 \pm 0.0000\) \\
+TAP-CT-S-3D late fusion & \(0.9192 \pm 0.0718\) & \(0.8763 \pm 0.1186\) & \(0.8778 \pm 0.1333\) \\
+Hybrid Mamba-Attention & \(0.8692 \pm 0.0656\) & \(0.8177 \pm 0.0761\) & \(0.8289 \pm 0.0963\) \\
 \hline
 \end{tabular}
 \endgroup
 \end{table}
 
-排除 AC 中間組後，AC 二分類表現明顯提升。TAP-CT late fusion 搭配 aug100 取得最高 Accuracy（\(0.9192 \pm 0.0718\)）、Macro-F1（\(0.8763 \pm 0.1186\)）與 Balanced accuracy（\(0.8778 \pm 0.1333\)），相較 Hybrid Mamba-Attention baseline 之 Macro-F1 0.4350 有大幅改善。Balanced accuracy 的提升亦表示模型對兩類樣本的辨識較為均衡。此結果指出，AC 低值組與 AC 高值組兩端樣本具有較明確的影像差異；後續 RQ6 進一步檢視 hard voting 是否能在此二分類任務之外帶來額外準確率或敏感度改善。
+排除 AC 中間組後，AC 二分類表現明顯提升。TAP-CT-S-3D late fusion 搭配 aug100 取得最高 Accuracy（\(0.9192 \pm 0.0718\)）、Macro-F1（\(0.8763 \pm 0.1186\)）與 Balanced accuracy（\(0.8778 \pm 0.1333\)），優於 Hybrid Mamba-Attention aug100 之 Macro-F1 \(0.8177 \pm 0.0761\)。Balanced accuracy 的提升亦表示模型對兩類樣本的辨識較為均衡。此結果指出，AC 低值組與 AC 高值組兩端樣本具有較明確的影像差異；後續 RQ6 進一步檢視 hard voting 是否能在此二分類任務之外帶來額外準確率或敏感度改善。
 
 AC 三分類結果如表~\ref{tab:rq4_ac_3class} 所示。
 
@@ -214,21 +213,18 @@ AC 三分類結果如表~\ref{tab:rq4_ac_3class} 所示。
 \footnotesize
 \renewcommand{\arraystretch}{1.25}
 \setlength{\tabcolsep}{3pt}
-\begin{tabular}{p{0.30\textwidth} p{0.14\textwidth} c c c}
+\begin{tabular}{p{0.42\textwidth} c c c}
 \hline
-Model & Setting & Accuracy & Macro-F1 & Bal. acc. \\
+Model & Accuracy & Macro-F1 & Bal. acc. \\
 \hline
-TAP-CT late fusion & aug100 & \(0.8209 \pm 0.0939\) & \(0.6141 \pm 0.1403\) & \(0.6326 \pm 0.1803\) \\
-TAP-CT-S-2.5D late fusion & aug100 & \(0.8352 \pm 0.0831\) & \(0.5884 \pm 0.0756\) & \(0.5933 \pm 0.0952\) \\
-TAP-CT ABMIL S-3D & baseline & \(0.7132 \pm 0.0846\) & \(0.5883 \pm 0.1381\) & \(0.6400 \pm 0.2036\) \\
-Hybrid Mamba-Attention & baseline & \(0.7879 \pm 0.1018\) & \(0.5861 \pm 0.1546\) & \(0.6200 \pm 0.1154\) \\
-Hybrid Mamba-Attention & aug300 & \(0.7593 \pm 0.1173\) & \(0.5713 \pm 0.0748\) & \(0.6319 \pm 0.1160\) \\
+TAP-CT-B-3D late fusion & \(0.8209 \pm 0.0939\) & \(0.6141 \pm 0.1403\) & \(0.6326 \pm 0.1803\) \\
+TAP-CT-S-2.5D late fusion & \(0.8352 \pm 0.0831\) & \(0.5884 \pm 0.0756\) & \(0.5933 \pm 0.0952\) \\
 \hline
 \end{tabular}
 \endgroup
 \end{table}
 
-AC 三分類中，TAP-CT late fusion 搭配 aug100 取得最高 Macro-F1（\(0.6141 \pm 0.1403\)），Accuracy 為 \(0.8209 \pm 0.0939\)。TAP-CT-S-2.5D late fusion 雖有最高 Accuracy（\(0.8352 \pm 0.0831\)），但 Macro-F1 較低，表示類別間辨識較不均衡。若以 Balanced accuracy 觀察，TAP-CT ABMIL S-3D baseline 為 \(0.6400 \pm 0.2036\)，數值最高但跨折變異亦較大，顯示三分類模型仍需同時考量整體正確率、各類別均衡性與結果穩定性。為呈現整體 Accuracy 最高設定之錯誤分布，圖~\ref{fig:rq4_ac_3class} 採用 TAP-CT-S-2.5D late fusion 繪製混淆矩陣；該模型對 AC 高值組與 AC 低值組具有較穩定的判別能力，五折測試樣本中分別正確分類 43 例與 12 例。然而，AC 中間組 5 例皆被判為 AC 高值組，顯示模型傾向將中間灰區樣本歸入高角度端。相較於二分類，三分類需額外辨識樣本數較少且界線較模糊的 AC 中間組，因此 Macro-F1 明顯下降，顯示中間灰區會增加肺功能相關影像判讀難度。
+AC 三分類中，TAP-CT-B-3D late fusion 搭配 aug100 取得最高 Macro-F1（\(0.6141 \pm 0.1403\)），Accuracy 為 \(0.8209 \pm 0.0939\)。TAP-CT-S-2.5D late fusion 雖有最高 Accuracy（\(0.8352 \pm 0.0831\)），但 Macro-F1 與 Balanced accuracy 均較低，表示類別間辨識較不均衡。整體而言，TAP-CT-B-3D late fusion aug100 在 Macro-F1 與 Balanced accuracy 上皆較佳，顯示三分類模型需同時考量整體正確率與各類別均衡性。為呈現整體 Accuracy 最高設定之錯誤分布，圖~\ref{fig:rq4_ac_3class} 採用 TAP-CT-S-2.5D late fusion 繪製混淆矩陣；該模型對 AC 高值組與 AC 低值組具有較穩定的判別能力，五折測試樣本中分別正確分類 43 例與 12 例。然而，AC 中間組 5 例皆被判為 AC 高值組，顯示模型傾向將中間灰區樣本歸入高角度端。相較於二分類，三分類需額外辨識樣本數較少且界線較模糊的 AC 中間組，因此 Macro-F1 明顯下降，顯示中間灰區會增加肺功能相關影像判讀難度。
 
 \begin{figure}[htbp]
 \centering
@@ -240,11 +236,11 @@ AC 三分類中，TAP-CT late fusion 搭配 aug100 取得最高 Macro-F1（\(0.6
 
 \subsection{RQ5 GOLD 分級分類結果}
 
-RQ5 評估三維 CT 影像模型於 GOLD 四分級任務之辨識能力。本任務依第三章 GOLD 2026 標籤設定，排除 Class 0（FEV1/FVC $\geq 70\%$，34 例），以 GOLD 1 至 GOLD 4 共 32 例進行四分類實驗（各類分別為 2、11、13、6 例）。模型採 Hybrid Mamba-Attention 搭配 TAP-CT late fusion，以 5 折交叉驗證搭配每類別補至 13 筆之虛擬增強（aug13）訓練；因 GOLD 1 僅有 2 例，允許其驗證樣本跨折重複使用。實驗結果如表~\ref{tab:rq5_gold_result} 所示，合併五折測試預測之混淆矩陣如圖~\ref{fig:rq5_gold_cm} 所示。
+RQ5 評估三維 CT 影像模型於 GOLD 四分級任務之辨識能力。本任務依第三章 GOLD 2026 標籤設定，排除 Class 0（FEV1/FVC $\geq 70\%$，34 例），以 GOLD 1 至 GOLD 4 共 32 例進行四分類實驗（各類分別為 2、11、13、6 例）。模型採 Hybrid Mamba-Attention 搭配 TAP-CT-B-3D late fusion，以 5 折交叉驗證搭配每類別補至 13 筆之虛擬增強（aug13）訓練；因 GOLD 1 僅有 2 例，允許其驗證樣本跨折重複使用。實驗結果如表~\ref{tab:rq5_gold_result} 所示，合併五折測試預測之混淆矩陣如圖~\ref{fig:rq5_gold_cm} 所示。
 
 \begin{table}[htbp]
 \centering
-\caption{RQ5 GOLD 四分級分類結果（Hybrid Mamba-Attention + TAP-CT Late Fusion）}
+\caption{RQ5 GOLD 四分級分類結果（Hybrid Mamba-Attention + TAP-CT-B-3D Late Fusion）}
 \label{tab:rq5_gold_result}
 \begingroup
 \renewcommand{\arraystretch}{1.25}
@@ -274,7 +270,7 @@ Balanced Accuracy & $0.3750 \pm 0.1149$ \\
 
 \subsection{RQ6 塌陷角二分類多數決結果}
 
-RQ6 針對排除 AC 中間組後之 AC 二分類任務，評估 hard voting 決策彙整對病人層級分類結果之影響。此實驗之候選預測來源與 RQ4 的 AC 二分類任務相同，皆為 TAP-CT late fusion 於相同資料範圍、相同五折切分與相同 AC 低值組/高值組標籤下產生之 validation fold 候選分類輸出。Hard voting 僅將這些既有 AC 二分類候選輸出進行多數決，不加入臨床 Normal/Abnormal 或 GOLD 分級標籤。表中候選輸出數量為 1 時，代表未投票之原始二分類基準；候選輸出數量為 3、5 與 7 時，則代表 hard voting 使用之 AC 二分類候選分類輸出數量。為使結果聚焦於較直接的錯誤型態，本文僅呈現 Accuracy、Sensitivity 與 Specificity，分別對應整體正確率、AC 低值組召回能力與 AC 高值組辨識能力。
+RQ6 針對排除 AC 中間組後之 AC 二分類任務，評估 hard voting 決策彙整對病人層級分類結果之影響。此實驗之候選預測來源與 RQ4 的 AC 二分類任務相同，皆為 TAP-CT-S-3D late fusion 於相同資料範圍、相同五折切分與相同 AC 低值組/高值組標籤下產生之 validation fold 候選分類輸出。Hard voting 僅將這些既有 AC 二分類候選輸出進行多數決，不加入臨床 Normal/Abnormal 或 GOLD 分級標籤。表中候選輸出數量為 1 時，代表未投票之原始二分類基準；候選輸出數量為 3、5 與 7 時，則代表 hard voting 使用之 AC 二分類候選分類輸出數量。為使結果聚焦於較直接的錯誤型態，本文僅呈現 Accuracy、Sensitivity 與 Specificity，分別對應整體正確率、AC 低值組召回能力與 AC 高值組辨識能力。
 
 \begin{table}[htbp]
 \centering
@@ -296,7 +292,7 @@ Number of models & Accuracy & Sensitivity & Specificity \\
 \endgroup
 \end{table}
 
-由表~\ref{tab:rq6_ac_binary_voting} 可見，未投票之 TAP-CT late fusion 已取得 \(0.919 \pm 0.072\) 的 Accuracy；hard voting 中表現最佳的候選輸出數量 5 亦為 \(0.919 \pm 0.072\)，僅與原始二分類基準相同。Specificity 方面，未投票基準為 \(0.956 \pm 0.054\)，候選輸出數量 5 為 \(0.956 \pm 0.089\)，平均值相近但投票後變異較大。因此，hard voting 並未在本資料中帶來明顯準確率提升，也未比原始二分類結果形成更穩定的特異度表現。
+由表~\ref{tab:rq6_ac_binary_voting} 可見，未投票之 TAP-CT-S-3D late fusion 已取得 \(0.919 \pm 0.072\) 的 Accuracy；hard voting 中表現最佳的候選輸出數量 5 亦為 \(0.919 \pm 0.072\)，僅與原始二分類基準相同。Specificity 方面，未投票基準為 \(0.956 \pm 0.054\)，候選輸出數量 5 為 \(0.956 \pm 0.089\)，平均值相近但投票後變異較大。因此，hard voting 並未在本資料中帶來明顯準確率提升，也未比原始二分類結果形成更穩定的特異度表現。
 
 未投票基準與三種候選輸出數量的 Sensitivity 皆為 \(0.800 \pm 0.267\)，且標準差偏高，代表 hard voting 並未改善 AC 低值組樣本之召回能力。候選輸出數量 3 與 7 的 Accuracy 皆為 \(0.903\)，低於未投票基準與候選輸出數量 5；其 Specificity 亦降至 \(0.933\)。整體而言，hard voting 在本研究中較適合作為結果穩定性檢查，而非主要效能提升策略；其對 accuracy 的增益有限，對 sensitivity 則沒有觀察到改善。
 
