@@ -51,6 +51,15 @@ Quantitative biomarker set & 54 & Normal/Abnormal & Segmentation, feature extrac
 \end{tabularx}
 \end{table}
 
+上述 66 例資料之病人年齡與性別分布如圖~\ref{fig:patient_distribution} 所示。病人年齡以 60--69 歲區間人數最多，整體呈現中高齡為主之分布，與 COPD 好發於中高齡族群之臨床特性一致。
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.85\textwidth]{figures/patient_distribution.png}
+\caption{資料集病人年齡與性別分布}
+\label{fig:patient_distribution}
+\end{figure}
+
 AC 三分類任務將影像依肺功能曲線衍生角度分為三類：$AC \leq 131^{\circ}$ 為 AC 低值組，$132^{\circ} \leq AC \leq 151^{\circ}$ 為 AC 中間組，$AC \geq 152^{\circ}$ 為 AC 高值組。原始 66 例資料中，三類樣本數分別為 14、5 與 47 例。上述 AC 類別為肺功能曲線衍生標籤，不等同於臨床 Normal/Abnormal 二元標籤。由於 AC 中間組樣本數較少且可能代表肺功能曲線表徵之灰區，本研究另設計 AC 二分類任務，排除 $132^{\circ}$ 至 $151^{\circ}$ 之 5 例，只保留 $AC \leq 131^{\circ}$ 與 $AC \geq 152^{\circ}$ 兩端較明確之 61 例資料。
 
 GOLD 標籤依據 GOLD 2026 固定比值準則整理：以 FEV1/FVC 實測比值低於 70\% 作為 COPD 判定條件，再依支氣管擴張劑後 FEV1\% 預測值分為 GOLD 1（輕度，$\geq 80\%$）、GOLD 2（中度，50\%--79\%）、GOLD 3（重度，30\%--49\%）與 GOLD 4（極重度，$< 30\%$）。66 例資料中，FEV1/FVC $\geq 70\%$ 者歸為 Class 0（沒有 COPD，34 例），GOLD 1 至 4 各有 2、11、13 與 6 例，合計 32 例。GOLD 分級分類任務排除 Class 0，僅以此 32 例進行四分類訓練與評估。
@@ -61,7 +70,14 @@ GOLD 標籤依據 GOLD 2026 固定比值準則整理：以 FEV1/FVC 實測比值
 
 原始胸部 CT 以 DICOM series 形式儲存。同一病人可能具有多組掃描序列或重建影像，因此本研究先依 SeriesInstanceUID 與 DICOM metadata 將影像分組，再排除 scout、snapshot、冠狀面或矢狀面重建影像，以及不適合肺部分析之非目標序列。若同一病人具有多個可用胸部 CT series，則優先選擇適合肺部結構分析之軸向胸部或肺窗序列。完成序列選擇後，依 ImagePositionPatient 對切片排序，並利用 ImageOrientationPatient、PixelSpacing 與 SliceThickness 等欄位建立三維空間方向與 voxel spacing。
 
-CT 強度值轉換依據 DICOM 中之 RescaleSlope 與 RescaleIntercept 進行。實際處理時，先將原始 pixel value 轉換為對應之 HU 值，使影像強度與原始掃描條件保持一致。此步驟對本研究特別重要，因為後續量化分析高度依賴影像強度的正確性；若未正確轉換 HU，相關影像表徵與量化結果皆可能產生系統性偏差。轉換後之影像以 NIfTI 格式儲存，並保留必要之空間與強度資訊，以支援後續分析流程。
+CT 強度值轉換依據 DICOM 中之 RescaleSlope 與 RescaleIntercept 進行。對每個原始儲存像素值 $P$，其對應之 HU 值依 DICOM 標準之 modality LUT 以線性轉換計算\cite{nema2024dicom}，如式~(\ref{eq:hu_conversion}) 所示：
+
+\begin{equation}
+\label{eq:hu_conversion}
+\mathrm{HU} = P \times \mathrm{RescaleSlope} + \mathrm{RescaleIntercept}
+\end{equation}
+
+其中 RescaleSlope（DICOM tag 0028,1053）與 RescaleIntercept（0028,1052）由掃描儀於影像 metadata 中記錄；胸部 CT 常見設定為 RescaleSlope 等於 1、RescaleIntercept 等於 $-1024$，使空氣對應約 $-1000$ HU、水對應約 $0$ HU。透過此轉換可使影像強度與原始掃描條件保持一致。此步驟對本研究特別重要，因為後續量化分析高度依賴影像強度的正確性；若未正確轉換 HU，相關影像表徵與量化結果皆可能產生系統性偏差。轉換後之影像以 NIfTI 格式儲存，並保留必要之空間與強度資訊，以支援後續分析流程。
 
 PFT 資料則以病人為單位與 CT volume 對應，用於建立 Normal/Abnormal 二元標籤、FEV1 預測值百分比相關分級，以及塌陷角度（AC）等肺功能導向標籤。
 
@@ -150,7 +166,7 @@ d_{\mathrm{PA}} = 2\left(\frac{3V_{\mathrm{PA}}}{4\pi}\right)^{1/3}
 
 Hybrid Mamba-Attention 影像編碼器之細部架構如圖~\ref{fig:hybrid_mamba_attention_architecture} 所示。模型先以三維卷積建立局部低階特徵，再依序通過三個 Mamba stage 擷取不同解析度下之空間表徵；各階段輸出經 adaptive average pooling 彙整後進行逐層融合，最後結合 attention block 輸出之深層特徵形成 352 維三維影像表示。此設計使模型同時保留早期局部紋理、中階空間結構與深層全域關係，作為後續迴歸或 prediction head 之輸入。
 
-損失函數依任務類型選定：Normal/Abnormal 二元分類採用 binary cross entropy with logits loss；AC 三分類、AC 二分類與 GOLD 分級等多類別任務採用 cross entropy loss。
+損失函數依任務類型選定：Normal/Abnormal 二元分類採用 binary cross entropy with logits loss；AC 三分類與 AC 二分類採用 cross entropy loss；GOLD 分級因類別嚴重不平衡，改採 focal loss 以降低多數類別主導訓練之影響。
 
 三種編碼器之架構超參數如表~\ref{tab:cnn_arch_hparams} 所示。Mamba 與 Hybrid Mamba-Attention 共用三維卷積與 Mamba 骨幹設定，Hybrid Mamba-Attention 另加入多頭注意力橋接模組；SwinUNETR 則採用階層式 Swin Transformer 之設定。
 
@@ -158,33 +174,53 @@ Hybrid Mamba-Attention 影像編碼器之細部架構如圖~\ref{fig:hybrid_mamb
 \centering
 \caption{三維 CT 編碼器架構超參數}
 \label{tab:cnn_arch_hparams}
-\small
-\begin{tabularx}{\textwidth}{l X}
+\begingroup
+\renewcommand{\arraystretch}{1.35}
+\begin{tabularx}{0.95\textwidth}{|>{\centering\arraybackslash}p{0.34\textwidth}|>{\raggedright\arraybackslash}p{0.26\textwidth}|>{\raggedright\arraybackslash}X|}
 \hline
-Model & Architecture hyperparameters \\
+\textbf{Model} & \textbf{Hyperparameter} & \textbf{Value} \\
 \hline
-Mamba & in-channels 1, base channels 32, Mamba blocks 3, hidden dim 128, dropout 0.3 \\
-Hybrid Mamba-Attention & Mamba backbone as above, plus attention heads 8, attention layers 1, MLP ratio 2.0, attention dropout 0.1 \\
-SwinUNETR & feature size 24, depths [2, 2, 2, 2], heads [3, 6, 12, 24], window size 4, patch size 2, SwinUNETR v2 \\
+Mamba & In-channels & 1 \\
+ & Base channels & 32 \\
+ & Mamba blocks & 3 \\
+ & Hidden dim & 128 \\
+ & Dropout & 0.3 \\
+\hline
+Hybrid Mamba-Attention & Backbone & same as Mamba \\
+ & Attention heads & 8 \\
+ & Attention layers & 1 \\
+ & MLP ratio & 2.0 \\
+ & Attention dropout & 0.1 \\
+\hline
+SwinUNETR & Feature size & 24 \\
+ & Depths & [2, 2, 2, 2] \\
+ & Attention heads & [3, 6, 12, 24] \\
+ & Window size & 4 \\
+ & Patch size & 2 \\
+ & Version & SwinUNETR v2 \\
 \hline
 \end{tabularx}
+\endgroup
 \end{table}
 
 三維 CT 模型之訓練設定如下：以 AdamW 最佳化器（learning rate \(1\times10^{-4}\)、weight decay \(1\times10^{-3}\)）搭配 ReduceLROnPlateau 學習率調整（factor 0.5、patience 2），並採用混合精度（AMP）與梯度裁剪（1.0）以穩定小樣本訓練。輸入影像統一為 \(112 \times 136 \times 112\)、強度窗為 \([-1000, 400]\) HU，迴歸目標以每折 z-score 標準化，並以 5 折交叉驗證評估，隨機種子固定為 42。
 
+\FloatBarrier
 \section{塌陷角迴歸任務}
 
-本節實驗以塌陷角（AC）作為三維 CT 迴歸目標，模型輸入 CT volume，輸出對應病人的連續角度預測值。本研究先以連續值迴歸評估模型能否直接還原 AC 數值，作為後續將 AC 轉為分級標籤之前置依據。迴歸以第~\ref{sec:cnn_arch}~節所述之三維編碼器為基礎，搭配單一輸出之 prediction head：以 Mamba 與 SwinUNETR 作為比較基準，並以 Hybrid Mamba-Attention 為主要模型。
+本節實驗以塌陷角（AC）作為三維 CT 迴歸目標，模型輸入 CT volume，輸出對應病人的連續角度預測值。本研究先以連續值迴歸評估模型能否直接還原 AC 數值，作為後續將 AC 轉為分級標籤之前置依據。迴歸以第~\ref{sec:cnn_arch}~節所述之三維編碼器為基礎，搭配單一輸出之 prediction head：以 Mamba 與 SwinUNETR 作為比較基準，Hybrid Mamba-Attention 為主要影像模型；此外亦評估將 Hybrid Mamba-Attention 與凍結 TAP-CT 特徵晚期融合（見第~\ref{sec:tapct_fusion}~節）之迴歸表現，作為融合預訓練 CT 表徵對連續角度預測效益之比較。
 
 標籤標準化依每折訓練資料的均值與標準差進行，模型學習標準化後的角度，驗證時再還原為原始單位計算誤差，避免驗證資料洩漏至標準化參數估計。訓練採用 smooth L1 loss 以降低極端誤差的影響，以 validation MAE 選取最佳 checkpoint。評估指標包含 MAE、RMSE、決定係數 \(R^2\) 與 Pearson 相關係數，分別反映平均誤差、誤差離散程度與預測值對真實角度之相關性。
 
 \section{TAP-CT 影像嵌入與融合策略}\label{sec:tapct_fusion}
 
-TAP-CT 為針對三維 CT 預訓練的影像編碼模型，可將 CT volume 轉換為固定維度的特徵向量\cite{veenboer2025tapct}。由於本研究樣本數有限，不重新訓練 TAP-CT 權重，而是固定參數直接擷取特徵。本文依實驗設定使用 TAP-CT-B-3D、TAP-CT-S-3D 與 TAP-CT-S-2.5D，其中 B-3D 產生 2304 維特徵向量，S-3D 與 S-2.5D 產生 1152 維特徵向量；若 CT 被切成多個區段處理，則先整合同一病人的多段特徵再進入後續模型。
+TAP-CT 為針對三維 CT 預訓練的影像編碼模型，可將 CT volume 轉換為固定維度的特徵向量\cite{veenboer2025tapct}。其預訓練模型提供數種變體，命名依骨幹規模（Base、Small）與輸入形式（3D 直接處理三維體積，2.5D 以切片堆疊近似三維資訊）區分：Base 三維變體（B-3D）輸出 2304 維特徵，Small 之三維與 2.5D 變體（S-3D、S-2.5D）則輸出 1152 維特徵。
 
-TAP-CT 特徵以 late fusion 方式用於 AC 分類與 GOLD 分級：將 Hybrid Mamba-Attention 從原始 CT 產生的特徵與凍結之 TAP-CT 特徵串接後，輸入 MLP 分類頭，評估融合預訓練 CT 表徵後之效果。
+由於本研究樣本數有限，不重新訓練 TAP-CT 權重，而是固定其參數直接擷取特徵。為避免小樣本下高維特徵增加融合層過擬合風險，並保留塌陷角與肺功能相關之立體結構資訊，本研究於所有 late fusion 任務統一採用 TAP-CT-S-3D（1152 維）；若單一 CT 被切成多段處理，則先整合同一病人的多段特徵再輸入後續模型。為求行文簡潔，後續章節一律以「TAP-CT」統稱此變體，文中之「TAP-CT late fusion」即指採用凍結 TAP-CT-S-3D 特徵之融合模型。
 
-上述 late fusion 於不同任務採用不同之 TAP-CT 變體：AC 二分類採用 TAP-CT-S-3D（1152 維），AC 三分類與 GOLD 分級採用 TAP-CT-B-3D（2304 維），並於 AC 三分類另比較 TAP-CT-S-2.5D（1152 維）。後續結果章中之模型名稱即依此標示所用之 TAP-CT 變體。
+TAP-CT 特徵以 late fusion 方式用於 AC 迴歸、AC 分類與 GOLD 分級：將 Hybrid Mamba-Attention 從原始 CT 產生的特徵與凍結之 TAP-CT 特徵串接後，輸入 MLP 預測頭（迴歸為單一輸出，分類則為類別數輸出），評估融合預訓練 CT 表徵後之效果。
+
+上述 late fusion 於 AC 迴歸、AC 二分類、AC 三分類與 GOLD 分級各任務均採用相同之 TAP-CT-S-3D 特徵與相同融合架構，僅預測頭輸出依任務調整；因此後續結果章中各「TAP-CT late fusion」模型之差異僅來自任務設定與損失函數，而非所用之 TAP-CT 變體不同。
 
 融合模型以 Hybrid Mamba-Attention 為影像骨幹，將其特徵與凍結之 TAP-CT 嵌入串接後，經投影層與 MLP 分類頭輸出，相關超參數如表~\ref{tab:fusion_hparams} 所示。其餘最佳化器、學習率調整與交叉驗證設定與第~\ref{sec:cnn_arch}~節所述之三維 CT 模型相同，惟融合模型之訓練 epoch 數增為 160。
 
@@ -192,22 +228,31 @@ TAP-CT 特徵以 late fusion 方式用於 AC 分類與 GOLD 分級：將 Hybrid 
 \centering
 \caption{TAP-CT 融合模型超參數}
 \label{tab:fusion_hparams}
-\small
-\begin{tabular}{l l}
+\begingroup
+\renewcommand{\arraystretch}{1.45}
+\begin{tabular}{|l|l|}
 \hline
-Hyperparameter & Value \\
+\textbf{Hyperparameter} & \textbf{Value} \\
 \hline
 Image backbone & Hybrid Mamba-Attention \\
+\hline
 Fusion projection dim & 128 \\
+\hline
 Fusion dropout & 0.1 \\
+\hline
 Fused head hidden dim & 256 \\
+\hline
 Head dropout & 0.3 \\
+\hline
 Epochs & 160 \\
+\hline
 Batch size & 12 \\
 \hline
 \end{tabular}
+\endgroup
 \end{table}
 
+\FloatBarrier
 \section{交叉驗證、資料增強與平衡取樣}\label{sec:cv_aug}
 
 所有實驗以病人為資料切分單位，同一病人的 CT、TAP-CT 特徵與增強樣本只能出現在同一 fold，避免資料洩漏。
@@ -216,12 +261,12 @@ Batch size & 12 \\
     \item \textbf{交叉驗證：}量化特徵分類採 stratified five-fold，以 training fold 估計標準化參數。三維 CT 模型的 Normal/Abnormal、AC 三分類與 AC 二分類同樣採五折；AC 迴歸依角度分布建立 quantile bins 後分層切分，降低各折角度分布差異。GOLD 分級亦採五折，但因 GOLD 1 僅有 2 例，允許其驗證樣本跨折重複使用，以確保各折均能涵蓋所有分級類別。
     \item \textbf{三維影像輸入：}統一為 \(1 \times 112 \times 136 \times 112\) 的 channel-first volume，並依任務進行 HU clipping 與強度正規化。
     \item \textbf{資料增強：}僅套用於 training fold。AC 三分類、AC 二分類與 TAP-CT late fusion 採較小幅度：旋轉 \(\pm 5^{\circ}\)、平移 0.03、縮放 0.97--1.03、強度縮放 0.98--1.02、強度平移 \(\pm 0.05\)、高斯雜訊標準差 0.02。GOLD 分級因類別更不平衡，幅度加大：旋轉 \(\pm 7^{\circ}\)、平移 0.05、縮放 0.95--1.05、強度縮放 0.95--1.05、強度平移 \(\pm 0.1\)、高斯雜訊標準差 0.03。
-    \item \textbf{平衡取樣：}對類別不平衡任務，於 training fold 內對各類別產生虛擬增強樣本，每個 epoch 再以少數類別數量為基準隨機平衡取樣。測試的補樣本數如下：AC 三分類補至每類 50、75、100、200、300 筆，另測試每筆產生 12 個視圖的先平衡後增強設定；AC 二分類補至每類 100 筆；TAP-CT late fusion 的 AC 任務補至每類 100 筆、GOLD 分級補至每類 13 筆。
+    \item \textbf{平衡取樣：}對類別不平衡之分類任務，於 training fold 內以虛擬增強樣本將各類別補至相同的固定數量，使訓練時各類別達到平衡：AC 三分類、AC 二分類補至每類 100 筆，GOLD 分級補至每類 13 筆。
 \end{itemize}
 
 \section{多數決彙整}
 
-深度學習模型的預測結果會因 random seed 不同而產生變異，hard voting 透過彙整多個模型的輸出來降低此不確定性。本節針對 AC 二分類任務，以不同 random seed 訓練 7 個 TAP-CT-S-3D late fusion 模型，對每位病人各產生一個預測後以多數決決定最終類別。候選數分別取 3、5、7（皆為奇數，不會平手），並以單一模型預測（未投票）作為 baseline。
+深度學習模型的預測結果會因 random seed 不同而產生變異，hard voting 透過彙整多個模型的輸出來降低此不確定性。本節針對 AC 二分類任務，以不同 random seed 訓練 7 個 TAP-CT late fusion 模型，對每位病人各產生一個預測後以多數決決定最終類別。候選數分別取 3、5、7（皆為奇數，不會平手），並以單一模型預測（未投票）作為 baseline。
 
 評估以 accuracy、sensitivity 與 specificity 為主：sensitivity 反映 AC 低值組的召回能力，specificity 反映 AC 高值組的辨識能力，用以檢視多模型投票是否比單一模型更穩定或準確。
 

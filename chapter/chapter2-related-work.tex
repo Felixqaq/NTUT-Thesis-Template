@@ -46,32 +46,30 @@ GOLD 指引以固定比值準則作為 COPD 之判定前提：支氣管擴張劑
 
 \section{三維醫學影像深度學習模型}
 
-胸部 CT 屬於三維體積影像，與單張二維影像相比，其資訊不僅存在於單一切面，也包含上下切片之間的連續解剖關係。COPD 相關影像表徵亦具有三維分布特性，例如肺氣腫可能呈現肺葉或區域性分布，氣道與血管則沿著肺內空間形成分支結構。因此，若僅以二維切片進行分析，可能忽略跨切片的空間連續性與整體肺部形態；三維深度學習模型則可直接以 CT volume 作為輸入，從體積資料中學習局部紋理、區域分布與全肺形態等特徵。
+胸部 CT 屬於三維體積影像，其資訊不僅存在於單一切面，也包含切片之間的連續解剖關係。COPD 相關影像表徵亦具三維分布特性，例如肺氣腫之肺葉或區域性分布，以及氣道與血管沿肺內空間形成之分支結構。因此，僅以二維切片分析易忽略跨切片的空間連續性；三維深度學習模型則可直接以 CT volume 為輸入，學習局部紋理、區域分布與全肺形態等特徵。
 
-早期三維醫學影像深度學習多以 3D convolutional neural networks（3D CNN）為基礎。3D convolution 可在深度、高度與寬度三個方向同時萃取局部特徵，使模型能保留體積影像中的空間鄰近關係。Park 等人以 inflated three-dimensional convolutional network 由低劑量胸部 CT 預測 FVC 與 FEV1，並進一步以預測之肺功能值判斷高風險族群，顯示三維 CT 模型可由影像中學習與肺功能相關的潛在表徵\cite{park2023dlpulmonaryct}。BeyondCT 則結合 3D CNN、Vision Transformer 與人口統計資料，用於由非增強吸氣相胸部 CT 預測 FVC 與 FEV1；其設計反映了近年模型發展趨勢，即以 CNN 擷取局部影像特徵，再透過 Transformer 類架構捕捉較長距離的全域關係\cite{geng2024beyondct}。此類研究說明，胸部 CT 模型除可輸出疾病類別外，亦可透過迴歸方式估計連續肺功能相關指標，作為後續門檻分級與風險判讀之前置表徵。
+早期三維醫學影像深度學習多以 3D convolutional neural networks（3D CNN）為基礎，可於深度、高度與寬度三個方向同時萃取局部特徵。Park 等人以 inflated 3D CNN 由低劑量胸部 CT 預測 FVC 與 FEV1，並據以判斷高風險族群\cite{park2023dlpulmonaryct}；BeyondCT 則結合 3D CNN、Vision Transformer 與人口統計資料預測 FVC 與 FEV1，反映以 CNN 擷取局部特徵、再以 Transformer 捕捉全域關係之發展趨勢\cite{geng2024beyondct}。此類研究顯示，三維 CT 模型除可輸出疾病類別外，亦能以迴歸方式估計連續肺功能指標。
 
-Transformer 架構原先發展於序列建模，後續 Vision Transformer 將影像切分為 patch token，利用 self-attention 建立影像區域之間的關係\cite{dosovitskiy2021vit}。在胸部 CT 與 COPD 相關研究中，Wu 等人曾將 Vision Transformer 應用於 CT 肺氣腫亞型分類，說明 attention-based 模型可用於辨識 centrilobular、panlobular 與 paraseptal emphysema 等不同影像型態\cite{wu2021emphysemavit}。然而，標準 self-attention 的計算量會隨 token 數量平方成長，若直接用於高解析三維 CT，記憶體與運算成本皆相當高。Swin Transformer 以 shifted window attention 建立階層式特徵表示，在降低計算負擔的同時保留多尺度資訊\cite{liu2021swin}；Swin UNETR 進一步將此概念引入三維醫學影像分割，以 Swin Transformer encoder 萃取多層級特徵，再與 U-Net 類 decoder 結合\cite{hatamizadeh2022swinunetr}。這些研究顯示，Transformer 類模型有助於補足純 CNN 對長距離相依關係建模不足的問題。
+Transformer 透過 self-attention 建立元素間關係，Vision Transformer 進一步將影像切分為 patch token 後套用此機制\cite{dosovitskiy2021vit}；Wu 等人即以其進行 CT 肺氣腫亞型分類\cite{wu2021emphysemavit}。然而標準 self-attention 之計算量隨 token 數量平方成長，直接用於高解析三維 CT 成本過高。Swin Transformer 改以 shifted window attention 建立階層式特徵，在降低運算量的同時保留多尺度資訊\cite{liu2021swin}；SwinUNETR 則將此概念引入三維醫學影像分割\cite{hatamizadeh2022swinunetr}。
 
-\subsection{Swin Transformer 階層式視窗注意力架構}
+\subsection{Swin Transformer}
 
-Swin UNETR 採用 encoder--decoder 結構處理三維體積影像，其整體架構如圖~\ref{fig:swinunetr_architecture}~所示。輸入 CT volume 首先經由 patch partition 切分為不重疊的三維 patch，並透過線性嵌入轉換為初始 token；其後堆疊四個編碼階段（Stage 1 至 Stage 4），各階段以 patch merging 將空間解析度逐層減半、特徵通道數逐層加倍，藉此建立由細部紋理至全域形態的多尺度階層式表示。
-
-各編碼階段的核心為 Swin Transformer block，如圖~\ref{fig:swinunetr_architecture}~右側所示。該區塊以兩個連續子層交替運作：前者使用視窗式多頭自注意力（window multi-head self-attention, W-MSA），將自注意力計算限制於局部視窗內以降低運算量；後者使用位移視窗式多頭自注意力（shifted-window multi-head self-attention, SW-MSA），透過視窗位移使相鄰視窗間得以交換資訊，避免局部視窗造成的資訊隔離。每個子層皆搭配層正規化（layer norm）、多層感知器（MLP）與殘差連接，使模型在控制計算複雜度的同時保留跨區域的長距離相依關係。在解碼階段，編碼器各層級特徵經反卷積上採樣後，與對應解析度的編碼特徵以 skip connection 串接，逐步還原空間解析度並輸出分割結果。此設計使 Swin UNETR 兼具 Transformer 的全域建模能力與 U-Net 對局部空間資訊的保留能力，因此本研究將其作為與 Mamba 編碼器比較的 attention-based 基準架構。
+SwinUNETR 採用 encoder--decoder 結構處理三維體積影像，整體架構如圖~\ref{fig:swinunetr_architecture}~所示。輸入 CT volume 先經 patch partition 切為不重疊的三維 patch 並線性嵌入為 token，再堆疊四個編碼階段，各階段以 patch merging 逐層減半空間解析度、加倍特徵通道，建立多尺度階層式表示。各階段核心為 Swin Transformer block，交替使用視窗式多頭自注意力（W-MSA）與位移視窗式多頭自注意力（SW-MSA）：前者將注意力限制於局部視窗以降低運算量，後者藉視窗位移使相鄰視窗交換資訊，並搭配 layer norm、MLP 與殘差連接。解碼階段則將各層編碼特徵以 skip connection 串接並上採樣還原解析度。此設計兼具 Transformer 的全域建模與 U-Net 對局部資訊的保留能力，故本研究以其作為與 Mamba 比較之 attention-based 基準。
 
 \begin{figure}[H]
 \centering
 \includegraphics[width=\textwidth]{figures/Swinunet.png}
-\caption{Swin UNETR 階層式視窗注意力分割架構}
+\caption{SwinUNETR 階層式視窗注意力分割架構}
 \label{fig:swinunetr_architecture}
 \end{figure}
 
-近年 state space model（SSM）與 Mamba 架構開始被引入醫學影像分析。Mamba 透過 selective state space mechanism 建立長序列建模能力，並具有相對於標準 Transformer 更接近線性的序列長度複雜度，因此適合處理 token 數量龐大的影像或三維體積資料\cite{gu2023mamba}。在醫學影像領域，nnMamba 將 CNN 的局部表示能力與 SSM 的長距離建模能力結合，並應用於三維生物醫學影像分割、分類與 landmark detection 任務\cite{gong2024nnmamba}。SegMamba 則針對三維醫學影像分割設計 Mamba-based 架構，以提升 whole-volume feature modeling 的效率\cite{xing2024segmamba}；MedMamba 則探討 Vision Mamba 於多種醫學影像分類任務中的應用，作為 Mamba-based medical image classification 的基準之一\cite{yue2024medmamba}。
+\subsection{Mamba}
 
-\subsection{選擇性狀態空間模型架構}
+state space model（SSM）與 Mamba 近年開始被引入醫學影像分析。Mamba 以 selective state space mechanism 建立長序列建模能力，且序列長度複雜度接近線性，適合處理 token 數量龐大的三維體積資料\cite{gu2023mamba}。在醫學影像領域，nnMamba 結合 CNN 之局部表示與 SSM 之長距離建模，應用於三維分割、分類與 landmark detection\cite{gong2024nnmamba}；SegMamba 針對三維醫學影像分割設計 Mamba 架構以提升 whole-volume 建模效率\cite{xing2024segmamba}；MedMamba 則將 Vision Mamba 應用於多種醫學影像分類\cite{yue2024medmamba}。
 
-Mamba 的核心為具選擇機制的狀態空間模型（selective state space model），其運作概念如圖~\ref{fig:mamba_architecture}~所示。狀態空間模型以隱藏狀態描述序列的演化，將前一時刻狀態 $h_{t-1}$ 與當前輸入 $x_t$ 透過狀態轉移矩陣 $A$ 與輸入矩陣 $B_t$ 更新為當前狀態 $h_t$，再經由輸出矩陣 $C_t$ 映射為輸出 $y_t$。由於連續形式的狀態空間方程需先離散化（discretize）才能套用於離散序列，模型引入步長參數 $\Delta_t$ 控制離散化過程，使狀態更新得以沿序列逐步遞迴計算。
+Mamba 的核心為具選擇機制的狀態空間模型（selective state space model），其運作概念如圖~\ref{fig:mamba_architecture}~所示。狀態空間模型以隱藏狀態描述序列演化：將前一時刻狀態 $h_{t-1}$ 與當前輸入 $x_t$ 經狀態轉移矩陣 $A$ 與輸入矩陣 $B_t$ 更新為 $h_t$，再由輸出矩陣 $C_t$ 映射為輸出 $y_t$。連續形式之狀態方程須先離散化，模型以步長參數 $\Delta_t$ 控制此過程，使狀態得以沿序列遞迴計算。
 
-傳統狀態空間模型的參數固定不隨輸入改變，難以針對不同內容選擇性地保留或遺忘資訊。Mamba 的關鍵改良在於選擇機制（selection mechanism）：如圖~\ref{fig:mamba_architecture}~下方所示，$B_t$、$C_t$ 與 $\Delta_t$ 改由輸入 $x_t$ 經投影（projection）動態生成，使模型可依當前輸入內容調整狀態更新與輸出的強度，藉此選擇性地關注序列中具資訊量的部分。此外，Mamba 採用硬體感知（hardware-aware）的計算設計，將狀態擴展運算安排於 GPU 高速記憶體（SRAM）與高頻寬記憶體（HBM）之間，以減少記憶體讀寫成本。相較於標準 self-attention 隨 token 數量呈平方成長的複雜度，Mamba 對序列長度具有接近線性的複雜度，因此特別適合處理 token 數量龐大的三維 CT 體積資料，可在保留長距離建模能力的同時降低高維影像的運算負擔。
+傳統狀態空間模型參數固定，難以依內容選擇性保留或遺忘資訊。Mamba 的關鍵改良在於選擇機制（selection mechanism）：如圖~\ref{fig:mamba_architecture}~下方所示，$B_t$、$C_t$ 與 $\Delta_t$ 改由輸入 $x_t$ 動態生成，使模型可依當前內容調整狀態更新強度，選擇性關注序列中具資訊量的片段；並採硬體感知（hardware-aware）計算設計以減少記憶體讀寫成本。相較於 self-attention 隨 token 數量呈平方成長的複雜度，Mamba 對序列長度接近線性，特別適合 token 數量龐大的三維 CT，可在保留長距離建模能力的同時降低運算負擔。
 
 \begin{figure}[H]
 \centering
@@ -80,7 +78,7 @@ Mamba 的核心為具選擇機制的狀態空間模型（selective state space m
 \label{fig:mamba_architecture}
 \end{figure}
 
-整體而言，三維醫學影像模型的發展可視為由局部特徵萃取走向局部與全域表徵整合的過程。3D CNN 適合捕捉 CT 中局部低衰減區、血管紋理與氣道周邊變化；Transformer 與 Swin 類模型則強調跨區域或多尺度關係；Mamba 類模型則嘗試在保留長距離建模能力的同時降低高維體積資料的計算負擔。對 COPD 輔助診斷而言，這些模型可作為第~\ref{sec:ct_biomarkers}~節量化生物標記之外的補充途徑，使模型直接由原始 CT volume 學習與肺功能、肺氣腫分布或疾病嚴重程度相關的隱含特徵，並同時支援連續肺功能表徵迴歸與衍生分類任務。然而，三維深度模型通常需要較多資料與嚴謹驗證；在小樣本醫學影像情境中，模型可能受到掃描協議差異、連續標籤雜訊、類別不平衡與資料切分方式影響，因此後續仍需搭配適當的資料增強、交叉驗證與多指標評估。
+整體而言，三維醫學影像模型的發展可視為由局部特徵萃取走向局部與全域表徵整合：3D CNN 擅長局部紋理，Transformer 與 Swin 類模型強調跨區域多尺度關係，Mamba 類模型則在保留長距離建模的同時降低高維資料之運算負擔。對 COPD 輔助診斷而言，這些模型可作為第~\ref{sec:ct_biomarkers}~節量化生物標記之外的補充途徑，直接由 CT volume 學習與肺功能、肺氣腫分布或疾病嚴重程度相關之隱含特徵。惟三維深度模型需較多資料與嚴謹驗證，於小樣本情境易受掃描協議差異、標籤雜訊與類別不平衡影響，故仍須搭配資料增強、交叉驗證與多指標評估。
 
 \section{集成決策策略}
 
@@ -92,7 +90,7 @@ Mamba 的核心為具選擇機制的狀態空間模型（selective state space m
 
 Veenboer 等人提出之 TAP-CT（Task-Agnostic Pretraining of Computed Tomography）即以 CT 體積影像之通用預訓練為核心。該研究將 Vision Transformer 與 DINOv2 類自監督學習概念延伸至 volumetric CT，並針對三維 patch embedding、位置編碼與體積式資料增強進行調整，使模型可由 CT volume 建立具深度資訊之影像表示。其預訓練資料涵蓋大量 CT volumes，研究結果指出 TAP-CT 可在下游任務中提供穩定之 frozen representation，作為低資源情境下除完整 end-to-end fine-tuning 以外的特徵來源\cite{veenboer2025tapct}。
 
-TAP-CT 對本研究所關注之小樣本胸部 CT 任務具有兩項參考意義。首先，COPD 相關影像表徵同時包含肺實質低衰減區、肺部空間分布與氣道血管周邊結構，若僅依本研究有限資料自訓練影像編碼器，模型可學得之表徵可能受資料量與標籤分布限制；預訓練 CT embedding 則提供另一種由大量 CT 影像學得之表示來源。其次，TAP-CT 之 frozen representation 可與任務導向模型輸出形成互補比較：前者強調通用 CT 表徵之可轉移性，後者則針對本研究之塌陷角與肺功能相關標籤調整特徵。因此，於下游任務中可分別檢視預訓練 embedding 單獨使用時之資訊量，以及其與三維影像模型特徵融合後是否提供額外效益。
+TAP-CT 對本研究所關注之小樣本胸部 CT 任務具有兩項參考意義。首先，COPD 相關影像表徵同時包含肺實質低衰減區、肺部空間分布與氣道血管周邊結構，若僅依本研究有限資料自訓練影像編碼器，模型可學得之表徵可能受資料量與標籤分布限制；預訓練 CT embedding 則提供另一種由大量 CT 影像學得之表示來源。其次，TAP-CT 之 frozen representation 可與任務導向模型輸出形成互補比較：前者強調通用 CT 表徵之可轉移性，後者則針對本研究之塌陷角與肺功能相關標籤調整特徵。因此，於下游任務中可檢視預訓練 embedding 與三維影像模型特徵融合後是否提供額外效益。
 
 然而，TAP-CT 屬於通用 CT 預訓練模型，並非專為 COPD、肺功能檢查或塌陷角標籤建立之疾病特異模型。其 embedding 是否能保留與呼氣流量容積曲線、GOLD 分級或 Normal/Abnormal 判讀相關之訊息，仍需依實際資料與下游任務驗證。基於此，本研究將 TAP-CT 視為三維 CT 深度學習分支中的預訓練表徵補充來源，而非取代可解釋 CT 量化生物標記或任務導向三維模型之唯一方法。
 

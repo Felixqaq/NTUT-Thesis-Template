@@ -6,7 +6,7 @@
     \end{ZhAbstractItems}
 
     \begin{ZhAbstractDescription}
-        慢性阻塞性肺病（Chronic Obstructive Pulmonary Disease, COPD）之臨床評估主要仰賴肺功能檢查，但胸部電腦斷層影像（computed tomography, CT）亦可提供肺部結構資訊。本研究建立以胸部 CT 為基礎之 COPD 輔助判讀流程，結合可解釋量化生物標記與三維深度影像模型。量化分支使用 54 例 CT，擷取 12 項肺氣腫、肺容積、氣道與血管相關特徵；其中 Abnormal 組對應合作醫師判定之 COPD 個案。經分層五折交叉驗證後，Normal/Abnormal 二分類之準確率為 92.59\%，AUC 為 0.9784。同一 54 例資料用於三維 Mamba 之 Normal/Abnormal 二分類，五折平均準確率為 0.9409，AUC 為 1.0000。肺功能相關影像任務則使用擴充後之 66 例 CT，以 Mamba、SwinUNETR 與 Hybrid Mamba-Attention 進行塌陷角連續值迴歸比較；分類任務以 Hybrid Mamba-Attention 與 TAP-CT 融合模型進行，排除 AC 中間組後，最佳 AC 二分類準確率為 0.9192，Macro-F1 為 0.8763。進一步以 AC 二分類候選輸出進行 hard voting 彙整時，候選輸出數量為 5 之準確率與未投票原始二分類基準皆為 0.919，且 sensitivity 皆維持 0.800。GOLD 四分級任務於排除無 COPD 個案後，五折平均 Macro-F1 為 0.3333，仍受少數類別樣本不足限制。結果顯示，兩類方法可分別提供結構量化依據與影像表徵學習能力，而 hard voting 在本資料中未帶來明顯準確率提升。
+        慢性阻塞性肺病（Chronic Obstructive Pulmonary Disease, COPD）之臨床評估主要仰賴肺功能檢查，但胸部電腦斷層影像（computed tomography, CT）亦可提供肺部結構資訊。本研究建立以胸部 CT 為基礎之 COPD 輔助判讀流程，結合可解釋量化生物標記與三維深度影像模型。量化分支使用 54 例 CT，擷取 12 項肺氣腫、肺容積、氣道與血管相關特徵；其中 Abnormal 組對應合作醫師判定之 COPD 個案。經分層五折交叉驗證後，Normal/Abnormal 二分類之準確率為 92.59\%，AUC 為 0.9784。同一 54 例資料用於三維 Mamba 之 Normal/Abnormal 二分類，五折平均準確率為 0.9409，AUC 為 1.0000。肺功能相關影像任務則使用擴充後之 66 例 CT，以 Mamba、SwinUNETR、Hybrid Mamba-Attention 與 TAP-CT 融合模型進行塌陷角連續值迴歸比較；分類任務以 Hybrid Mamba-Attention 與 TAP-CT 融合模型進行，排除 AC 中間組後，最佳 AC 二分類準確率為 0.9192，Macro-F1 為 0.8763。進一步以 AC 二分類候選輸出進行 hard voting 彙整時，候選輸出數量為 5 之準確率與未投票原始二分類基準皆為 0.919，且 sensitivity 皆維持 0.800。GOLD 四分級任務於排除無 COPD 個案後，五折平均 Macro-F1 為 0.3798，仍受少數類別樣本不足限制。結果顯示，兩類方法可分別提供結構量化依據與影像表徵學習能力，而 hard voting 在本資料中未帶來明顯準確率提升。
     \end{ZhAbstractDescription}
     
 \end{ZhAbstract}
