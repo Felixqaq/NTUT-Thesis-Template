@@ -165,16 +165,16 @@ RQ2 評估三維 CT Mamba 模型於 54 例 Normal/Abnormal 二分類之表現。
 \hline
 Metric & 5-fold average \\
 \hline
-AUC & \(1.0000 \pm 0.0000\) \\
-Accuracy & \(0.9409 \pm 0.0422\) \\
-Sensitivity & \(0.9019 \pm 0.0718\) \\
-Specificity & \(1.0000 \pm 0.0000\) \\
+AUC & \(0.9733 \pm 0.0533\) \\
+Accuracy & \(0.9073 \pm 0.0997\) \\
+Sensitivity & \(0.9048 \pm 0.0783\) \\
+Specificity & \(0.9200 \pm 0.1600\) \\
 \hline
 \end{tabular}
 \endgroup
 \end{table}
 
-Mamba Normal/Abnormal 二分類模型之 AUC 為 \(1.0000 \pm 0.0000\)，Accuracy 為 \(0.9409 \pm 0.0422\)，Specificity 亦達 \(1.0000 \pm 0.0000\)。Sensitivity 為 \(0.9019 \pm 0.0718\)，顯示模型仍可能漏判部分 Abnormal 個案。與 RQ1 相比，三維影像模型可直接學習三維 CT 體積資料之空間表徵，整體 Accuracy 與 AUC 略高；但其臨床應用仍需處理 Abnormal 個案漏判及模型可解釋性不足的問題。
+Mamba Normal/Abnormal 二分類模型之 AUC 為 \(0.9733 \pm 0.0533\)，Accuracy 為 \(0.9073 \pm 0.0997\)。Sensitivity 為 \(0.9048 \pm 0.0783\)，Specificity 為 \(0.9200 \pm 0.1600\)，顯示模型在 Abnormal 與 Normal 兩類別上皆仍有少數誤判，且各折表現之離散程度（標準差）較大。與 RQ1 相比，三維影像模型可直接學習三維 CT 體積資料之空間表徵，Sensitivity 略高於量化特徵分支（0.8788），代表其對 Abnormal 個案之召回能力較佳；惟整體 Accuracy 與 AUC 與量化特徵分支相當而略低，Specificity 亦因偶發之 Normal 誤判而低於 RQ1 之 1.0000。此結果說明三維影像模型雖能補足量化特徵對 Abnormal 個案的漏判，但其穩定性與可解釋性不足仍為後續臨床應用須克服的問題。
 \FloatBarrier
 
 \subsection{RQ3 三維影像角度預測結果}

@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RQ3 塌陷角迴歸 MAE 比較</title>
+<style>
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: #ffffff;
+    color: #000;
+    font-family: "Times New Roman", "PingFang TC", "Microsoft JhengHei", serif;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .card { width: min(94vw, 1000px); padding: 28px 36px; box-sizing: border-box; }
+  h1 { font-size: clamp(18px, 2.2vw, 24px); margin: 0 0 18px; text-align: center; font-weight: 700; }
+  svg { width: 100%; height: auto; display: block; }
+  .lbl  { font-size: 18px; fill: #000; }
+  .val  { font-size: 17px; fill: #000; }
+  .axis { font-size: 15px; fill: #000; }
+  .axis-title { font-size: 17px; fill: #000; }
+  .grid { stroke: #d9d9d9; stroke-width: 1; stroke-dasharray: 3 3; }
+  .frame { stroke: #000; stroke-width: 1.2; }
+  .bar       { fill: #5b7fa6; }
+  .bar-best  { fill: #1f3b5c; }
+</style>
+</head>
+<body>
+  <div class="card">
+    <h1>各模型塌陷角連續值迴歸之 MAE 比較</h1>
+    <svg id="chart" viewBox="0 0 960 420" role="img" aria-label="MAE comparison"></svg>
+  </div>
+
+<script>
+const data = [
+  { name: "TAP-CT late fusion",     mae: 11.5182, best: true },
+  { name: "Hybrid Mamba-Attention", mae: 15.8512 },
+  { name: "Mamba",                  mae: 17.1180 },
+  { name: "SwinUNETR",              mae: 19.0884 },
+];
+
+const W = 960, H = 420;
+const m = { top: 18, right: 70, bottom: 56, left: 270 };
+const plotW = W - m.left - m.right;
+const plotH = H - m.top - m.bottom;
+const xMax = 20;
+const x = v => m.left + (v / xMax) * plotW;
+
+const svg = document.getElementById("chart");
+const NS = "http://www.w3.org/2000/svg";
+const el = (tag, attrs, text) => {
+  const n = document.createElementNS(NS, tag);
+  for (const k in attrs) n.setAttribute(k, attrs[k]);
+  if (text != null) n.textContent = text;
+  svg.appendChild(n);
+  return n;
+};
+
+// gridlines + x ticks
+for (let v = 0; v <= xMax; v += 5) {
+  if (v > 0) el("line", { class: "grid", x1: x(v), y1: m.top, x2: x(v), y2: m.top + plotH });
+  el("line", { class: "frame", x1: x(v), y1: m.top + plotH, x2: x(v), y2: m.top + plotH + 6 });
+  el("text", { class: "axis", x: x(v), y: m.top + plotH + 26, "text-anchor": "middle" }, v);
+}
+// axes (left + bottom)
+el("line", { class: "frame", x1: m.left, y1: m.top, x2: m.left, y2: m.top + plotH });
+el("line", { class: "frame", x1: m.left, y1: m.top + plotH, x2: m.left + plotW, y2: m.top + plotH });
+el("text", { class: "axis-title", x: m.left + plotW / 2, y: H - 8, "text-anchor": "middle" }, "MAE (degrees)");
+
+// bars
+const band = plotH / data.length;
+const barH = Math.min(42, band * 0.5);
+data.forEach((d, i) => {
+  const cy = m.top + band * i + band / 2;
+  const y = cy - barH / 2;
+  el("rect", { class: d.best ? "bar-best" : "bar", x: m.left, y, width: x(d.mae) - m.left, height: barH });
+  el("text", { class: "lbl", x: m.left - 14, y: cy + 6, "text-anchor": "end" }, d.name);
+  el("text", { class: "val", x: x(d.mae) + 10, y: cy + 6 }, d.mae.toFixed(2));
+});
+</script>
+</body>
+</html>
