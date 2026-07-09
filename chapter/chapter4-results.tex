@@ -259,7 +259,9 @@ Hybrid Mamba-Attention & \(0.7593 \pm 0.1173\) & \(0.5713 \pm 0.0748\) & \(0.631
 \endgroup
 \end{table}
 
-如表~\ref{tab:rq4_ac_3class} 所示，AC 三分類中，TAP-CT late fusion 取得最高 Accuracy（\(0.8044 \pm 0.0727\)），高於僅使用影像特徵之 Hybrid Mamba-Attention（\(0.7593 \pm 0.1173\)）；惟其 Macro-F1（\(0.5294 \pm 0.0749\)）與 Balanced accuracy（\(0.5341 \pm 0.0945\)）略低於 Hybrid Mamba-Attention 之 \(0.5713 \pm 0.0748\) 與 \(0.6319 \pm 0.1160\)。此結果顯示，TAP-CT late fusion 雖可提升三分類之整體正確率，卻未同步改善各類別之均衡性。為呈現整體 Accuracy 最高設定之錯誤分布，圖~\ref{fig:rq4_ac_3class} 採用 TAP-CT late fusion 繪製混淆矩陣；該模型對 AC 高值組與 AC 低值組具有較穩定的判別能力，五折測試樣本中分別正確分類 44 例與 9 例。AC 中間組 5 例則全數未能正確分類，且皆被判為 AC 高值組，顯示模型傾向將中間灰區樣本歸入高角度端；此一偏誤亦使 Macro-F1 與 Balanced accuracy 未隨 Accuracy 同步提升。相較於二分類，三分類需額外辨識樣本數較少且界線較模糊的 AC 中間組，因此 Macro-F1 明顯下降，顯示中間灰區會增加肺功能相關影像判讀難度。
+如表~\ref{tab:rq4_ac_3class} 所示，AC 三分類中，TAP-CT late fusion 取得最高 Accuracy（\(0.8044 \pm 0.0727\)），高於僅使用影像特徵之 Hybrid Mamba-Attention（\(0.7593 \pm 0.1173\)）；惟其 Macro-F1（\(0.5294 \pm 0.0749\)）與 Balanced accuracy（\(0.5341 \pm 0.0945\)）低於 Hybrid Mamba-Attention 之 \(0.5713 \pm 0.0748\) 與 \(0.6319 \pm 0.1160\)。此結果顯示，TAP-CT late fusion 有助於提升三分類整體正確率，但未同步改善各類別之均衡辨識能力。由圖~\ref{fig:rq4_ac_3class} 可見，TAP-CT late fusion 對 AC 高值組與 AC 低值組較具判別能力，五折測試樣本中分別正確分類 44 例與 9 例；然而 AC 中間組 5 例全數被誤分為 AC 高值組，顯示模型傾向將中間灰區樣本歸入高角度端。由於 Macro-F1 與 Balanced accuracy 對少數類別表現較為敏感，中間組辨識失敗使兩項指標未隨 Accuracy 同步提升。
+
+此現象亦說明 RQ3 與 RQ4 之結果不可直接等同。RQ3 將 AC 視為連續變數，主要評估預測角度與真實角度之平均誤差及相關性；RQ4 則依 \(131^{\circ}\) 與 \(152^{\circ}\) 門檻將 AC 離散化為分類標籤，模型除了需掌握角度變化趨勢外，亦須將樣本正確分配至門檻兩側。對於接近門檻之個案，即使連續角度預測誤差不大，仍可能造成分類結果翻轉。尤其 AC 三分類需額外辨識樣本數少且界線模糊的中間組，因此分類指標更容易受到灰區樣本影響。整體而言，TAP-CT late fusion 在 RQ3 中可較佳地捕捉連續 AC 趨勢，並於 RQ4 三分類中提升整體 Accuracy；但其對門檻附近與中間灰區樣本之辨識仍有限制，因此未能在 Macro-F1 與 Balanced accuracy 上同步取得最佳表現。
 
 \begin{figure}[htbp]
 \centering
