@@ -87,4 +87,15 @@
 % 參考文獻，請在段落上隨意註解，你同時需要 reference.bib
 \include{page/reference}
 
+% 附錄：補充實驗（GOLD 四分級）
+\renewcommand\appendixname{附錄}
+\appendix
+% 附錄章名改為「附錄 A」樣式（避免沿用本文「第 X 章」之中文數字格式）
+\renewcommand\prechaptername{附錄\ }
+\renewcommand\postchaptername{}
+\renewcommand\tocprechaptername{附錄\ }
+\renewcommand\tocpostchaptername{}
+\def\zhnumber#1{#1}
+\include{chapter/appendix.tex}
+
 \end{document}

@@ -14,7 +14,7 @@ GOLD 指引以固定比值準則作為 COPD 之判定前提：支氣管擴張劑
 
 然而，肺功能檢查主要反映整體呼吸生理狀態，較難直接指出肺部結構異常的位置、型態與分布。同樣的 FEV1 或 GOLD 分級可能對應不同程度的肺氣腫、氣道壁增厚、過度充氣或血管改變，因此單一肺功能指標未必能完整描述 COPD 的影像表型\cite{park2025qctcopd}。基於此限制，結合胸部 CT 影像之量化特徵與三維影像模型，並將 PFT 相關資訊作為參考標籤，可望補充單一肺功能指標難以呈現之 COPD 影像表型，並支援肺功能相關表徵之預測與輔助判讀。
 
-除傳統肺量計數值外，流量容積曲線之幾何表徵亦可反映呼氣過程中的曲線形狀變化。Topalovic 等人以塌陷角度（Angle of Collapse, AC）描述曲線凹陷程度，並指出其與肺氣腫表徵具有關聯\cite{topalovic2013anglecollapse}。相較於直接將個案壓縮為單一正常或異常類別，AC 為連續角度，可保留不同病人之肺功能曲線差異；若再依具解釋意義之角度門檻建立分級標籤，則可進一步觀察連續肺功能表徵轉換為分類任務後對模型學習與結果解讀之影響。因此，AC 可同時作為連續迴歸目標與衍生分類標籤來源，有助於觀察由肺功能表徵預測延伸至輔助分級之分析過程。
+除傳統肺量計數值外，流量容積曲線之幾何表徵亦可反映呼氣過程中的曲線形狀變化。Topalovic 等人以塌陷角度（Angle of Collapse, AC）描述曲線凹陷程度，並指出其與肺氣腫表徵具有關聯\cite{topalovic2013anglecollapse}。此外，由肺功能檢查亦可衍生阻塞指數（Obstruction Index, OI）等指標，用以反映氣道阻塞與肺氣腫傾向。Mochizuki 等人以 OI 量化最大呼氣流量-容積曲線下降段之凹陷程度，其定義為用力肺活量與曲線上尖峰呼氣流量一半處之容積差值之比值，並指出該指標與 CT 上之肺氣腫範圍具有關聯，且此關聯不受 FEV1 影響\cite{mochizuki2019concavity}。此結果顯示，曲線凹陷程度所攜帶之肺氣腫資訊，未必能由單一肺量計數值完全涵蓋。本研究以固定門檻將 OI 轉換為二分類標籤，作為肺功能導向之衍生標籤之一。相較於直接將個案壓縮為單一正常或異常類別，AC 為連續角度，可保留不同病人之肺功能曲線差異；若再依具解釋意義之角度門檻建立分級標籤，則可進一步觀察連續肺功能表徵轉換為分類任務後對模型學習與結果解讀之影響。因此，AC 可同時作為連續迴歸目標與衍生分類標籤來源，有助於觀察由肺功能表徵預測延伸至輔助分級之分析過程。
 
 \section{CT 影像表徵與量化生物標記}\label{sec:ct_biomarkers}
 
@@ -50,18 +50,7 @@ GOLD 指引以固定比值準則作為 COPD 之判定前提：支氣管擴張劑
 
 早期三維醫學影像深度學習多以 3D convolutional neural networks（3D CNN）為基礎，可於深度、高度與寬度三個方向同時萃取局部特徵。Park 等人以 inflated 3D CNN 由低劑量胸部 CT 預測 FVC 與 FEV1，並據以判斷高風險族群\cite{park2023dlpulmonaryct}；BeyondCT 則結合 3D CNN、Vision Transformer 與人口統計資料預測 FVC 與 FEV1，反映以 CNN 擷取局部特徵、再以 Transformer 捕捉全域關係之發展趨勢\cite{geng2024beyondct}。此類研究顯示，三維 CT 模型除可輸出疾病類別外，亦能以迴歸方式估計連續肺功能指標。
 
-Transformer 透過 self-attention 建立元素間關係，Vision Transformer 進一步將影像切分為 patch token 後套用此機制\cite{dosovitskiy2021vit}；Wu 等人即以其進行 CT 肺氣腫亞型分類\cite{wu2021emphysemavit}。然而標準 self-attention 之計算量隨 token 數量平方成長，直接用於高解析三維 CT 成本過高。Swin Transformer 改以 shifted window attention 建立階層式特徵，在降低運算量的同時保留多尺度資訊\cite{liu2021swin}；SwinUNETR 則將此概念引入三維醫學影像分割\cite{hatamizadeh2022swinunetr}。
-
-\subsection{Swin Transformer}
-
-SwinUNETR 採用 encoder--decoder 結構處理三維體積影像，整體架構如圖~\ref{fig:swinunetr_architecture}~所示。輸入 CT volume 先經 patch partition 切為不重疊的三維 patch 並線性嵌入為 token，再堆疊四個編碼階段，各階段以 patch merging 逐層減半空間解析度、加倍特徵通道，建立多尺度階層式表示。各階段核心為 Swin Transformer block，交替使用視窗式多頭自注意力（W-MSA）與位移視窗式多頭自注意力（SW-MSA）：前者將注意力限制於局部視窗以降低運算量，後者藉視窗位移使相鄰視窗交換資訊，並搭配 layer norm、MLP 與殘差連接。解碼階段則將各層編碼特徵以 skip connection 串接並上採樣還原解析度。此設計兼具 Transformer 的全域建模與 U-Net 對局部資訊的保留能力，故本研究以其作為與 Mamba 比較之 attention-based 基準。
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=\textwidth]{figures/Swinunet.png}
-\caption{SwinUNETR 階層式視窗注意力分割架構}
-\label{fig:swinunetr_architecture}
-\end{figure}
+Transformer 透過 self-attention 建立元素間關係，Vision Transformer 進一步將影像切分為 patch token 後套用此機制\cite{dosovitskiy2021vit}；Wu 等人即以其進行 CT 肺氣腫亞型分類\cite{wu2021emphysemavit}。然而標準 self-attention 之計算量隨 token 數量平方成長，直接用於高解析三維 CT 成本過高。Swin Transformer 改以 shifted window attention 建立階層式特徵，在降低運算量的同時保留多尺度資訊\cite{liu2021swin}。
 
 \subsection{Mamba}
 
@@ -73,16 +62,13 @@ Mamba 的核心為具選擇機制的狀態空間模型（selective state space m
 
 \begin{figure}[H]
 \centering
+{\footnotesize 資料來源：Gu 與 Dao\cite{gu2023mamba}}\par\vspace{0.3em}
 \includegraphics[width=\textwidth]{figures/mamba.png}
 \caption{具選擇機制之狀態空間模型架構}
 \label{fig:mamba_architecture}
 \end{figure}
 
 整體而言，三維醫學影像模型的發展可視為由局部特徵萃取走向局部與全域表徵整合：3D CNN 擅長局部紋理，Transformer 與 Swin 類模型強調跨區域多尺度關係，Mamba 類模型則在保留長距離建模的同時降低高維資料之運算負擔。對 COPD 輔助診斷而言，這些模型可作為第~\ref{sec:ct_biomarkers}~節量化生物標記之外的補充途徑，直接由 CT volume 學習與肺功能、肺氣腫分布或疾病嚴重程度相關之隱含特徵。惟三維深度模型需較多資料與嚴謹驗證，於小樣本情境易受掃描協議差異、標籤雜訊與類別不平衡影響，故仍須搭配資料增強、交叉驗證與多指標評估。
-
-\section{集成決策策略}
-
-多數決或集成式決策彙整常被用於降低單一分類器或單次推論結果之偶然性。集成學習的核心概念，是由多個具有差異性的分類決策共同產生最終輸出，以期降低模型變異或改善泛化表現\cite{dietterich2000ensemble}。其中 hard voting 僅使用各成員輸出的類別標籤，並以多數類別作為最終結果；相較於 soft voting 需整合機率或信心分數，hard voting 的假設較簡單，也較容易在病人層級輸出中解釋\cite{kuncheva2004combining}。然而，多數決不必然帶來明顯準確率提升，也不保證改善少數類別召回率；因此，本研究在 hard voting 分析中以 accuracy、sensitivity 與 specificity 作為主要指標，分別觀察整體正確率、AC 低值組召回能力與 AC 高值組辨識能力。
 
 \section{TAP-CT 預訓練影像表徵}
 

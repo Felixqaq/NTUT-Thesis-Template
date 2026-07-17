@@ -301,3 +301,10 @@ commits/
 # option is specified. Footnotes are the stored in a file with suffix Notes.bib.
 # Uncomment the next line to have this generated file ignored.
 #*Notes.bib
+
+## 個資與倫理審查文件（不納入版控）
+# IRB 核可函、病歷調閱表等含個資或行政資訊之文件
+1240新案核可函+病歷調閱表.pdf
+*核可函*
+*病歷調閱*
+*IRB*.pdf

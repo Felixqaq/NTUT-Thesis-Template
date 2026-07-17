@@ -4,20 +4,19 @@
 
 \section{研究問題}
 
-本章依研究流程彙整六項研究問題（Research Questions, RQs），分別評估 CT 量化特徵、三維影像模型、肺功能衍生標籤與 hard voting 決策彙整於 COPD 輔助判讀之表現。結果分析著重於模型效能、類別辨識均衡性及其臨床判讀意義。
+本章以三個研究問題（Research Questions, RQs）彙整實驗結果。三個 RQ 共用同一份 66 例病人與相同之訓練設定，並在每個任務中比較三種方法：以 12 項 CT 量化生物標記為輸入之量化生物標記模型（FCNN）、僅使用 CT 影像之 Hybrid Mamba-Attention 影像模型，以及結合凍結 TAP-CT 病人層級嵌入之 TAP-CT late fusion 模型。下文分別以「FCNN」、「Hybrid Mamba-Attention」與「TAP-CT late fusion」稱之。
 
 \begin{list}{}{\setlength{\leftmargin}{4.2em}\setlength{\labelwidth}{3.4em}\setlength{\labelsep}{0.8em}\setlength{\itemsep}{0.35em}}
-    \item[\textbf{RQ1：}]胸部 CT 影像擷取之量化生物標記，能否區分 Normal 與 Abnormal 個案？
-    \item[\textbf{RQ2：}]輸入三維 CT 之 Mamba 模型，能否有效區分 Normal 與 Abnormal 個案？
-    \item[\textbf{RQ3：}]三維 CT 影像模型是否能預測肺功能塌陷角度？
-    \item[\textbf{RQ4：}]塌陷角度衍生之二分類與三分類標籤，是否有助於肺功能相關影像判讀？
-    \item[\textbf{RQ5：}]三維 CT 影像模型能否辨識 GOLD 分級？
-    \item[\textbf{RQ6：}]Hard voting 決策彙整對塌陷角二分類準確率、敏感度與特異度有何影響？
+    \item[\textbf{RQ1：}]胸部 CT 能否區分臨床標記之 Normal 與 Abnormal 個案？
+    \item[\textbf{RQ2：}]塌陷角於（a）三分類、（b）二分類與（c）角度迴歸三個子任務下，三種方法之可預測性為何？
+    \item[\textbf{RQ3：}]阻塞指數（OI）之二分類表現如何？
 \end{list}
+
+三個 RQ 之敏感度（Sensitivity）與特異度（Specificity）正類定義如下：RQ1 為 Abnormal、RQ2b 為 AC 低值組（塌陷／異常）、RQ3 為 OI $\geq 3$；RQ2a 為三分類，其 Sensitivity 與 Specificity 以 one-vs-rest macro 平均計算。各比較表中之粗體代表該表 Accuracy（或迴歸各欄）之最佳者。
 
 \section{實驗環境設定}\label{sec:exp_setup}
 
-本研究實驗之硬體設備如表~\ref{tab:experiment_hardware} 所示。CT 量化生物標記分支於 Windows 環境執行，三維 CT 深度學習、塌陷角預測、hard voting、GOLD 分級與 TAP-CT 相關實驗則於 Ubuntu 環境執行。兩分支之軟體環境整理如表~\ref{tab:quant_software} 與表~\ref{tab:deep_software}。
+本研究實驗之硬體設備如表~\ref{tab:experiment_hardware} 所示。量化生物標記分支之分割與特徵擷取於 Windows 環境執行，影像模型訓練與評估則於 Ubuntu 環境執行。兩分支之軟體環境整理如表~\ref{tab:quant_software} 與表~\ref{tab:deep_software}。
 
 \begin{table}[htbp]
 \centering
@@ -83,33 +82,33 @@ TAP-CT related libraries & transformers, timm, einops \\
 \endgroup
 \end{table}
 
-三維 CT 深度學習分支使用 Mamba、SwinUNETR 與 Hybrid Mamba-Attention 三種編碼器，其架構超參數詳見第~\ref{sec:cnn_arch}~節。為確保結果可重現，各實驗採用相同之訓練超參數與固定亂數種子，並以五折交叉驗證評估；損失函數與類別平衡之虛擬增強設定則依任務調整，完整設定整理如表~\ref{tab:hyperparameters} 所示。其中晚期融合模型另以線性投影將凍結之 TAP-CT 病人層級嵌入與影像特徵對齊至 128 維後串接。
+為使三種方法之比較公平，本研究對三個 RQ 採用相同之訓練設定，如表~\ref{tab:hyperparameters} 所示。
 
 \begin{table}[htbp]
 \centering
-\caption{三維 CT 深度學習分支訓練超參數}
+\caption{三方法相同訓練設定}
 \label{tab:hyperparameters}
 \begingroup
 \renewcommand{\arraystretch}{1.45}
 \begin{tabularx}{0.95\textwidth}{|>{\centering\arraybackslash}p{0.34\textwidth}|>{\raggedright\arraybackslash}X|}
 \hline
-\textbf{Hyperparameter} & \textbf{Value} \\
+\textbf{Setting} & \textbf{Value} \\
 \hline
-Epochs & 160 \\
+Epochs & 100 \\
 \hline
-Batch size & 12 \\
-\hline
-Learning rate & \(1\times10^{-4}\) \\
-\hline
-Weight decay & \(1\times10^{-3}\) \\
-\hline
-Cross-validation & 5-fold \\
+Cross-validation & 五折驗證 \\
 \hline
 Random seed & 42 \\
 \hline
-Loss function & BCE-with-logits for Normal/Abnormal; cross-entropy for AC binary and AC 3-class; focal loss for GOLD; smooth L1 for AC regression \\
+Batch size & 12（深度模型）／16（FCNN） \\
 \hline
-Virtual augmentation per class & 100 per class for AC binary and 3-class (aug100); 13 per class for GOLD (aug13) \\
+Learning rate & \(1\times10^{-4}\)（深度模型）／\(1\times10^{-3}\)（FCNN） \\
+\hline
+Loss function & 分類：class-weighted CE（FCNN），BCE/CE（深度模型）；迴歸：smooth L1 \\
+\hline
+Image augmentation & 5 倍（僅深度模型；FCNN 不使用） \\
+\hline
+Decision rule & argmax，不調整閾值 \\
 \hline
 \end{tabularx}
 \endgroup
@@ -118,219 +117,170 @@ Virtual augmentation per class & 100 per class for AC binary and 3-class (aug100
 \FloatBarrier
 
 \section{實驗結果分析}
-\subsection{RQ1 量化特徵二分類結果}
 
-RQ1 以 12 項 CT 衍生量化生物標記作為輸入，採五折交叉驗證評估 Normal 與 Abnormal 個案之辨識能力，結果如表~\ref{tab:rq1_quant_result} 與圖~\ref{fig:rq1_quant_cm} 所示。本文之 Abnormal 組為合作醫師依 ATS/ERS 肺功能判讀標準判定之 COPD 個案\cite{stanojevic2022ersats}。整體 Accuracy 為 0.9259，AUC 為 0.9784，顯示量化特徵已能有效區分兩類個案。Precision 與 Specificity 皆為 1.0000，代表本實驗未將 Normal 個案誤判為 Abnormal；Sensitivity 為 0.8788，仍有 4 筆 Abnormal 個案被判為 Normal。F1-score 為 0.9355，顯示模型在 precision 與 sensitivity 之間維持良好的綜合表現。此結果說明肺氣腫比例、肺容積、血管與氣道等特徵具有輔助判讀價值，但 Abnormal 個案漏判仍是後續模型優化的主要問題。
+\subsection{RQ1 COPD Normal/Abnormal}
+
+RQ1 於 66 例（Normal 33、Abnormal 33）下比較三種方法之 Normal/Abnormal 辨識能力，其中 Abnormal 組對應合作醫師依 ATS/ERS 肺功能判讀標準判定之 COPD 個案\cite{stanojevic2022ersats}。各方法之 Accuracy、Sensitivity 與 Specificity 之五折平均與標準差如表~\ref{tab:rq1_normal_abnormal} 所示。
 
 \begin{table}[htbp]
 \centering
-\caption{RQ1 量化特徵二分類結果}
-\label{tab:rq1_quant_result}
+\caption{RQ1 Normal/Abnormal 三方法比較（n=66，33/33）}
+\label{tab:rq1_normal_abnormal}
 \begingroup
 \renewcommand{\arraystretch}{1.25}
-\begin{tabularx}{0.75\textwidth}{>{\raggedright\arraybackslash}X >{\centering\arraybackslash}X >{\centering\arraybackslash}X}
+\begin{tabularx}{0.95\textwidth}{>{\raggedright\arraybackslash}X c c c}
 \hline
-Metric & Overall & 5-fold average \\
+Model & Accuracy & Sensitivity & Specificity \\
 \hline
-Accuracy & 0.9259 & \(0.9273 \pm 0.0680\) \\
-Precision & 1.0000 & \(1.0000 \pm 0.0000\) \\
-Sensitivity & 0.8788 & \(0.8810 \pm 0.1086\) \\
-Specificity & 1.0000 & -- \\
-F1-score & 0.9355 & \(0.9331 \pm 0.0626\) \\
-AUC & 0.9784 & \(0.9657 \pm 0.0430\) \\
+FCNN & \(0.848 \pm 0.084\) & \(0.800 \pm 0.214\) & \(0.910 \pm 0.074\) \\
+Hybrid Mamba-Attention & \textbf{0.879 ± 0.078} & \(0.848 \pm 0.091\) & \(0.914 \pm 0.114\) \\
+TAP-CT late fusion & \(0.866 \pm 0.107\) & \(0.848 \pm 0.091\) & \(0.886 \pm 0.140\) \\
 \hline
 \end{tabularx}
 \endgroup
 \end{table}
 
-\begin{figure}[htbp]
-\centering
-\includegraphics[width=0.80\textwidth]{figures/kfold_confusion_matrix.png}
-\caption{RQ1 量化特徵二分類混淆矩陣圖}
-\label{fig:rq1_quant_cm}
-\end{figure}
+由表~\ref{tab:rq1_normal_abnormal} 可見，三種方法之 Accuracy 相當接近（0.848--0.879），以 Hybrid Mamba-Attention最佳（\(0.879 \pm 0.078\)），TAP-CT late fusion 次之（\(0.866 \pm 0.107\)），FCNN（\(0.848 \pm 0.084\)）僅落後約 3 個百分點。三種方法之 Specificity 皆高於 Sensitivity，其中 FCNN 之 Sensitivity 標準差偏高（\(\pm 0.214\)），反映其在部分折上對 Abnormal 個案之召回較不穩定。整體而言，正常與異常之區分僅以 12 維定量參數即已相當接近深度影像模型，顯示此任務之影像訊號多可被量化生物標記涵蓋，加入凍結 TAP-CT 嵌入之融合並未進一步提升 Accuracy。
+
 \FloatBarrier
 
-\subsection{RQ2 三維 Mamba 二分類結果}
+\subsection{RQ2 塌陷角}
 
-RQ2 評估三維 CT Mamba 模型於 54 例 Normal/Abnormal 二分類之表現。此任務沿用 RQ1 之二元標籤與五折交叉驗證設定，使三維影像模型可與 CT 量化生物標記分支在相同樣本範圍下比較；其中 Abnormal 組同樣對應 COPD 個案。各指標均以平均值與標準差呈現，如表~\ref{tab:rq2_3d_binary} 所示。
+RQ2 評估三種方法對 AC 表徵之可預測性，分為三分類（RQ2a）、排除 \(132^{\circ}\)--\(151^{\circ}\) 中間組之二分類（RQ2b）與連續角度迴歸（RQ2c）三個子任務。
+
+\subsubsection{RQ2a 三分類}
+
+RQ2a 依 \(AC \leq 131^{\circ}\)、\(132^{\circ} \leq AC \leq 151^{\circ}\)、\(AC \geq 152^{\circ}\) 將 66 例分為 AC 低值、中間與高值三組（樣本數分別為 14、5、47），Sensitivity 與 Specificity 以 one-vs-rest macro 平均呈現，結果如表~\ref{tab:rq2a_3class} 所示。
 
 \begin{table}[htbp]
 \centering
-\caption{RQ2 Mamba Normal/Abnormal 二分類結果}
-\label{tab:rq2_3d_binary}
+\caption{RQ2a 塌陷角三分類三方法比較（n=66；Sens/Spec 為 macro）}
+\label{tab:rq2a_3class}
 \begingroup
 \renewcommand{\arraystretch}{1.25}
-\begin{tabular}{l c}
+\begin{tabularx}{0.95\textwidth}{>{\raggedright\arraybackslash}X c c c}
 \hline
-Metric & 5-fold average \\
+Model & Accuracy & Sensitivity & Specificity \\
 \hline
-AUC & \(0.9733 \pm 0.0533\) \\
-Accuracy & \(0.9073 \pm 0.0997\) \\
-Sensitivity & \(0.9048 \pm 0.0783\) \\
-Specificity & \(0.9200 \pm 0.1600\) \\
-\hline
-\end{tabular}
-\endgroup
-\end{table}
-
-Mamba Normal/Abnormal 二分類模型之 AUC 為 \(0.9733 \pm 0.0533\)，Accuracy 為 \(0.9073 \pm 0.0997\)。Sensitivity 為 \(0.9048 \pm 0.0783\)，Specificity 為 \(0.9200 \pm 0.1600\)，顯示模型在 Abnormal 與 Normal 兩類別上皆仍有少數誤判，且各折表現之離散程度（標準差）較大。與 RQ1 相比，三維影像模型可直接學習三維 CT 體積資料之空間表徵，Sensitivity 略高於量化特徵分支（0.8788），代表其對 Abnormal 個案之召回能力較佳；惟整體 Accuracy 與 AUC 與量化特徵分支相當而略低，Specificity 亦因偶發之 Normal 誤判而低於 RQ1 之 1.0000。此結果說明三維影像模型雖能補足量化特徵對 Abnormal 個案的漏判，但其穩定性與可解釋性不足仍為後續臨床應用須克服的問題。
-\FloatBarrier
-
-\subsection{RQ3 三維影像角度預測結果}
-
-RQ3 評估三維影像模型預測塌陷角連續值之能力，結果如表~\ref{tab:rq3_ac_regression} 所示。表中指標為各折評估結果之平均值，其中 MAE 另列標準差。
-
-\begin{table}[htbp]
-\centering
-\caption{RQ3 塌陷角連續值迴歸結果}
-\label{tab:rq3_ac_regression}
-\begingroup
-\small
-\renewcommand{\arraystretch}{1.25}
-\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}X c c c c}
-\hline
-Model & MAE & RMSE & \(R^2\) & Pearson \\
-\hline
-TAP-CT late fusion & \(11.5182 \pm 2.2001\) & 16.9993 & 0.4528 & 0.7215 \\
-Hybrid Mamba-Attention & \(15.8512 \pm 4.7756\) & 21.2647 & 0.1723 & 0.6699 \\
-Mamba & \(17.1180 \pm 2.5754\) & 23.9086 & 0.0314 & 0.3413 \\
-SwinUNETR & \(19.0884 \pm 2.8357\) & 24.3769 & -0.0012 & 0.1898 \\
+FCNN & \(0.577 \pm 0.119\) & \(0.458 \pm 0.063\) & \(0.768 \pm 0.060\) \\
+Hybrid Mamba-Attention & \(0.518 \pm 0.253\) & \(0.510 \pm 0.137\) & \(0.741 \pm 0.121\) \\
+TAP-CT late fusion & \textbf{0.774 ± 0.042} & \(0.550 \pm 0.079\) & \(0.830 \pm 0.056\) \\
 \hline
 \end{tabularx}
 \endgroup
 \end{table}
 
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.76\textwidth]{figures/rq3_ac_regression_scatter.png}
-\caption{TAP-CT late fusion 合併五折測試樣本之塌陷角預測散佈圖}
-\label{fig:rq3_ac_regression_scatter}
-\end{figure}
+RQ2a 中僅 TAP-CT late fusion 撐得住整體正確率（\(0.774 \pm 0.042\)），FCNN（\(0.577 \pm 0.119\)）與 Hybrid Mamba-Attention（\(0.518 \pm 0.253\)）皆偏弱，後者跨折變異尤大。三種方法之共同瓶頸皆為僅 5 例之中間組；此結果初步顯示塌陷角是「CT 影像較看得出、12 維定量參數較看不出」之訊號，且凍結 TAP-CT 嵌入對此三分類任務有明顯助益。
 
-四種模型中，TAP-CT late fusion 表現最佳，取得最低 MAE（\(11.5182 \pm 2.2001\)）與最低 RMSE（16.9993），\(R^2\)（0.4528）與五折 Pearson correlation 平均值（0.7215）亦皆為最高，顯示 TAP-CT late fusion 有助於降低連續塌陷角預測誤差並提升與真實值之相關性。其餘三種僅使用影像特徵之模型中以 Hybrid Mamba-Attention 較佳（MAE \(15.8512 \pm 4.7756\)、RMSE 21.2647、Pearson 0.6699）；Mamba 與 SwinUNETR 之 MAE 則分別為 \(17.1180 \pm 2.5754\) 與 \(19.0884 \pm 2.8357\)。
+\subsubsection{RQ2b 二分類}
 
-圖~\ref{fig:rq3_ac_regression_scatter} 以表現最佳之 TAP-CT late fusion 合併五折測試樣本繪製散佈圖。合併後真實與預測塌陷角呈正相關，整體 Pearson correlation 為 0.689（此值由各折測試預測合併後計算，與表~\ref{tab:rq3_ac_regression} 之五折平均彙整方式不同）。散佈圖顯示模型能捕捉部分連續角度變化趨勢，惟迴歸線斜率低於 identity line，且預測值多集中於約 \(155^{\circ}\)--\(175^{\circ}\)，反映模型對低角度樣本傾向高估、對高角度樣本略為低估。
-
-整體而言，加入凍結 TAP-CT 嵌入之晚期融合可進一步降低塌陷角預測誤差；然而各模型 \(R^2\) 仍偏低，顯示單以 CT 影像與通用 CT 表徵精準估計連續肺功能指標仍具限制。
-\FloatBarrier
-
-\subsection{RQ4 塌陷角衍生分類結果}
-
-RQ4 比較塌陷角衍生標籤於二分類與三分類任務中的可辨識性。以下先呈現排除 \(132^{\circ}\)--\(151^{\circ}\) AC 中間組後之 AC 二分類，再呈現保留 AC 中間組之 AC 三分類；各模型之訓練超參數與虛擬資料增強設定詳見表~\ref{tab:hyperparameters}。
+RQ2b 排除 \(132^{\circ}\)--\(151^{\circ}\) 中間組之 5 例，僅保留 AC 低值組與 AC 高值組共 61 例，以 AC 低值組為正類，結果如表~\ref{tab:rq2b_binary} 所示。
 
 \begin{table}[htbp]
 \centering
-\caption{RQ4 AC 二分類結果}
-\label{tab:rq4_ac_binary}
+\caption{RQ2b 塌陷角二分類三方法比較（n=61，排除中間組）}
+\label{tab:rq2b_binary}
+\begingroup
+\renewcommand{\arraystretch}{1.25}
+\begin{tabularx}{0.95\textwidth}{>{\raggedright\arraybackslash}X c c c}
+\hline
+Model & Accuracy & Sensitivity & Specificity \\
+\hline
+FCNN & \(0.755 \pm 0.087\) & \(0.767 \pm 0.200\) & \(0.747 \pm 0.080\) \\
+Hybrid Mamba-Attention & \textbf{0.885 ± 0.086} & \(0.867 \pm 0.163\) & \(0.891 \pm 0.122\) \\
+TAP-CT late fusion & \(0.871 \pm 0.080\) & \(0.867 \pm 0.163\) & \(0.871 \pm 0.106\) \\
+\hline
+\end{tabularx}
+\endgroup
+\end{table}
+
+排除中間組後，AC 二分類表現明顯提升，且以 Hybrid Mamba-Attention最佳（\(0.885 \pm 0.086\)），TAP-CT late fusion 次之（\(0.871 \pm 0.080\)），FCNN 最弱（\(0.755 \pm 0.087\)）。此結果與 RQ2a 一致，說明 AC 低值與高值兩端具有較明確之影像差異；惟在此已相當明確之二分任務中，凍結 TAP-CT 嵌入未再帶來增益，反而略微稀釋純影像模型之表現。
+
+\subsubsection{RQ2c 角度迴歸}
+
+RQ2c 將 AC 視為連續值，改以迴歸指標評估。各方法之 MAE、RMSE、決定係數 \(R^2\) 與 Pearson 相關係數如表~\ref{tab:rq2c_regression} 所示，其中 MAE 越低、RMSE 越低、\(R^2\) 與 Pearson r 越高越佳，各欄最佳者以粗體標示。
+
+\begin{table}[htbp]
+\centering
+\caption{RQ2c 塌陷角連續值迴歸三方法比較（n=66）}
+\label{tab:rq2c_regression}
+\begingroup
+\renewcommand{\arraystretch}{1.25}
+\begin{tabularx}{0.95\textwidth}{>{\raggedright\arraybackslash}X c c c c}
+\hline
+Model & MAE (\(^{\circ}\)) & RMSE (\(^{\circ}\)) & \(R^2\) & Pearson r \\
+\hline
+FCNN & \(16.56 \pm 1.96\) & \textbf{20.63} & 0.054 & 0.467 \\
+Hybrid Mamba-Attention & \(15.48 \pm 1.09\) & 23.43 & \(-0.003\) & 0.422 \\
+TAP-CT late fusion & \textbf{14.61 ± 2.17} & 20.72 & \textbf{0.174} & \textbf{0.525} \\
+\hline
+\end{tabularx}
+\endgroup
+\end{table}
+
+RQ2c 中，TAP-CT late fusion 最能解釋角度變異，取得最低 MAE（\(14.61 \pm 2.17\)）、最高 \(R^2\)（0.174）與最高 Pearson r（0.525）；FCNN 之 RMSE 最低（20.63）但 \(R^2\) 與相關性居中；Hybrid Mamba-Attention之 \(R^2\) 近乎 0（\(-0.003\)），對連續角度幾乎無解釋力。整體而言，三種方法之 \(R^2\) 皆偏低，顯示單以 CT 影像與通用 CT 表徵精準估計連續肺功能指標仍具限制；惟加入凍結 TAP-CT 嵌入之融合能明顯改善此連續迴歸任務。
+
+綜合 RQ2 三個子任務可見，塌陷角是深度影像模型較量化參數更具優勢之訊號：三分類與連續迴歸由 TAP-CT late fusion 勝出，二分類則由 Hybrid Mamba-Attention勝出，而 FCNN 於三個子任務皆非最佳。
+
+\FloatBarrier
+
+\subsection{RQ3 OI 二分類}
+
+RQ3 以肺功能檢查衍生之阻塞指數（OI）依門檻 OI$=3$ 建立二分類標籤，66 例中 OI$<3$ 者 32 例、OI$\geq 3$ 者 34 例，以 OI$\geq 3$ 為正類，結果如表~\ref{tab:rq3_oi} 所示。
+
+\begin{table}[htbp]
+\centering
+\caption{RQ3 OI 二分類三方法比較（n=66，32/34）}
+\label{tab:rq3_oi}
+\begingroup
+\renewcommand{\arraystretch}{1.25}
+\begin{tabularx}{0.95\textwidth}{>{\raggedright\arraybackslash}X c c c}
+\hline
+Model & Accuracy & Sensitivity & Specificity \\
+\hline
+FCNN & \(0.804 \pm 0.054\) & \(0.733 \pm 0.065\) & \(0.876 \pm 0.110\) \\
+Hybrid Mamba-Attention & \(0.803 \pm 0.036\) & \(0.767 \pm 0.065\) & \(0.843 \pm 0.106\) \\
+TAP-CT late fusion & \textbf{0.834 ± 0.088} & \(0.848 \pm 0.106\) & \(0.819 \pm 0.149\) \\
+\hline
+\end{tabularx}
+\endgroup
+\end{table}
+
+RQ3 中三種方法之 Accuracy 相當接近（0.803--0.834），以 TAP-CT late fusion 最佳（\(0.834 \pm 0.088\)），FCNN（\(0.804 \pm 0.054\)）與 Hybrid Mamba-Attention（\(0.803 \pm 0.036\)）幾乎相同。此結果與 RQ1 類似：肺氣腫本就與量化特徵高度相關，故 FCNN 於此 OI 導向任務即已足夠；而 TAP-CT late fusion 仍能小幅提升整體正確率與 Sensitivity。
+
+\FloatBarrier
+
+\section{討論}
+
+本節之錯誤分析以 FCNN 為對象。該模型之輸入為 12 項可解釋之 CT 量化特徵，可逐案對照特徵值與臨床標籤是否一致，故較適合追溯誤判來源；Hybrid Mamba-Attention 與 TAP-CT late fusion 所學得者為高維度隱含表徵，無法以相同方式逐案檢視。
+
+FCNN 於 RQ1 之準確率上限，主要由少數「臨床標籤與 CT 量化特徵互相矛盾」之病人決定，這些個案在交叉驗證中反覆被誤判，如表~\ref{tab:rq1_hard_cases} 所示。表中所列之肺氣腫比例與肺動脈（PA）等效直徑均為該模型之輸入特徵；其中 PA 等效直徑係由肺動脈 label 體積換算（見第~\ref{sec:seg_quant}~節），反映肺動脈結構量之相對差異，不宜以臨床主幹直徑之正常值解讀。
+
+\begin{table}[htbp]
+\centering
+\caption{RQ1 FCNN 困難個案錯誤分析}
+\label{tab:rq1_hard_cases}
 \begingroup
 \footnotesize
 \renewcommand{\arraystretch}{1.25}
-\setlength{\tabcolsep}{3pt}
-\begin{tabular}{p{0.42\textwidth} c c c}
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{l l r r p{0.34\textwidth}}
 \hline
-Model & Accuracy & Macro-F1 & Bal. acc. \\
+病人 & 臨床標籤 & 肺氣腫\% & PA 等效直徑 & 誤判原因 \\
 \hline
-TAP-CT late fusion & \(0.9192 \pm 0.0718\) & \(0.8763 \pm 0.1186\) & \(0.8778 \pm 0.1333\) \\
-Hybrid Mamba-Attention & \(0.8692 \pm 0.0656\) & \(0.8177 \pm 0.0761\) & \(0.8289 \pm 0.0963\) \\
-\hline
-\end{tabular}
-\endgroup
-\end{table}
-
-如表~\ref{tab:rq4_ac_binary} 所示，排除 AC 中間組後，AC 二分類表現明顯提升。TAP-CT late fusion 取得最高 Accuracy（\(0.9192 \pm 0.0718\)）、Macro-F1（\(0.8763 \pm 0.1186\)）與 Balanced accuracy（\(0.8778 \pm 0.1333\)），優於 Hybrid Mamba-Attention 之 Macro-F1 \(0.8177 \pm 0.0761\)。Balanced accuracy 的提升亦表示模型對兩類樣本的辨識較為均衡。此結果指出，AC 低值組與 AC 高值組兩端樣本具有較明確的影像差異。
-
-\begin{table}[htbp]
-\centering
-\caption{RQ4 AC 三分類結果}
-\label{tab:rq4_ac_3class}
-\begingroup
-\footnotesize
-\renewcommand{\arraystretch}{1.25}
-\setlength{\tabcolsep}{3pt}
-\begin{tabular}{p{0.42\textwidth} c c c}
-\hline
-Model & Accuracy & Macro-F1 & Bal. acc. \\
-\hline
-TAP-CT late fusion & \(0.8044 \pm 0.0727\) & \(0.5294 \pm 0.0749\) & \(0.5341 \pm 0.0945\) \\
-Hybrid Mamba-Attention & \(0.7593 \pm 0.1173\) & \(0.5713 \pm 0.0748\) & \(0.6319 \pm 0.1160\) \\
+個案 1 & Normal & 34.3\% & 33.5mm & 正常人卻有 34\% 肺氣腫，判為異常 \\
+個案 2 & Abnormal & 0.0\% & 65.5mm & 異常人肺氣腫為 0（惟肺動脈結構量偏高），判為正常 \\
+個案 3 & Abnormal & 6.8\% & 34.1mm & 肺氣腫很輕、整體近正常，判為正常 \\
+個案 4 & Abnormal & 13.1\% & 43.3mm & 邊緣個案 \\
+個案 5 & Normal & 18.8\% & 37.9mm & 正常人肺氣腫偏高，判為異常 \\
+個案 6 & Abnormal & 24.9\% & 40.3mm & 邊緣個案 \\
 \hline
 \end{tabular}
 \endgroup
 \end{table}
 
-如表~\ref{tab:rq4_ac_3class} 所示，AC 三分類中，TAP-CT late fusion 取得最高 Accuracy（\(0.8044 \pm 0.0727\)），高於僅使用影像特徵之 Hybrid Mamba-Attention（\(0.7593 \pm 0.1173\)）；惟其 Macro-F1（\(0.5294 \pm 0.0749\)）與 Balanced accuracy（\(0.5341 \pm 0.0945\)）低於 Hybrid Mamba-Attention 之 \(0.5713 \pm 0.0748\) 與 \(0.6319 \pm 0.1160\)。此結果顯示，TAP-CT late fusion 有助於提升三分類整體正確率，但未同步改善各類別之均衡辨識能力。由圖~\ref{fig:rq4_ac_3class} 可見，TAP-CT late fusion 對 AC 高值組與 AC 低值組較具判別能力，五折測試樣本中分別正確分類 44 例與 9 例；然而 AC 中間組 5 例全數被誤分為 AC 高值組，顯示模型傾向將中間灰區樣本歸入高角度端。由於 Macro-F1 與 Balanced accuracy 對少數類別表現較為敏感，中間組辨識失敗使兩項指標未隨 Accuracy 同步提升。
+FCNN 主要依賴肺氣腫比例，其死角恰為「正常人卻肺氣腫偏多」或「異常人卻幾乎無肺氣腫」之個案。其中個案 2、個案 3 與個案 4 為穩定重現之 false negative，屬臨床邊緣病人而非流程缺陷。此結果顯示，FCNN 於 RQ1 之準確率天花板主要受標籤品質與特徵鑑別力限制，而非訓練不足；若欲再提升，應覆核矛盾個案之臨床標籤，或補入更具鑑別力之特徵。
 
-此現象亦說明 RQ3 與 RQ4 之結果不可直接等同。RQ3 將 AC 視為連續變數，主要評估預測角度與真實角度之平均誤差及相關性；RQ4 則依 \(131^{\circ}\) 與 \(152^{\circ}\) 門檻將 AC 離散化為分類標籤，模型除了需掌握角度變化趨勢外，亦須將樣本正確分配至門檻兩側。對於接近門檻之個案，即使連續角度預測誤差不大，仍可能造成分類結果翻轉。尤其 AC 三分類需額外辨識樣本數少且界線模糊的中間組，因此分類指標更容易受到灰區樣本影響。整體而言，TAP-CT late fusion 在 RQ3 中可較佳地捕捉連續 AC 趨勢，並於 RQ4 三分類中提升整體 Accuracy；但其對門檻附近與中間灰區樣本之辨識仍有限制，因此未能在 Macro-F1 與 Balanced accuracy 上同步取得最佳表現。
-
-\begin{figure}[htbp]
-\centering
-\includegraphics[width=0.82\textwidth]{figures/rq4_ac_3class_confusion_matrix.png}
-\caption{TAP-CT late fusion 塌陷角三分類混淆矩陣}
-\label{fig:rq4_ac_3class}
-\end{figure}
 \FloatBarrier
-
-\subsection{RQ5 GOLD 分級分類結果}
-
-RQ5 評估三維 CT 影像模型於 GOLD 四分級任務之辨識能力。本任務依第三章 GOLD 2026 標籤設定，排除 Class 0（FEV1/FVC $\geq 70\%$，34 例），以 GOLD 1 至 GOLD 4 共 32 例進行四分類實驗（各類分別為 2、11、13、6 例）。模型採 TAP-CT late fusion，並以 focal loss 訓練四分類頭，訓練超參數與虛擬資料增強設定詳見表~\ref{tab:hyperparameters}；因 GOLD 1 僅有 2 例，允許其驗證樣本跨折重複使用。實驗結果如表~\ref{tab:rq5_gold_result} 所示，合併五折測試預測之混淆矩陣如圖~\ref{fig:rq5_gold_cm} 所示。
-
-\begin{table}[htbp]
-\centering
-\caption{RQ5 GOLD 四分級分類結果（TAP-CT Late Fusion）}
-\label{tab:rq5_gold_result}
-\begingroup
-\renewcommand{\arraystretch}{1.25}
-\begin{tabular}{l c}
-\hline
-Metric & 5-fold average \\
-\hline
-Accuracy & $0.5429 \pm 0.0571$ \\
-Macro-F1 & $0.3798 \pm 0.0870$ \\
-Macro-Precision & $0.4042 \pm 0.0965$ \\
-Macro-Recall & $0.4083 \pm 0.0553$ \\
-Balanced Accuracy & $0.4083 \pm 0.0553$ \\
-\hline
-\end{tabular}
-\endgroup
-\end{table}
-
-\begin{figure}[htbp]
-\centering
-\includegraphics[width=0.82\textwidth]{figures/total_confusion_matrix.png}
-\caption{RQ5 GOLD 四分級分類混淆矩陣}
-\label{fig:rq5_gold_cm}
-\end{figure}
-
-由表~\ref{tab:rq5_gold_result} 可見，模型五折平均 Accuracy 為 $0.5429 \pm 0.0571$，Macro-F1 為 $0.3798 \pm 0.0870$，Balanced Accuracy 為 $0.4083 \pm 0.0553$；Accuracy 之跨折標準差較低，惟 Macro-F1 與 Macro-Precision 之標準差仍偏高，反映小樣本四分類任務結果之不穩定性。由圖~\ref{fig:rq5_gold_cm} 可見，GOLD 3（13 例）與 GOLD 2（11 例）辨識能力相對較佳，五折測試預測中分別正確分類 10 例與 8 例；GOLD 4（6 例，1 例正確）多被誤判為 GOLD 2（3 例）或 GOLD 3（2 例）。值得注意的是，由於 GOLD 1 驗證樣本跨折重複使用，五折合計共產生 5 筆 GOLD 1 測試預測，但均未獲正確分類；模型僅一次將樣本預測為 GOLD 1，且該樣本實為 GOLD 2，顯示 2 例之極少樣本數導致該分級幾乎無法有效學習。整體而言，GOLD 2 與 GOLD 3 的辨識相對穩定，GOLD 1 與 GOLD 4 兩端之極少樣本分級則為主要混淆來源；在 GOLD 1 樣本量極度不足的前提下，Balanced Accuracy 僅約 0.41，顯示資料不平衡是四分類可行性的主要限制因素。
-\FloatBarrier
-
-\subsection{RQ6 塌陷角二分類多數決結果}
-
-RQ6 針對排除 AC 中間組後之 AC 二分類任務，評估 hard voting 決策彙整對病人層級分類結果之影響。此實驗之候選預測來源與 RQ4 的 AC 二分類任務相同，皆為 TAP-CT late fusion 於相同資料範圍、相同五折切分與相同 AC 低值組/高值組標籤下產生之 validation fold 候選分類輸出。Hard voting 僅將這些既有 AC 二分類候選輸出進行多數決，不加入臨床 Normal/Abnormal 或 GOLD 分級標籤。表中候選輸出數量為 1 時，代表未投票之原始二分類基準；候選輸出數量為 3、5 與 7 時，則代表 hard voting 使用之 AC 二分類候選分類輸出數量。為使結果聚焦於較直接的錯誤型態，本文僅呈現 Accuracy、Sensitivity 與 Specificity，分別對應整體正確率、AC 低值組召回能力與 AC 高值組辨識能力。
-
-\begin{table}[htbp]
-\centering
-\caption{RQ6 塌陷角二分類多數決結果}
-\label{tab:rq6_ac_binary_voting}
-\begingroup
-\small
-\renewcommand{\arraystretch}{1.25}
-\begin{tabular}{c c c c}
-\hline
-Number of models & Accuracy & Sensitivity & Specificity \\
-\hline
-1 & \(0.919 \pm 0.072\) & \(0.800 \pm 0.267\) & \(0.956 \pm 0.054\) \\
-3 & \(0.903 \pm 0.060\) & \(0.800 \pm 0.267\) & \(0.933 \pm 0.089\) \\
-5 & \(0.919 \pm 0.072\) & \(0.800 \pm 0.267\) & \(0.956 \pm 0.089\) \\
-7 & \(0.903 \pm 0.080\) & \(0.800 \pm 0.267\) & \(0.933 \pm 0.089\) \\
-\hline
-\end{tabular}
-\endgroup
-\end{table}
-
-由表~\ref{tab:rq6_ac_binary_voting} 可見，未投票之 TAP-CT late fusion 已取得 \(0.919 \pm 0.072\) 的 Accuracy；hard voting 中表現最佳的候選輸出數量 5 亦為 \(0.919 \pm 0.072\)，僅與原始二分類基準相同。Specificity 方面，未投票基準為 \(0.956 \pm 0.054\)，候選輸出數量 5 為 \(0.956 \pm 0.089\)，平均值相近但投票後變異較大。因此，hard voting 並未在本資料中帶來明顯準確率提升，也未比原始二分類結果形成更穩定的特異度表現。
-
-未投票基準與三種候選輸出數量的 Sensitivity 皆為 \(0.800 \pm 0.267\)，且標準差偏高，代表 hard voting 並未改善 AC 低值組樣本之召回能力。候選輸出數量 3 與 7 的 Accuracy 皆為 \(0.903\)，低於未投票基準與候選輸出數量 5；其 Specificity 亦降至 \(0.933\)。整體而言，hard voting 在本研究中較適合作為結果穩定性檢查，而非主要效能提升策略；其對 accuracy 的增益有限，對 sensitivity 則沒有觀察到改善。
 
 \end{ZhChapter}
