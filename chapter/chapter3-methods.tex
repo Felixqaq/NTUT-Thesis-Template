@@ -46,9 +46,9 @@ PFT 資料另用於整理塌陷角度（AC）與阻塞指數（OI）等肺功能
 \label{fig:patient_distribution}
 \end{figure}
 
-AC 三分類任務將影像依肺功能曲線衍生角度分為三類：$AC \leq 131^{\circ}$ 為 AC 低值組，$132^{\circ} \leq AC \leq 151^{\circ}$ 為 AC 中間組，$AC \geq 152^{\circ}$ 為 AC 高值組。66 例資料中，三類樣本數分別為 14、5 與 47 例。上述 AC 類別為肺功能曲線衍生標籤，不等同於臨床 Normal/Abnormal 二元標籤。由於 AC 中間組樣本數較少，且其肺功能曲線表徵介於兩端之間、較不明確，本研究另設計 AC 二分類任務，排除 $132^{\circ}$ 至 $151^{\circ}$ 之 5 例，只保留 $AC \leq 131^{\circ}$ 與 $AC \geq 152^{\circ}$ 兩端較明確之 61 例資料。
+AC 三分類任務將影像依肺功能曲線衍生角度分為三類：$AC \leq 131^{\circ}$ 為 AC 低值組，$131^{\circ} < AC < 152^{\circ}$ 為 AC 中間組，$AC \geq 152^{\circ}$ 為 AC 高值組。66 例資料中，三類樣本數分別為 14、5 與 47 例。上述 AC 類別為肺功能曲線衍生標籤，不等同於臨床 Normal/Abnormal 二元標籤。由於 AC 中間組樣本數較少，且其肺功能曲線表徵介於兩端之間、較不明確，本研究另設計 AC 二分類任務，排除 $131^{\circ} < AC < 152^{\circ}$ 之 5 例，只保留 $AC \leq 131^{\circ}$ 與 $AC \geq 152^{\circ}$ 兩端較明確之 61 例資料。
 
-GOLD 標籤僅用於補充實驗（見附錄~\ref{chap:appendix}），依 GOLD 2025 固定比值準則整理\cite{gold2025}：以 FEV1/FVC 實測比值低於 70\% 作為 COPD 判定條件，再依支氣管擴張劑後 FEV1\% 預測值分為 GOLD 1（輕度，$\geq 80\%$）、GOLD 2（中度，50\%--79\%）、GOLD 3（重度，30\%--49\%）與 GOLD 4（極重度，$< 30\%$）。66 例資料中，FEV1/FVC $\geq 70\%$ 者歸為 Class 0（沒有 COPD，34 例），GOLD 1 至 4 各有 2、11、13 與 6 例，合計 32 例。GOLD 分級分類任務排除 Class 0，僅以此 32 例進行四分類訓練與評估。
+GOLD 標籤僅用於補充實驗（見附錄~\ref{chap:appendix}），依 GOLD 2025 固定比值準則整理\cite{gold2025}：以支氣管擴張劑後 FEV1/FVC 低於 70\% 作為 COPD 判定條件，再依支氣管擴張劑後 FEV1\% 預測值分為 GOLD 1（輕度，$\mathrm{FEV_1\%} \geq 80\%$）、GOLD 2（中度，$50\% \leq \mathrm{FEV_1\%} < 80\%$）、GOLD 3（重度，$30\% \leq \mathrm{FEV_1\%} < 50\%$）與 GOLD 4（極重度，$\mathrm{FEV_1\%} < 30\%$）。66 例資料中，支氣管擴張劑後 FEV1/FVC $\geq 70\%$ 者歸為 Class 0（沒有 COPD，34 例），GOLD 1 至 4 各有 2、11、13 與 6 例，合計 32 例。GOLD 分級分類任務排除 Class 0，僅以此 32 例進行四分類訓練與評估。
 
 \section{資料前處理}
 
@@ -65,11 +65,11 @@ CT 強度值轉換依據 DICOM 中之 RescaleSlope 與 RescaleIntercept 進行�
 
 其中 RescaleSlope（DICOM tag 0028,1053）與 RescaleIntercept（0028,1052）由掃描儀於影像 metadata 中記錄；胸部 CT 常見設定為 RescaleSlope 等於 1、RescaleIntercept 等於 $-1024$，使空氣對應約 $-1000$ HU、水對應約 $0$ HU。透過此轉換可使影像強度與原始掃描條件保持一致。此步驟對本研究特別重要，因為後續量化分析高度依賴影像強度的正確性；若未正確轉換 HU，相關影像表徵與量化結果皆可能產生系統性偏差。轉換後之影像以 NIfTI 格式儲存，並保留必要之空間與強度資訊，以支援後續分析流程。
 
-PFT 資料則以病人為單位與 CT volume 對應，用於建立 Normal/Abnormal 二元標籤、FEV1 預測值百分比相關分級，以及塌陷角度（AC）等肺功能導向標籤。
+PFT 資料則以病人為單位與 CT volume 對應，用於建立 Normal/Abnormal 二元標籤、FEV1 預測值百分比相關分級，以及塌陷角度（AC）與阻塞指數（OI）等肺功能導向標籤。
 
 \section{肺部結構分割與量化參數擷取}\label{sec:seg_quant}
 
-本研究以 NIfTI volume 為輸入，透過 3D Slicer 結合 MONAI Auto3DSeg 產生多類別 label map\cite{fedorov2012slicer,cardoso2022monai}。Label 1 至 5 對應五個肺葉並合併為總肺遮罩，label 6 至 9 對應血管、氣管、肺靜脈系統與肺動脈。氣道結構另以 AeroPath 分割結果補充\cite{stoverud2024aeropath}，若 airway mask 可取得則優先採用，否則以 label map 中之氣管標籤近似。分割後確認各主要結構 label 非空且 voxel 數合理，再進行特徵計算。
+本研究以 NIfTI volume 為輸入，透過 3D Slicer 結合 MONAI Auto3DSeg 產生多類別 label map\cite{fedorov2012slicer,cardoso2022monai}。Label 1 至 5 對應五個肺葉並合併為總肺遮罩，label 6 至 9 對應血管、氣管、肺靜脈系統與肺動脈。氣道結構另以 AeroPath 分割結果補充\cite{stoverud2024aeropath}，若 airway mask 可取得則優先採用，否則以 label map 中之氣管標籤近似。分割後確認各主要結構 label 非空且 voxel 數合理，再進行特徵計算。分割結果範例如圖~\ref{fig:slicer_lung_segmentation} 所示。
 
 \begin{figure}[htbp]
 \centering
@@ -116,7 +116,7 @@ d_{\mathrm{PA}} = 2\left(\frac{3V_{\mathrm{PA}}}{4\pi}\right)^{1/3}
 \label{fig:fc_classification_architecture}
 \end{figure}
 
-量化生物標記模型以第~\ref{sec:seg_quant}~節所述之 12 項 CT 量化特徵作為輸入，並作為三方法比較中的量化基準，於各研究問題任務中進行分類或迴歸：Normal/Abnormal 二分類、塌陷角三分類、塌陷角二分類與 OI 二分類採用分類頭，塌陷角連續值迴歸則改用單一輸出之迴歸頭。相較於三維 CT 模型，此分支輸入維度低，且各特徵對應明確的肺部結構變化，在本研究 66 例小樣本條件下具有較好的可解釋性。
+量化生物標記模型（FCNN）以第~\ref{sec:seg_quant}~節所述之 12 項 CT 量化特徵作為輸入，並作為三方法比較中的基準，於各研究問題任務中進行分類或迴歸：Normal/Abnormal 二分類、塌陷角三分類、塌陷角二分類與 OI 二分類採用分類頭，塌陷角連續值迴歸則改用單一輸出之迴歸頭。相較於三維 CT 模型，此分支輸入維度低，且各特徵對應明確的肺部結構變化，在本研究 66 例小樣本條件下具有較好的可解釋性。
 
 由於各特徵單位與尺度不同，模型訓練前僅以 training fold 資料估計各特徵之均值與標準差進行 StandardScaler（z-score）標準化，避免驗證資料洩漏至標準化參數估計。
 
@@ -127,7 +127,7 @@ d_{\mathrm{PA}} = 2\left(\frac{3V_{\mathrm{PA}}}{4\pi}\right)^{1/3}
 \begin{itemize}
     \item \textbf{輸入：}第~\ref{sec:seg_quant}~節所列 12 項量化特徵（已以每折 StandardScaler 標準化）。
     \item \textbf{模型架構：}主幹維度為 $12 \rightarrow 64 \rightarrow 32 \rightarrow 16$，各 hidden layer 後接 batch normalization、ReLU activation 與 dropout；輸出頭依任務為對應類別數之 logits（分類）或單一輸出（塌陷角迴歸）。
-    \item \textbf{訓練目標：}分類任務採用 class-weighted cross entropy 以因應類別不平衡，塌陷角迴歸採用 smooth L1 loss。量化分支不使用影像增強。
+    \item \textbf{訓練目標：}分類任務採用 class-weighted cross entropy 以因應類別不平衡，塌陷角迴歸採用 smooth L1 loss。FCNN 不使用影像增強。
     \item \textbf{最佳化與訓練設定：}Optimizer 採用 Adam，learning rate 為 0.001；batch size 設為 16，固定訓練 100 epochs，並關閉 early stopping，改以最終 epoch 之模型評估，避免以驗證折選取停止點造成之樂觀偏差。
     \item \textbf{驗證方式：}採用病人層級分層五折交叉驗證，隨機種子固定為 42，每折獨立估計標準化參數並重新訓練，合併五折驗證預測計算整體效能。
 \end{itemize}
@@ -173,12 +173,12 @@ Hybrid Mamba-Attention & In-channels & 1 \\
 \endgroup
 \end{table}
 
-三維 CT 模型之訓練設定如下：以 AdamW 最佳化器（learning rate \(1\times10^{-4}\)、weight decay \(1\times10^{-3}\)）搭配 ReduceLROnPlateau 學習率調整（factor 0.5、patience 2），並採用混合精度（AMP）與梯度裁剪（1.0）以穩定小樣本訓練。各任務固定訓練 100 epochs 並關閉 early stopping，以最終 epoch 之模型評估，避免以測試折選取停止點造成之樂觀偏差。輸入影像統一為 \(112 \times 136 \times 112\)、強度窗為 \([-1000, 400]\) HU，迴歸目標以每折 z-score 標準化，並以病人層級分層五折交叉驗證評估，隨機種子固定為 42。
+三維 CT 模型之訓練設定如下：以 AdamW 最佳化器（learning rate \(1\times10^{-4}\)、weight decay \(1\times10^{-3}\)）搭配 ReduceLROnPlateau 學習率調整（factor 0.5、patience 2），並採用混合精度（AMP）與梯度裁剪（1.0）以穩定小樣本訓練。batch size 設為 12，各任務固定訓練 100 epochs 並關閉 early stopping，以最終 epoch 之模型評估，避免以測試折選取停止點造成之樂觀偏差。輸入影像統一為 \(112 \times 136 \times 112\)、強度窗為 \([-1000, 400]\) HU，迴歸目標以每折 z-score 標準化，並以病人層級分層五折交叉驗證評估，隨機種子固定為 42。
 
 \FloatBarrier
 \section{塌陷角迴歸任務}
 
-本節實驗以塌陷角（AC）作為連續迴歸目標（對應 RQ2c），並沿用三方法比較架構：量化生物標記模型輸入 12 維定量特徵，Hybrid Mamba-Attention與 TAP-CT late fusion 則輸入 CT volume，各以單一輸出之 prediction head 迴歸病人之連續角度值。其中 Hybrid Mamba-Attention 為僅使用影像特徵之深度模型，TAP-CT late fusion 則額外串接凍結之 TAP-CT 特徵（見第~\ref{sec:tapct_fusion}~節），以評估融合預訓練 CT 表徵對連續角度預測之效益。
+本節實驗以塌陷角（AC）作為連續迴歸目標（對應 RQ2c），並沿用三方法比較架構：FCNN 輸入 12 維定量特徵，Hybrid Mamba-Attention 與 TAP-CT late fusion 則輸入 CT volume，各以單一輸出之 prediction head 迴歸病人之連續角度值。其中 Hybrid Mamba-Attention 為僅使用影像特徵之深度模型，TAP-CT late fusion 則額外串接凍結之 TAP-CT 特徵（見第~\ref{sec:tapct_fusion}~節），以評估融合預訓練 CT 表徵對連續角度預測之效益。
 
 標籤標準化依每折訓練資料的均值與標準差進行，深度模型學習標準化後的角度，驗證時再還原為原始單位計算誤差，避免驗證資料洩漏至標準化參數估計。訓練採用 smooth L1 loss 以降低極端誤差的影響。評估指標包含 MAE、RMSE、決定係數 \(R^2\) 與 Pearson 相關係數，分別反映平均誤差、誤差離散程度與預測值對真實角度之相關性。
 
@@ -229,14 +229,14 @@ Batch size & 12 \\
 
 \begin{itemize}
     \item \textbf{交叉驗證：}三個研究問題之三種方法皆採病人層級分層五折，以 training fold 估計標準化參數。塌陷角連續值迴歸依角度分布建立 quantile bins 後分層切分，降低各折角度分布差異。補充實驗之 GOLD 分級亦採五折，但因 GOLD 1 僅有 2 例，允許其驗證樣本跨折重複使用，以確保各折均能涵蓋所有分級類別。
-    \item \textbf{三維影像輸入：}統一為 \(1 \times 112 \times 136 \times 112\) 的 channel-first volume，並依任務進行 HU clipping 與強度正規化。
-    \item \textbf{影像增強：}僅套用於深度模型（Hybrid Mamba-Attention 與 TAP-CT late fusion）之 training fold，量化模型不使用影像增強。本研究對每筆訓練樣本產生 5 倍增強，變換包含小幅旋轉、平移、縮放、強度縮放、強度平移與高斯雜訊，以擴充小樣本訓練資料之多樣性。
-    \item \textbf{類別平衡：}分類任務皆進行類別平衡。深度模型於 training fold 內以增強樣本平衡各類別，量化模型則以 class-weighted cross entropy 處理類別不平衡；決策一律取 argmax，不另行調整閾值。補充實驗之 GOLD 分級因類別更不平衡，另補至每類 13 筆。
+    \item \textbf{三維影像輸入：}統一為 \(1 \times 112 \times 136 \times 112\) 的 channel-first volume，並以 \([-1000, 400]\) HU 進行 clipping 與強度正規化。
+    \item \textbf{影像增強：}僅套用於深度模型（Hybrid Mamba-Attention 與 TAP-CT late fusion）之 training fold，FCNN 不使用影像增強。本研究對每筆訓練樣本產生 5 倍增強，變換包含小幅旋轉、平移、縮放、強度縮放、強度平移與高斯雜訊，以擴充小樣本訓練資料之多樣性。
+    \item \textbf{類別平衡：}分類任務皆進行類別平衡。深度模型於 training fold 內以增強樣本平衡各類別，FCNN 則以 class-weighted cross entropy 處理類別不平衡；決策一律取 argmax，不另行調整閾值。補充實驗之 GOLD 分級因類別更不平衡，另補至每類 13 筆。
 \end{itemize}
 
 \section{評估指標}
 
-本研究依任務類型選擇評估指標。Normal/Abnormal 二元分類以 accuracy、sensitivity 與 specificity 評估，並搭配 confusion matrix 呈現錯誤分類型態，各指標定義如方程式~\eqref{eq:binary_metrics}\cite{he2009imbalanced}。其中 Abnormal 為陽性類別（對應 COPD 個案）。
+本研究依任務類型選擇評估指標。Normal/Abnormal 二元分類以 accuracy、sensitivity 與 specificity 評估，各指標定義如方程式~\eqref{eq:binary_metrics}\cite{he2009imbalanced}。其中 Abnormal 為陽性類別（對應 COPD 個案）。
 
 \begin{equation}
 \label{eq:binary_metrics}
@@ -247,28 +247,7 @@ Batch size & 12 \\
 \end{alignedat}
 \end{equation}
 
-AC 三分類、AC 二分類與 GOLD 分級存在類別不平衡，因此除整體 accuracy 外，同時報告 macro precision、macro recall、macro-F1 與 balanced accuracy。各類別指標定義如方程式~\eqref{eq:classwise_metrics}：
-
-\begin{equation}
-\label{eq:classwise_metrics}
-\begin{alignedat}{2}
-&\mathrm{Precision}_k\quad &&= \frac{\mathrm{TP}_k}{\mathrm{TP}_k + \mathrm{FP}_k} \\
-&\mathrm{Recall}_k\quad &&= \frac{\mathrm{TP}_k}{\mathrm{TP}_k + \mathrm{FN}_k} \\
-&\mathrm{F1}_k\quad &&= \frac{2 \times \mathrm{Precision}_k \times \mathrm{Recall}_k}{\mathrm{Precision}_k + \mathrm{Recall}_k}
-\end{alignedat}
-\end{equation}
-
-Macro precision、macro recall、Macro-F1 與 balanced accuracy 定義如方程式~\eqref{eq:macro_metrics}：
-
-\begin{equation}
-\label{eq:macro_metrics}
-\begin{alignedat}{2}
-&\mathrm{MacroPrecision}\quad &&= \frac{1}{K}\sum_{k=1}^{K}\mathrm{Precision}_k \\
-&\mathrm{MacroRecall}\quad &&= \frac{1}{K}\sum_{k=1}^{K}\mathrm{Recall}_k \\
-&\mathrm{MacroF1}\quad &&= \frac{1}{K}\sum_{k=1}^{K}\mathrm{F1}_k \\
-&\mathrm{BalancedAccuracy}\quad &&= \mathrm{MacroRecall}
-\end{alignedat}
-\end{equation}
+AC 二分類沿用上述二元分類指標，以 AC 低值組為陽性類別。AC 三分類存在類別不平衡，整體 accuracy 易受多數類別主導，故除 accuracy 外，另以 one-vs-rest 方式將各類別依序視為陽性、其餘類別視為陰性，分別計算 sensitivity 與 specificity 後取各類別之算術平均（macro 平均）作為該任務之 sensitivity 與 specificity。依方程式~\eqref{eq:binary_metrics} 之定義，macro 平均之 sensitivity 即各類別 recall 之平均，其數值等同 balanced accuracy。補充實驗之 GOLD 分級因類別更不平衡，另報告 macro precision、macro recall、macro-F1 與 balanced accuracy，相關定義見附錄~\ref{chap:appendix}。
 
 對於連續 AC 迴歸任務，本研究以 mean absolute error（MAE）、root mean squared error（RMSE）、coefficient of determination（\(R^2\)）與 Pearson correlation coefficient 評估預測值與真實角度之差異及相關程度。設真實值為 \(y_i\)，預測值為 \(\hat{y}_i\)，其平均值分別為 \(\bar{y}\) 與 \(\bar{\hat{y}}\)，則各項指標定義如方程式~\eqref{eq:regression_metrics}：
 

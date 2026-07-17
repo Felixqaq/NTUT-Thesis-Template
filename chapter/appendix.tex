@@ -6,7 +6,32 @@
 
 \section{GOLD 四分級分類}
 
-GOLD 四分級依第三章 GOLD 2025 標籤設定，排除 Class 0（FEV1/FVC $\geq 70\%$，34 例），以 GOLD 1 至 GOLD 4 共 32 例（各類 2、11、13、6 例）進行四分類，並以 focal loss 訓練，結果如表~\ref{tab:rq5_gold_result} 與圖~\ref{fig:rq5_gold_cm} 所示。
+GOLD 四分級依第三章 GOLD 2025 標籤設定，排除 Class 0（支氣管擴張劑後 FEV1/FVC $\geq 70\%$，34 例），以 GOLD 1 至 GOLD 4 共 32 例（各類 2、11、13、6 例）進行四分類，並以 focal loss 訓練，結果如表~\ref{tab:rq5_gold_result} 與圖~\ref{fig:rq5_gold_cm} 所示。
+
+本補充實驗之設定須特別說明：其一，因 GOLD 1 僅有 2 例，五折切分允許其驗證樣本跨折重複使用，以確保各折均能涵蓋所有分級類別，此作法使驗證樣本並非完全互斥，所得結果具樂觀偏差；其二，訓練折內另將各類別補至 13 筆以平衡類別分布；其三，本實驗之訓練設定與正文三方法對齊比較並不完全一致。因此下列數值僅供延伸觀察，不宜與正文各研究問題之結果直接比較。
+
+本補充實驗因類別嚴重不平衡，除 accuracy 外另報告 macro precision、macro recall、macro-F1 與 balanced accuracy。設共有 $K$ 個類別，第 $k$ 類之 precision、recall 與 F1 定義如方程式~\eqref{eq:classwise_metrics}：
+
+\begin{equation}
+\label{eq:classwise_metrics}
+\begin{alignedat}{2}
+&\mathrm{Precision}_k\quad &&= \frac{\mathrm{TP}_k}{\mathrm{TP}_k + \mathrm{FP}_k} \\
+&\mathrm{Recall}_k\quad &&= \frac{\mathrm{TP}_k}{\mathrm{TP}_k + \mathrm{FN}_k} \\
+&\mathrm{F1}_k\quad &&= \frac{2 \times \mathrm{Precision}_k \times \mathrm{Recall}_k}{\mathrm{Precision}_k + \mathrm{Recall}_k}
+\end{alignedat}
+\end{equation}
+
+各 macro 指標與 balanced accuracy 則為各類別指標之算術平均，定義如方程式~\eqref{eq:macro_metrics}：
+
+\begin{equation}
+\label{eq:macro_metrics}
+\begin{alignedat}{2}
+&\mathrm{MacroPrecision}\quad &&= \frac{1}{K}\sum_{k=1}^{K}\mathrm{Precision}_k \\
+&\mathrm{MacroRecall}\quad &&= \frac{1}{K}\sum_{k=1}^{K}\mathrm{Recall}_k \\
+&\mathrm{MacroF1}\quad &&= \frac{1}{K}\sum_{k=1}^{K}\mathrm{F1}_k \\
+&\mathrm{BalancedAccuracy}\quad &&= \mathrm{MacroRecall}
+\end{alignedat}
+\end{equation}
 
 \begin{table}[htbp]
 \centering

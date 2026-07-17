@@ -4,7 +4,7 @@
 
 \section{研究問題}
 
-本章以三個研究問題（Research Questions, RQs）彙整實驗結果。三個 RQ 共用同一份 66 例病人與相同之訓練設定，並在每個任務中比較三種方法：以 12 項 CT 量化生物標記為輸入之量化生物標記模型（FCNN）、僅使用 CT 影像之 Hybrid Mamba-Attention 影像模型，以及結合凍結 TAP-CT 病人層級嵌入之 TAP-CT late fusion 模型。下文分別以「FCNN」、「Hybrid Mamba-Attention」與「TAP-CT late fusion」稱之。
+本章以三個研究問題（Research Questions, RQs）彙整實驗結果。三個 RQ 共用同一份 66 例病人與相同之資料切分與驗證協定，並在每個任務中比較三種方法：以 12 項 CT 量化生物標記為輸入之量化生物標記模型（FCNN）、僅使用 CT 影像之 Hybrid Mamba-Attention 影像模型，以及結合凍結 TAP-CT 病人層級嵌入之 TAP-CT late fusion 模型。下文分別以「FCNN」、「Hybrid Mamba-Attention」與「TAP-CT late fusion」稱之。
 
 \begin{list}{}{\setlength{\leftmargin}{4.2em}\setlength{\labelwidth}{3.4em}\setlength{\labelsep}{0.8em}\setlength{\itemsep}{0.35em}}
     \item[\textbf{RQ1：}]胸部 CT 能否區分臨床標記之 Normal 與 Abnormal 個案？
@@ -82,11 +82,11 @@ TAP-CT related libraries & transformers, timm, einops \\
 \endgroup
 \end{table}
 
-為使三種方法之比較公平，本研究對三個 RQ 採用相同之訓練設定，如表~\ref{tab:hyperparameters} 所示。
+為使三種方法之比較公平，本研究對三個 RQ 採用相同之資料切分與驗證協定，各方法之訓練設定如表~\ref{tab:hyperparameters} 所示。
 
 \begin{table}[htbp]
 \centering
-\caption{三方法相同訓練設定}
+\caption{三方法之訓練設定與驗證協定}
 \label{tab:hyperparameters}
 \begingroup
 \renewcommand{\arraystretch}{1.45}
@@ -140,17 +140,17 @@ TAP-CT late fusion & \(0.866 \pm 0.107\) & \(0.848 \pm 0.091\) & \(0.886 \pm 0.1
 \endgroup
 \end{table}
 
-由表~\ref{tab:rq1_normal_abnormal} 可見，三種方法之 Accuracy 相當接近（0.848--0.879），以 Hybrid Mamba-Attention最佳（\(0.879 \pm 0.078\)），TAP-CT late fusion 次之（\(0.866 \pm 0.107\)），FCNN（\(0.848 \pm 0.084\)）僅落後約 3 個百分點。三種方法之 Specificity 皆高於 Sensitivity，其中 FCNN 之 Sensitivity 標準差偏高（\(\pm 0.214\)），反映其在部分折上對 Abnormal 個案之召回較不穩定。整體而言，正常與異常之區分僅以 12 維定量參數即已相當接近深度影像模型，顯示此任務之影像訊號多可被量化生物標記涵蓋，加入凍結 TAP-CT 嵌入之融合並未進一步提升 Accuracy。
+由表~\ref{tab:rq1_normal_abnormal} 可見，三種方法之 Accuracy 相當接近（0.848--0.879），以 Hybrid Mamba-Attention 最佳（\(0.879 \pm 0.078\)），TAP-CT late fusion 次之（\(0.866 \pm 0.107\)），FCNN（\(0.848 \pm 0.084\)）僅落後約 3 個百分點。三種方法之 Specificity 皆高於 Sensitivity，其中 FCNN 之 Sensitivity 標準差偏高（\(\pm 0.214\)），反映其在部分折上對 Abnormal 個案之召回較不穩定。整體而言，正常與異常之區分僅以 12 維定量參數即已相當接近深度影像模型，顯示此任務之影像訊號多可被量化生物標記涵蓋，加入凍結 TAP-CT 嵌入之融合並未進一步提升 Accuracy。
 
 \FloatBarrier
 
 \subsection{RQ2 塌陷角}
 
-RQ2 評估三種方法對 AC 表徵之可預測性，分為三分類（RQ2a）、排除 \(132^{\circ}\)--\(151^{\circ}\) 中間組之二分類（RQ2b）與連續角度迴歸（RQ2c）三個子任務。
+RQ2 評估三種方法對 AC 表徵之可預測性，分為三分類（RQ2a）、排除 \(131^{\circ} < AC < 152^{\circ}\) 中間組之二分類（RQ2b）與連續角度迴歸（RQ2c）三個子任務。
 
 \subsubsection{RQ2a 三分類}
 
-RQ2a 依 \(AC \leq 131^{\circ}\)、\(132^{\circ} \leq AC \leq 151^{\circ}\)、\(AC \geq 152^{\circ}\) 將 66 例分為 AC 低值、中間與高值三組（樣本數分別為 14、5、47），Sensitivity 與 Specificity 以 one-vs-rest macro 平均呈現，結果如表~\ref{tab:rq2a_3class} 所示。
+RQ2a 依 \(AC \leq 131^{\circ}\)、\(131^{\circ} < AC < 152^{\circ}\)、\(AC \geq 152^{\circ}\) 將 66 例分為 AC 低值、中間與高值三組（樣本數分別為 14、5、47），Sensitivity 與 Specificity 以 one-vs-rest macro 平均呈現，結果如表~\ref{tab:rq2a_3class} 所示。
 
 \begin{table}[htbp]
 \centering
@@ -174,7 +174,7 @@ RQ2a 中僅 TAP-CT late fusion 撐得住整體正確率（\(0.774 \pm 0.042\)）
 
 \subsubsection{RQ2b 二分類}
 
-RQ2b 排除 \(132^{\circ}\)--\(151^{\circ}\) 中間組之 5 例，僅保留 AC 低值組與 AC 高值組共 61 例，以 AC 低值組為正類，結果如表~\ref{tab:rq2b_binary} 所示。
+RQ2b 排除 \(131^{\circ} < AC < 152^{\circ}\) 中間組之 5 例，僅保留 AC 低值組與 AC 高值組共 61 例，以 AC 低值組為正類，結果如表~\ref{tab:rq2b_binary} 所示。
 
 \begin{table}[htbp]
 \centering
@@ -194,7 +194,7 @@ TAP-CT late fusion & \(0.871 \pm 0.080\) & \(0.867 \pm 0.163\) & \(0.871 \pm 0.1
 \endgroup
 \end{table}
 
-排除中間組後，AC 二分類表現明顯提升，且以 Hybrid Mamba-Attention最佳（\(0.885 \pm 0.086\)），TAP-CT late fusion 次之（\(0.871 \pm 0.080\)），FCNN 最弱（\(0.755 \pm 0.087\)）。此結果與 RQ2a 一致，說明 AC 低值與高值兩端具有較明確之影像差異；惟在此已相當明確之二分任務中，凍結 TAP-CT 嵌入未再帶來增益，反而略微稀釋純影像模型之表現。
+排除中間組後，AC 二分類表現明顯提升，且以 Hybrid Mamba-Attention 最佳（\(0.885 \pm 0.086\)），TAP-CT late fusion 次之（\(0.871 \pm 0.080\)），FCNN 最弱（\(0.755 \pm 0.087\)）。此結果與 RQ2a 一致，說明 AC 低值與高值兩端具有較明確之影像差異；惟在此已相當明確之二分任務中，凍結 TAP-CT 嵌入未再帶來增益，反而略微稀釋純影像模型之表現。
 
 \subsubsection{RQ2c 角度迴歸}
 
@@ -218,9 +218,9 @@ TAP-CT late fusion & \textbf{14.61 ± 2.17} & 20.72 & \textbf{0.174} & \textbf{0
 \endgroup
 \end{table}
 
-RQ2c 中，TAP-CT late fusion 最能解釋角度變異，取得最低 MAE（\(14.61 \pm 2.17\)）、最高 \(R^2\)（0.174）與最高 Pearson r（0.525）；FCNN 之 RMSE 最低（20.63）但 \(R^2\) 與相關性居中；Hybrid Mamba-Attention之 \(R^2\) 近乎 0（\(-0.003\)），對連續角度幾乎無解釋力。整體而言，三種方法之 \(R^2\) 皆偏低，顯示單以 CT 影像與通用 CT 表徵精準估計連續肺功能指標仍具限制；惟加入凍結 TAP-CT 嵌入之融合能明顯改善此連續迴歸任務。
+RQ2c 中，TAP-CT late fusion 最能解釋角度變異，取得最低 MAE（\(14.61 \pm 2.17\)）、最高 \(R^2\)（0.174）與最高 Pearson r（0.525）；FCNN 之 RMSE 最低（20.63）但 \(R^2\) 與相關性居中；Hybrid Mamba-Attention 之 \(R^2\) 近乎 0（\(-0.003\)），對連續角度幾乎無解釋力。整體而言，三種方法之 \(R^2\) 皆偏低，顯示單以 CT 影像與通用 CT 表徵精準估計連續肺功能指標仍具限制；惟加入凍結 TAP-CT 嵌入之融合能明顯改善此連續迴歸任務。
 
-綜合 RQ2 三個子任務可見，塌陷角是深度影像模型較量化參數更具優勢之訊號：三分類與連續迴歸由 TAP-CT late fusion 勝出，二分類則由 Hybrid Mamba-Attention勝出，而 FCNN 於三個子任務皆非最佳。
+綜合 RQ2 三個子任務可見，塌陷角是深度影像模型較量化參數更具優勢之訊號：三分類與連續迴歸由 TAP-CT late fusion 勝出，二分類則由 Hybrid Mamba-Attention 勝出，而 FCNN 於三個子任務皆非最佳。
 
 \FloatBarrier
 
