@@ -31,7 +31,7 @@
 
 \section{資料集}
 
-本研究資料由振興醫院提供，包含病人胸部 CT 的 DICOM 影像及肺功能檢查（PFT）。本研究業經振興醫院人體試驗委員會（Institutional Review Board, IRB）審查通過，計畫名稱為「胸部 CT 影像應用於 COPD 輔助診斷之人工智慧研究」，核准編號為 CHGH-IRB (1240)115-22，通過審查日期為民國 115 年 7 月 9 日；本案依簡易審查程序辦理，並經委員會同意免除受試者知情同意程序。該委員會之組織與運作均符合 ICH-GCP 規範與赫爾辛基宣言之精神。
+本研究資料由振興醫院提供，包含病人胸部 CT 的 DICOM 影像及肺功能檢查（PFT）。本研究業經振興醫院人體試驗委員會（Institutional Review Board, IRB）審查通過，計畫名稱為「胸部 CT 影像應用於 COPD 輔助診斷之人工智慧研究」，核准編號為 CHGH-IRB (1240)115-22。
 
 為使三種方法之比較公平，本研究以同一份 66 例病人作為標準資料集，三個研究問題之三種方法皆於此 66 例上訓練與評估，各例皆可與 PFT 資料對應。全部 66 例之 Normal/Abnormal 標籤為 Normal 33 例、Abnormal 33 例，其二元標籤由合作醫師依 ATS/ERS 肺功能判讀標準判定\cite{stanojevic2022ersats}；Abnormal 組對應臨床判定之 COPD 個案。
 
@@ -180,7 +180,7 @@ Hybrid Mamba-Attention & In-channels & 1 \\
 
 本節實驗以塌陷角（AC）作為連續迴歸目標（對應 RQ2c），並沿用三方法比較架構：FCNN 輸入 12 維定量特徵，Hybrid Mamba-Attention 與 TAP-CT late fusion 則輸入 CT volume，各以單一輸出之 prediction head 迴歸病人之連續角度值。其中 Hybrid Mamba-Attention 為僅使用影像特徵之深度模型，TAP-CT late fusion 則額外串接凍結之 TAP-CT 特徵（見第~\ref{sec:tapct_fusion}~節），以評估融合預訓練 CT 表徵對連續角度預測之效益。
 
-標籤標準化依每折訓練資料的均值與標準差進行，深度模型學習標準化後的角度，驗證時再還原為原始單位計算誤差，避免驗證資料洩漏至標準化參數估計。訓練採用 smooth L1 loss 以降低極端誤差的影響。評估指標包含 MAE、RMSE、決定係數 \(R^2\) 與 Pearson 相關係數，分別反映平均誤差、誤差離散程度與預測值對真實角度之相關性。
+標籤標準化依每折訓練資料的均值與標準差進行，深度模型學習標準化後的角度，驗證時再還原為原始單位計算誤差，避免驗證資料洩漏至標準化參數估計。訓練採用 smooth L1 loss 以降低極端誤差的影響。迴歸表現以 MAE、RMSE、決定係數 \(R^2\) 與 Pearson 相關係數評估，各指標之定義與計算方式（含合併計算之說明）見第~\ref{sec:eval_metrics}~節。
 
 \section{TAP-CT 影像嵌入與融合策略}\label{sec:tapct_fusion}
 
@@ -234,7 +234,7 @@ Batch size & 12 \\
     \item \textbf{類別平衡：}分類任務皆進行類別平衡。深度模型於 training fold 內以增強樣本平衡各類別，FCNN 則以 class-weighted cross entropy 處理類別不平衡；決策一律取 argmax，不另行調整閾值。補充實驗之 GOLD 分級因類別更不平衡，另補至每類 13 筆。
 \end{itemize}
 
-\section{評估指標}
+\section{評估指標}\label{sec:eval_metrics}
 
 本研究依任務類型選擇評估指標。Normal/Abnormal 二元分類以 accuracy、sensitivity 與 specificity 評估，各指標定義如方程式~\eqref{eq:binary_metrics}\cite{he2009imbalanced}。其中 Abnormal 為陽性類別（對應 COPD 個案）。
 
@@ -266,5 +266,7 @@ R^2 &= 1-\frac{\sum_{i=1}^{N}\left(y_i-\hat{y}_i\right)^2}
 \end{equation}
 
 MAE 與 RMSE 衡量預測誤差大小，其中 RMSE 對極端誤差較敏感；\(R^2\) 描述模型對角度變異的解釋程度；Pearson coefficient 則反映預測值與真實值的線性相關強度。
+
+本研究之迴歸指標採合併計算，即先合併五折全體驗證預測，再一次計算 MAE、RMSE、\(R^2\) 與 Pearson，而非逐折計算後取平均。此作法使 \(R^2\) 之總變異（總平方和 SST）在全體樣本上唯一定義，可避免各折僅約 13 例時，逐折 \(R^2\) 因以各折局部變異正規化而極不穩定，並確保 RMSE 與 \(R^2\) 對誤差平方和維持單調一致的排序關係。
 
 \end{ZhChapter}

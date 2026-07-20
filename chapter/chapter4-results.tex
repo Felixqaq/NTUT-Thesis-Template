@@ -137,6 +137,8 @@ Hybrid Mamba-Attention & \textbf{0.879 ± 0.078} & \(0.848 \pm 0.091\) & \(0.914
 TAP-CT late fusion & \(0.866 \pm 0.107\) & \(0.848 \pm 0.091\) & \(0.886 \pm 0.140\) \\
 \hline
 \end{tabularx}
+\par\vspace{0.4em}
+{\footnotesize 註：Hybrid Mamba-Attention 與 TAP-CT late fusion 之 Sensitivity 其五折平均與標準差恰好相同，係因各折陽性（Abnormal）樣本僅約 6--7 例，逐折 Sensitivity 僅能取少數離散值，兩模型恰落在同一組數值集合，屬小樣本巧合；實際漏判之折次與個案於兩模型並不相同。}
 \endgroup
 \end{table}
 
@@ -170,7 +172,7 @@ TAP-CT late fusion & \textbf{0.774 ± 0.042} & \(0.550 \pm 0.079\) & \(0.830 \pm
 \endgroup
 \end{table}
 
-RQ2a 中僅 TAP-CT late fusion 撐得住整體正確率（\(0.774 \pm 0.042\)），FCNN（\(0.577 \pm 0.119\)）與 Hybrid Mamba-Attention（\(0.518 \pm 0.253\)）皆偏弱，後者跨折變異尤大。三種方法之共同瓶頸皆為僅 5 例之中間組；此結果初步顯示塌陷角是「CT 影像較看得出、12 維定量參數較看不出」之訊號，且凍結 TAP-CT 嵌入對此三分類任務有明顯助益。
+RQ2a 中僅 TAP-CT late fusion 維持較高之整體正確率（\(0.774 \pm 0.042\)），FCNN（\(0.577 \pm 0.119\)）與 Hybrid Mamba-Attention（\(0.518 \pm 0.253\)）皆偏弱，後者跨折變異尤大。三種方法之共同瓶頸皆為僅 5 例之中間組；此結果初步顯示塌陷角為 CT 影像較能反映、而 12 維定量參數較難捕捉之訊號，且凍結 TAP-CT 嵌入對此三分類任務有明顯助益。
 
 \subsubsection{RQ2b 二分類}
 
@@ -191,6 +193,8 @@ Hybrid Mamba-Attention & \textbf{0.885 ± 0.086} & \(0.867 \pm 0.163\) & \(0.891
 TAP-CT late fusion & \(0.871 \pm 0.080\) & \(0.867 \pm 0.163\) & \(0.871 \pm 0.106\) \\
 \hline
 \end{tabularx}
+\par\vspace{0.4em}
+{\footnotesize 註：兩深度模型 Sensitivity 之平均與標準差相同，原因同表~\ref{tab:rq1_normal_abnormal}（每折陽性僅 3 例之小樣本巧合），實際漏判折次並不相同。}
 \endgroup
 \end{table}
 
@@ -202,7 +206,7 @@ RQ2c 將 AC 視為連續值，改以迴歸指標評估。各方法之 MAE、RMSE
 
 \begin{table}[htbp]
 \centering
-\caption{RQ2c 塌陷角連續值迴歸三方法比較（n=66）}
+\caption{RQ2c 塌陷角連續值迴歸三方法比較（n=66，合併計算）}
 \label{tab:rq2c_regression}
 \begingroup
 \renewcommand{\arraystretch}{1.25}
@@ -210,17 +214,19 @@ RQ2c 將 AC 視為連續值，改以迴歸指標評估。各方法之 MAE、RMSE
 \hline
 Model & MAE (\(^{\circ}\)) & RMSE (\(^{\circ}\)) & \(R^2\) & Pearson r \\
 \hline
-FCNN & \(16.56 \pm 1.96\) & \textbf{20.63} & 0.054 & 0.467 \\
-Hybrid Mamba-Attention & \(15.48 \pm 1.09\) & 23.43 & \(-0.003\) & 0.422 \\
-TAP-CT late fusion & \textbf{14.61 ± 2.17} & 20.72 & \textbf{0.174} & \textbf{0.525} \\
+FCNN & 16.58 & \textbf{20.83} & \textbf{0.215} & 0.477 \\
+Hybrid Mamba-Attention & 15.49 & 23.55 & \(-0.004\) & 0.376 \\
+TAP-CT late fusion & \textbf{14.60} & 21.00 & 0.202 & \textbf{0.509} \\
 \hline
 \end{tabularx}
+\par\vspace{0.4em}
+{\footnotesize 註：本表採合併計算（合併五折全體驗證預測後計算一組指標），故不列標準差；逐折之離散度甚大（例如 TAP-CT late fusion 之逐折 \(R^2\) 約介於 \(-0.13\) 至 \(0.66\)），主因每折僅約 13 例，使逐折 \(R^2\) 以各折局部變異正規化而極不穩定。}
 \endgroup
 \end{table}
 
-RQ2c 中，TAP-CT late fusion 最能解釋角度變異，取得最低 MAE（\(14.61 \pm 2.17\)）、最高 \(R^2\)（0.174）與最高 Pearson r（0.525）；FCNN 之 RMSE 最低（20.63）但 \(R^2\) 與相關性居中；Hybrid Mamba-Attention 之 \(R^2\) 近乎 0（\(-0.003\)），對連續角度幾乎無解釋力。整體而言，三種方法之 \(R^2\) 皆偏低，顯示單以 CT 影像與通用 CT 表徵精準估計連續肺功能指標仍具限制；惟加入凍結 TAP-CT 嵌入之融合能明顯改善此連續迴歸任務。
+RQ2c 之迴歸指標採合併計算（合併五折全體驗證預測後計算，詳見第~\ref{sec:eval_metrics}~節）。三種方法於不同指標互有領先：TAP-CT late fusion 取得最低 MAE（14.60）與最高 Pearson r（0.509），FCNN 則取得最低 RMSE（20.83）與最高 \(R^2\)（0.215），Hybrid Mamba-Attention 之 \(R^2\) 近乎 0（\(-0.004\)），對連續角度幾乎無解釋力。就兩個深度模型而言，加入凍結 TAP-CT 嵌入之融合明顯優於純影像模型（\(R^2\) 由 \(-0.004\) 升至 0.202），顯示預訓練 CT 表徵對連續角度預測確有助益；惟三種方法之 \(R^2\) 均不高（最高僅約 0.22），顯示單以 CT 影像或通用 CT 表徵精準估計連續肺功能指標仍具限制。
 
-綜合 RQ2 三個子任務可見，塌陷角是深度影像模型較量化參數更具優勢之訊號：三分類與連續迴歸由 TAP-CT late fusion 勝出，二分類則由 Hybrid Mamba-Attention 勝出，而 FCNN 於三個子任務皆非最佳。
+綜合 RQ2 三個子任務可見，塌陷角之分類任務較能由深度影像模型捕捉：三分類（RQ2a）由 TAP-CT late fusion 勝出，排除中間組之二分類（RQ2b）由 Hybrid Mamba-Attention 勝出。連續角度迴歸（RQ2c）則三種方法互有領先，TAP-CT late fusion 於 MAE 與 Pearson r 最佳、FCNN 於 RMSE 與 \(R^2\) 最佳，而純影像之 Hybrid Mamba-Attention 對連續角度幾無解釋力；整體而言，塌陷角之分類較能由深度影像模型反映，連續角度之精準迴歸則仍具限制。
 
 \FloatBarrier
 
@@ -246,7 +252,7 @@ TAP-CT late fusion & \textbf{0.834 ± 0.088} & \(0.848 \pm 0.106\) & \(0.819 \pm
 \endgroup
 \end{table}
 
-RQ3 中三種方法之 Accuracy 相當接近（0.803--0.834），以 TAP-CT late fusion 最佳（\(0.834 \pm 0.088\)），FCNN（\(0.804 \pm 0.054\)）與 Hybrid Mamba-Attention（\(0.803 \pm 0.036\)）幾乎相同。此結果與 RQ1 類似：肺氣腫本就與量化特徵高度相關，故 FCNN 於此 OI 導向任務即已足夠；而 TAP-CT late fusion 仍能小幅提升整體正確率與 Sensitivity。
+RQ3 中三種方法之 Accuracy 相當接近（0.803--0.834），以 TAP-CT late fusion 最佳（\(0.834 \pm 0.088\)），FCNN（\(0.804 \pm 0.054\)）與 Hybrid Mamba-Attention（\(0.803 \pm 0.036\)）幾乎相同。此結果與 RQ1 類似：肺氣腫原即與量化特徵高度相關，故 FCNN 於此 OI 導向任務即可達到足夠之辨識表現；而 TAP-CT late fusion 仍能小幅提升整體正確率與 Sensitivity。
 
 \FloatBarrier
 
@@ -279,7 +285,7 @@ FCNN 於 RQ1 之準確率上限，主要由少數「臨床標籤與 CT 量化特
 \endgroup
 \end{table}
 
-FCNN 主要依賴肺氣腫比例，其死角恰為「正常人卻肺氣腫偏多」或「異常人卻幾乎無肺氣腫」之個案。其中個案 2、個案 3 與個案 4 為穩定重現之 false negative，屬臨床邊緣病人而非流程缺陷。此結果顯示，FCNN 於 RQ1 之準確率天花板主要受標籤品質與特徵鑑別力限制，而非訓練不足；若欲再提升，應覆核矛盾個案之臨床標籤，或補入更具鑑別力之特徵。
+FCNN 主要依賴肺氣腫比例，其主要盲點為「正常個案卻肺氣腫偏高」或「異常個案卻幾乎無肺氣腫」之情形。其中個案 2、個案 3 與個案 4 為穩定重現之 false negative，屬臨床邊緣病人而非流程缺陷。此結果顯示，FCNN 於 RQ1 之準確率上限主要受標籤品質與特徵鑑別力限制，而非訓練不足；若欲再提升，應覆核矛盾個案之臨床標籤，或補入更具鑑別力之特徵。
 
 \FloatBarrier
 
