@@ -229,7 +229,7 @@ Batch size & 12 \\
 
 \begin{itemize}
     \item \textbf{交叉驗證：}三個研究問題之三種方法皆採病人層級分層五折，以 training fold 估計標準化參數。塌陷角連續值迴歸依角度分布建立 quantile bins 後分層切分，降低各折角度分布差異。補充實驗之 GOLD 分級亦採五折，但因 GOLD 1 僅有 2 例，允許其驗證樣本跨折重複使用，以確保各折均能涵蓋所有分級類別。
-    \item \textbf{三維影像輸入：}統一為 \(1 \times 112 \times 136 \times 112\) 的 channel-first volume，並以 \([-1000, 400]\) HU 進行 clipping 與強度正規化。
+    \item \textbf{三維影像輸入：}所有 CT 體積以 HU 為單位載入後，先以三線性內插重取樣至統一尺寸 \(112 \times 136 \times 112\)，使原始矩陣與切片張數（63 至 386 張）使影像具有一致的輸入維度。接著依序以 \([-1000, 400]\) HU 窗寬截斷，最後以 z-score 標準化。處理後之張量(\(1 \times 112 \times 136 \times 112\) )即為網路輸入。
     \item \textbf{影像增強：}僅套用於深度模型（Hybrid Mamba-Attention 與 TAP-CT late fusion）之 training fold，FCNN 不使用影像增強。本研究對每筆訓練樣本產生 5 倍增強，變換包含小幅旋轉、平移、縮放、強度縮放、強度平移與高斯雜訊，以擴充小樣本訓練資料之多樣性。
     \item \textbf{類別平衡：}分類任務皆進行類別平衡。深度模型於 training fold 內以增強樣本平衡各類別，FCNN 則以 class-weighted cross entropy 處理類別不平衡；決策一律取 argmax，不另行調整閾值。補充實驗之 GOLD 分級因類別更不平衡，另補至每類 13 筆。
 \end{itemize}
