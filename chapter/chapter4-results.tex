@@ -164,6 +164,15 @@ Accuracy & Sensitivity & Specificity \\
 
 hard voting 之 Accuracy 為 0.894，略高於三個單模型中最佳之 Hybrid Mamba-Attention（逐案 0.879），Specificity 由各單模型之 0.886--0.914 提升至 0.939（假陽性由 3--4 例降至 2 例），Sensitivity 則維持於 0.848。若依三模型投票之一致性分層，可見準確率提升之來源：三模型完全一致（3--0）者共 50 例，其中 48 例正確（96.0\%）；三模型分歧（2--1）者共 16 例，僅 11 例正確（68.8\%）。此顯示當三種異質特徵來源意見一致時投票結果幾乎必然正確，誤判集中於模型彼此矛盾之少數邊緣個案，與後續~\ref{tab:rq1_hard_cases}~之困難個案分析所指之「臨床標籤與 CT 量化特徵互相矛盾」病人相符。因此 hard voting 可小幅提升整體正確率與特異度，但無法超越單模型共同之判別上限。
 
+為檢視三維 CT 深度學習分支之判別依據，圖~\ref{fig:gradcam_rq1_abnormal} 呈現三名 Abnormal 個案於軸狀面（Axial）、冠狀面（Coronal）與矢狀面（Sagittal）之 Grad-CAM 熱力圖。
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{figures/gradcam_stage2_3patients_B.png}
+\caption{RQ1 Grad-CAM 熱力圖}
+\label{fig:gradcam_rq1_abnormal}
+\end{figure}
+
 \FloatBarrier
 
 \subsection{RQ2 塌陷角}
