@@ -1,6 +1,6 @@
 \begin{ZhChapter}
 
-\chapter{實驗結果與討論}
+\chapter{實驗結果}
 
 \section{研究問題}
 
@@ -162,7 +162,7 @@ Accuracy & Sensitivity & Specificity \\
 \endgroup
 \end{table}
 
-hard voting 之 Accuracy 為 0.894，略高於三個單模型中最佳之 Hybrid Mamba-Attention（逐案 0.879），Specificity 由各單模型之 0.886--0.914 提升至 0.939（假陽性由 3--4 例降至 2 例），Sensitivity 則維持於 0.848。若依三模型投票之一致性分層，可見準確率提升之來源：三模型完全一致（3--0）者共 50 例，其中 48 例正確（96.0\%）；三模型分歧（2--1）者共 16 例，僅 11 例正確（68.8\%）。此顯示當三種異質特徵來源意見一致時投票結果幾乎必然正確，誤判集中於模型彼此矛盾之少數邊緣個案，與後續~\ref{tab:rq1_hard_cases}~之困難個案分析所指之「臨床標籤與 CT 量化特徵互相矛盾」病人相符。因此 hard voting 可小幅提升整體正確率與特異度，但無法超越單模型共同之判別上限。
+hard voting 之 Accuracy 為 0.894，略高於三個單模型中最佳之 Hybrid Mamba-Attention（逐案 0.879），Specificity 由各單模型之 0.886--0.914 提升至 0.939（假陽性由 3--4 例降至 2 例），Sensitivity 則維持於 0.848。若依三模型投票之一致性分層，可見準確率提升之來源：三模型完全一致（3--0）者共 50 例，其中 48 例正確（96.0\%）；三模型分歧（2--1）者共 16 例，僅 11 例正確（68.8\%）。此顯示當三種異質特徵來源意見一致時投票結果幾乎必然正確，誤判集中於模型彼此矛盾之少數邊緣個案，即「臨床標籤與 CT 量化特徵互相矛盾」之病人。因此 hard voting 可小幅提升整體正確率與特異度，但無法超越單模型共同之判別上限。
 
 為檢視三維 CT 深度學習分支之判別依據，圖~\ref{fig:gradcam_rq1_abnormal} 呈現三名 Abnormal 個案於軸狀面（Axial）、冠狀面（Coronal）與矢狀面（Sagittal）之 Grad-CAM 熱力圖。
 
@@ -282,39 +282,6 @@ TAP-CT late fusion & \textbf{0.834 ± 0.088} & \(0.848 \pm 0.106\) & \(0.819 \pm
 \end{table}
 
 RQ3 中三種方法之 Accuracy 相當接近（0.803--0.834），以 TAP-CT late fusion 最佳（\(0.834 \pm 0.088\)），FCNN（\(0.804 \pm 0.054\)）與 Hybrid Mamba-Attention（\(0.803 \pm 0.036\)）幾乎相同。此結果與 RQ1 類似：肺氣腫原即與量化特徵高度相關，故 FCNN 於此 OI 導向任務即可達到足夠之辨識表現；而 TAP-CT late fusion 仍能小幅提升整體正確率與 Sensitivity。
-
-\FloatBarrier
-
-\section{討論}
-
-本節之錯誤分析以 FCNN 為對象。該模型之輸入為 12 項可解釋之 CT 量化特徵，可逐案對照特徵值與臨床標籤是否一致，故較適合追溯誤判來源；Hybrid Mamba-Attention 與 TAP-CT late fusion 所學得者為高維度隱含表徵，無法以相同方式逐案檢視。
-
-FCNN 於 RQ1 之準確率上限，主要由少數「臨床標籤與 CT 量化特徵互相矛盾」之病人決定，這些個案在交叉驗證中反覆被誤判，如表~\ref{tab:rq1_hard_cases} 所示。表中所列之肺氣腫比例與肺動脈（PA）等效直徑均為該模型之輸入特徵；其中 PA 等效直徑係由肺動脈 label 體積換算（見第~\ref{sec:seg_quant}~節），反映肺動脈結構量之相對差異，不宜以臨床主幹直徑之正常值解讀。
-
-\begin{table}[htbp]
-\centering
-\caption{RQ1 FCNN 困難個案錯誤分析}
-\label{tab:rq1_hard_cases}
-\begingroup
-\footnotesize
-\renewcommand{\arraystretch}{1.25}
-\setlength{\tabcolsep}{4pt}
-\begin{tabular}{l l r r p{0.34\textwidth}}
-\hline
-病人 & 臨床標籤 & 肺氣腫\% & PA 等效直徑 & 誤判原因 \\
-\hline
-個案 1 & Normal & 34.3\% & 33.5mm & 正常人卻有 34\% 肺氣腫，判為異常 \\
-個案 2 & Abnormal & 0.0\% & 65.5mm & 異常人肺氣腫為 0（惟肺動脈結構量偏高），判為正常 \\
-個案 3 & Abnormal & 6.8\% & 34.1mm & 肺氣腫很輕、整體近正常，判為正常 \\
-個案 4 & Abnormal & 13.1\% & 43.3mm & 邊緣個案 \\
-個案 5 & Normal & 18.8\% & 37.9mm & 正常人肺氣腫偏高，判為異常 \\
-個案 6 & Abnormal & 24.9\% & 40.3mm & 邊緣個案 \\
-\hline
-\end{tabular}
-\endgroup
-\end{table}
-
-FCNN 主要依賴肺氣腫比例，其主要盲點為「正常個案卻肺氣腫偏高」或「異常個案卻幾乎無肺氣腫」之情形。其中個案 2、個案 3 與個案 4 為穩定重現之 false negative，屬臨床邊緣病人而非流程缺陷。此結果顯示，FCNN 於 RQ1 之準確率上限主要受標籤品質與特徵鑑別力限制，而非訓練不足；若欲再提升，應覆核矛盾個案之臨床標籤，或補入更具鑑別力之特徵。
 
 \FloatBarrier
 
