@@ -116,7 +116,7 @@ Decision rule & argmax，不調整閾值 \\
 
 \FloatBarrier
 
-\section{實驗結果分析}
+\section{實驗結果}
 
 \subsection{RQ1 COPD Normal/Abnormal}
 
@@ -144,7 +144,7 @@ TAP-CT late fusion & \(0.866 \pm 0.107\) & \(0.848 \pm 0.091\) & \(0.886 \pm 0.1
 
 由表~\ref{tab:rq1_normal_abnormal} 可見，三種方法之 Accuracy 相當接近（0.848--0.879），以 Hybrid Mamba-Attention 最佳（\(0.879 \pm 0.078\)），TAP-CT late fusion 次之（\(0.866 \pm 0.107\)），FCNN（\(0.848 \pm 0.084\)）僅落後約 3 個百分點。三種方法之 Specificity 皆高於 Sensitivity，其中 FCNN 之 Sensitivity 標準差偏高（\(\pm 0.214\)），反映其在部分折上對 Abnormal 個案之召回較不穩定。整體而言，正常與異常之區分僅以 12 維定量參數即已相當接近深度影像模型，顯示此任務之影像訊號多可被量化生物標記涵蓋，加入凍結 TAP-CT 嵌入之融合並未進一步提升 Accuracy。
 
-再來，本研究進一步以 hard voting 將三者預測量化生物標記、CT 影像、TAP-CT late fusion）整理為單一預測：每位病人由 FCNN、Hybrid Mamba-Attention 與 TAP-CT late fusion 各投一票，取得預測較多之類別為最終預測；因模型數為奇數，每位病人皆有明確結論而無平手。整合後之整體表現如表~\ref{tab:rq1_vote} 所示。
+再來，本研究進一步以 hard voting 將三種方法（量化生物標記、CT 影像、TAP-CT late fusion）之預測整合為單一預測（作法見第~\ref{sec:hard_voting}~節）：每位病人由 FCNN、Hybrid Mamba-Attention 與 TAP-CT late fusion 各投一票，取得預測較多之類別為最終預測；因模型數為奇數，每位病人皆有明確結論而無平手。整合後之整體表現如表~\ref{tab:rq1_vote} 所示。
 
 \begin{table}[htbp]
 \centering
@@ -156,7 +156,7 @@ TAP-CT late fusion & \(0.866 \pm 0.107\) & \(0.848 \pm 0.091\) & \(0.886 \pm 0.1
 \hline
 Accuracy & Sensitivity & Specificity \\
 \hline
-0.894 & 0.848 & 0.939 \\
+\(0.895 \pm 0.077\) & \(0.848 \pm 0.091\) & \(0.943 \pm 0.114\) \\
 \hline
 \end{tabular}
 \endgroup
@@ -169,8 +169,17 @@ hard voting 之 Accuracy 為 0.894，略高於三個單模型中最佳之 Hybrid
 \begin{figure}[H]
 \centering
 \includegraphics[width=\textwidth]{figures/gradcam_stage2_3patients_B.png}
-\caption{RQ1 Grad-CAM 熱力圖}
+\caption{RQ1 Abnormal病人的Grad-CAM 熱力圖}
 \label{fig:gradcam_rq1_abnormal}
+\end{figure}
+
+此外，圖~\ref{fig:gradcam_rq1_errors} 呈現三名判斷錯誤個案之 Grad-CAM 熱力圖，可觀察模型於誤判時所關注之影像區域，作為錯誤案例之補充分析。
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{figures/gradcam_stage1_3errors_predicted.png}
+\caption{RQ1 判斷錯誤個案的 Grad-CAM 熱力圖}
+\label{fig:gradcam_rq1_errors}
 \end{figure}
 
 \FloatBarrier
@@ -229,6 +238,26 @@ TAP-CT late fusion & \(0.871 \pm 0.080\) & \(0.867 \pm 0.163\) & \(0.871 \pm 0.1
 
 排除中間組後，AC 二分類表現明顯提升，且以 Hybrid Mamba-Attention 最佳（\(0.885 \pm 0.086\)），TAP-CT late fusion 次之（\(0.871 \pm 0.080\)），FCNN 最弱（\(0.755 \pm 0.087\)）。此結果與 RQ2a 一致，說明 AC 低值與高值兩端具有較明確之影像差異；惟在此已相當明確之二分任務中，凍結 TAP-CT 嵌入未再帶來增益，反而略微稀釋純影像模型之表現。
 
+與 RQ1 相同，本研究亦以 hard voting 將三種方法預測整合為單一預測。整合後之整體表現如表~\ref{tab:rq2b_vote} 所示。
+
+\begin{table}[htbp]
+\centering
+\caption{RQ2b 三模型 hard voting 結果}
+\label{tab:rq2b_vote}
+\begingroup
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{ccc}
+\hline
+Accuracy & Sensitivity & Specificity \\
+\hline
+\(0.901 \pm 0.063\) & \(0.933 \pm 0.133\) & \(0.891 \pm 0.100\) \\
+\hline
+\end{tabular}
+\endgroup
+\end{table}
+
+hard voting 之 Accuracy 為 0.902，高於三個單模型中最佳之 Hybrid Mamba-Attention（逐案 0.885）；於排除中間組之 61 例（AC 低值 14、AC 高值 47，以 AC 低值為正類）中，Sensitivity 達 0.929（14 例正類僅漏判 1 例）、Specificity 達 0.894（47 例負類誤判 5 例）。此顯示於 AC 兩端影像差異已相當明確之二分任務，結合三種異質特徵來源之投票可進一步收斂各單模型之誤判，小幅提升整體正確率與召回。
+
 \subsubsection{RQ2c 角度迴歸}
 
 RQ2c 將 AC 視為連續值，改以迴歸指標評估。各方法之 MAE、RMSE、決定係數 \(R^2\) 與 Pearson 相關係數如表~\ref{tab:rq2c_regression} 所示，其中 MAE 越低、RMSE 越低、\(R^2\) 與 Pearson r 越高越佳，各欄最佳者以粗體標示。
@@ -282,6 +311,26 @@ TAP-CT late fusion & \textbf{0.834 ± 0.088} & \(0.848 \pm 0.106\) & \(0.819 \pm
 \end{table}
 
 RQ3 中三種方法之 Accuracy 相當接近（0.803--0.834），以 TAP-CT late fusion 最佳（\(0.834 \pm 0.088\)），FCNN（\(0.804 \pm 0.054\)）與 Hybrid Mamba-Attention（\(0.803 \pm 0.036\)）幾乎相同。此結果與 RQ1 類似：肺氣腫原即與量化特徵高度相關，故 FCNN 於此 OI 導向任務即可達到足夠之辨識表現；而 TAP-CT late fusion 仍能小幅提升整體正確率與 Sensitivity。
+
+與 RQ1、RQ2b 相同，本研究亦以 hard voting 整合三種方法（量化生物標記、CT 影像、TAP-CT late fusion）之預測：每位病人由 FCNN、Hybrid Mamba-Attention 與 TAP-CT late fusion 各投一票，取得預測較多之類別為最終預測；因模型數為奇數，每位病人皆有明確結論而無平手。整合後之整體表現如表~\ref{tab:rq3_vote} 所示。
+
+\begin{table}[htbp]
+\centering
+\caption{RQ3 三模型 hard voting 結果}
+\label{tab:rq3_vote}
+\begingroup
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{ccc}
+\hline
+Accuracy & Sensitivity & Specificity \\
+\hline
+\(0.834 \pm 0.088\) & \(0.757 \pm 0.167\) & \(0.910 \pm 0.074\) \\
+\hline
+\end{tabular}
+\endgroup
+\end{table}
+
+hard voting 之 Accuracy 為 0.833，與最佳單模型 TAP-CT late fusion（逐案 0.834）相當；於 66 例（OI$<3$ 者 32、OI$\geq 3$ 者 34，以 OI$\geq 3$ 為正類）中，Specificity 提升至 0.906（32 例負類僅誤判 3 例），高於各單模型之 0.819--0.876，惟 Sensitivity 降至 0.765（34 例正類漏判 8 例）。此顯示於此 OI 導向任務，三模型投票主要以犧牲部分召回換取較高之特異度，整體正確率則未超越最佳單模型之判別上限。
 
 \FloatBarrier
 

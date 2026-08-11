@@ -44,8 +44,6 @@
 
 \begin{document}
 
-% 封面、不用浮水印 Cover without a watermark
-\include{page/titlepage.tex}
 % 留白頁、不用浮水印 Blank page without a watermark
 \include{page/blankpage.tex}
 
@@ -56,7 +54,7 @@
 \input{page/titlepage.tex}
 % 「學位論文口試委員會審定書」掃描檔，請檢附完整簽名之審定書掃描檔
 % Please add "Oral Defense Committee Signature Form" with complete signatures.
-\includepdf[pages=-]{static-page/signpage.pdf}
+\includepdf[pages=-,offset=0 -1in]{figures/口委審定書.pdf}
 
 \pagenumbering{roman}
 

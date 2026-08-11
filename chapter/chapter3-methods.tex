@@ -229,10 +229,18 @@ Batch size & 12 \\
 
 \begin{itemize}
     \item \textbf{交叉驗證：}三個研究問題之三種方法皆採病人層級分層五折，以 training fold 估計標準化參數。塌陷角連續值迴歸依角度分布建立 quantile bins 後分層切分，降低各折角度分布差異。補充實驗之 GOLD 分級亦採五折，但因 GOLD 1 僅有 2 例，允許其驗證樣本跨折重複使用，以確保各折均能涵蓋所有分級類別。
-    \item \textbf{三維影像輸入：}所有 CT 體積以 HU 為單位載入後，先以三線性內插重取樣至統一尺寸 \(112 \times 136 \times 112\)，使原始矩陣與切片張數（63 至 386 張）使影像具有一致的輸入維度。接著依序以 \([-1000, 400]\) HU 窗寬截斷，最後以 z-score 標準化。處理後之張量(\(1 \times 112 \times 136 \times 112\) )即為網路輸入。
+    \item \textbf{三維影像輸入：}所有 CT 體積以 HU 為單位載入後，先以三線性內插重取樣至統一尺寸 \(112 \times 136 \times 112\)，使原始矩陣大小與切片張數（63 至 386 張）不一的影像具有一致的輸入維度。接著依序以 \([-1000, 400]\) HU 窗寬截斷，最後以 z-score 標準化。處理後之張量(\(1 \times 112 \times 136 \times 112\) )即為網路輸入。
     \item \textbf{影像增強：}僅套用於深度模型（Hybrid Mamba-Attention 與 TAP-CT late fusion）之 training fold，FCNN 不使用影像增強。本研究對每筆訓練樣本產生 5 倍增強，變換包含小幅旋轉、平移、縮放、強度縮放、強度平移與高斯雜訊，以擴充小樣本訓練資料之多樣性。
     \item \textbf{類別平衡：}分類任務皆進行類別平衡。深度模型於 training fold 內以增強樣本平衡各類別，FCNN 則以 class-weighted cross entropy 處理類別不平衡；決策一律取 argmax，不另行調整閾值。補充實驗之 GOLD 分級因類別更不平衡，另補至每類 13 筆。
 \end{itemize}
+
+\section{三方法整合預測}\label{sec:hard_voting}
+
+除逐一比較三種方法之表現外，本研究另以 hard voting（多數決）將三種方法之預測整合為單一預測，觀察結合異質特徵來源後是否能收斂各單模型之誤判。此整合僅適用於分類任務，於 Normal/Abnormal 二分類（RQ1）、排除中間組之塌陷角二分類（RQ2b）與 OI 二分類（RQ3）中進行。
+
+具體作法為：每位病人由量化生物標記模型（FCNN）、Hybrid Mamba-Attention 與 TAP-CT late fusion 各就其預測類別投一票，取得票較多之類別為該病人之最終預測。因參與投票之模型數為奇數（三個），每位病人皆可得到明確結論而不會出現平手。
+
+hard voting 不另行訓練模型，亦不使用任何額外參數：其輸入為前述三種方法於病人層級分層五折交叉驗證所得之驗證折預測，各病人之票數僅由三模型對該病人之預測決定，故整合結果與各單模型沿用相同之資料切分與驗證協定。整合後之預測以與各單模型相同之 accuracy、sensitivity 與 specificity 評估（定義見第~\ref{sec:eval_metrics}~節），以與單模型之表現直接對照。
 
 \section{評估指標}\label{sec:eval_metrics}
 
