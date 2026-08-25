@@ -1,4 +1,0 @@
-swinunet參數架構參考誰的
-模型架構參數全部詳細列出
-
-去看我的nnmamba專案裡面的regression中的network神經網路架構 把它全部抓出來寫在論文中
